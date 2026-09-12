@@ -3,10 +3,11 @@
 // ---------------------------------------------------------------------------
 // Digital Wardrobe — interactive 3D outfit builder.
 //
-// The 3D avatar and garments are generated procedurally from three.js
-// primitive meshes (see components/wardrobe/WardrobeScene.tsx). This file
+// The 3D avatar is a real rigged VRM humanoid ("Seed-san") loaded with
+// @pixiv/three-vrm (see components/wardrobe/WardrobeScene.tsx). This file
 // renders the control UI (category tabs, per-category option buttons, and a
-// color picker) and streams the selection state into the scene.
+// color picker) and streams the selection state into the scene, where it
+// recolors the avatar's built-in outfit and toggles bone-anchored garments.
 //
 // The WebGL canvas MUST NOT run during Next.js static generation (three.js
 // touches window/document), so WardrobeScene is loaded via next/dynamic with
@@ -39,9 +40,9 @@ const WardrobeScene = dynamic(
   }
 );
 
-const ORDER: Category[] = ["top", "bottom", "shoes", "hat"];
+const ORDER: Category[] = ["outfit", "bottom", "shoes", "hat"];
 const LABELS: Record<Category, string> = {
-  top: "Top",
+  outfit: "Outfit",
   bottom: "Bottoms",
   shoes: "Shoes",
   hat: "Hat",
@@ -49,22 +50,22 @@ const LABELS: Record<Category, string> = {
 
 // Curated swatches per category.
 const SWATCHES: Record<Category, string[]> = {
-  top: ["#e9e6df", "#b2645f", "#3b556e", "#2c2a26", "#6d7f5b"],
+  outfit: ["#e9e6df", "#b2645f", "#3b556e", "#2c2a26", "#6d7f5b"],
   bottom: ["#3f5266", "#2c2a26", "#8a6d4b", "#9aa0a6", "#5a4a52"],
   shoes: ["#f2efe9", "#2c2a26", "#7a4a2b", "#b2645f"],
   hat: ["#b2645f", "#2c2a26", "#e9e6df", "#3b556e"],
 };
 
 export default function WardrobeBuilder() {
-  const [active, setActive] = useState<Category>("top");
+  const [active, setActive] = useState<Category>("outfit");
   const [selection, setSelection] = useState<WardrobeSelection>({
-    top: 1,
+    outfit: 0,
     bottom: 1,
     shoes: 1,
     hat: 0,
   });
   const [colors, setColors] = useState<WardrobeColors>({
-    top: "#b2645f",
+    outfit: "#b2645f",
     bottom: "#3f5266",
     shoes: "#f2efe9",
     hat: "#2c2a26",
