@@ -5,9 +5,16 @@
 //
 // The 3D avatar is a minimally-clothed modular base body VRM ("drophunter")
 // loaded with @pixiv/three-vrm (see components/wardrobe/WardrobeScene.tsx).
-// This file renders the control UI (category tabs, per-category option buttons,
-// and a color picker) and streams the selection state into the scene, where it
-// loads REAL fitted garment VRMs and transplants them onto the base skeleton.
+// This file renders the control UI and streams the selection state into the
+// scene, where it loads REAL fitted garment VRMs and transplants them onto the
+// base skeleton.
+//
+// Layout: the 3D stage sits in the CENTER, flanked by two VERTICAL side menus.
+// SHOES + HAIR live on the LEFT; TOP (outfit) + BOTTOMS live on the RIGHT. Each
+// side column presents both of its categories as labeled, vertically-stacked
+// scrollable sections of option cards, each with its own colour swatches. On
+// narrow screens the three columns stack: stage on top, then the four menu
+// sections full-width below.
 //
 // The WebGL canvas MUST NOT run during Next.js static generation (three.js
 // touches window/document), so WardrobeScene is loaded via next/dynamic with
@@ -42,13 +49,17 @@ const WardrobeScene = dynamic(
   }
 );
 
-const ORDER: Category[] = ["outfit", "bottom", "shoes", "hat"];
 const LABELS: Record<Category, string> = {
   outfit: "Top",
   bottom: "Bottoms",
   shoes: "Shoes",
   hat: "Hair",
 };
+
+// Which categories live in which vertical side menu. Shoes + Hair on the LEFT,
+// Top (outfit) + Bottoms on the RIGHT, flanking the centered 3D stage.
+const LEFT_CATEGORIES: Category[] = ["shoes", "hat"];
+const RIGHT_CATEGORIES: Category[] = ["outfit", "bottom"];
 
 // ---------------------------------------------------------------------------
 // Atelier palette — a curated, accessible capsule wardrobe.
@@ -91,22 +102,42 @@ const THUMBNAILS: Record<Category, (string | null)[]> = {
     "/wardrobe/thumbnails/chest-tanktop.png",
     "/wardrobe/thumbnails/chest-shirt.png",
     "/wardrobe/thumbnails/chest-hoodie.png",
+    "/wardrobe/thumbnails/chest-croptop.png",
+    "/wardrobe/thumbnails/chest-lightshirt.png",
+    "/wardrobe/thumbnails/chest-fulljacket.png",
+    "/wardrobe/thumbnails/chest-tuckedshirt.png",
+    "/wardrobe/thumbnails/chest-sweater.png",
   ],
   bottom: [
     null,
     "/wardrobe/thumbnails/legs-cargopants.png",
     "/wardrobe/thumbnails/legs-casualshorts.png",
     "/wardrobe/thumbnails/legs-skirt.png",
+    "/wardrobe/thumbnails/legs-sportshorts.png",
+    "/wardrobe/thumbnails/legs-abovekneeshorts.png",
+    "/wardrobe/thumbnails/legs-waistshorts.png",
+    "/wardrobe/thumbnails/legs-doublebeltpants.png",
   ],
   shoes: [
     null,
     "/wardrobe/thumbnails/feet-sneakers.png",
     "/wardrobe/thumbnails/feet-shortboots.png",
+    "/wardrobe/thumbnails/feet-thinshoe.png",
+    "/wardrobe/thumbnails/feet-dressboots.png",
+    "/wardrobe/thumbnails/feet-tallboots.png",
+    "/wardrobe/thumbnails/feet-tennisshoes.png",
+    "/wardrobe/thumbnails/feet-hightop.png",
   ],
   hat: [
     null,
     "/wardrobe/thumbnails/head-short.png",
     "/wardrobe/thumbnails/head-ponytail.png",
+    "/wardrobe/thumbnails/head-curledbangs.png",
+    "/wardrobe/thumbnails/head-buns.png",
+    "/wardrobe/thumbnails/head-straight.png",
+    "/wardrobe/thumbnails/head-swept.png",
+    "/wardrobe/thumbnails/head-longspike.png",
+    "/wardrobe/thumbnails/head-dreds.png",
   ],
 };
 
@@ -120,7 +151,6 @@ const ANIMATIONS: { value: WardrobeAnimation; label: string }[] = [
 ];
 
 export default function WardrobeBuilder() {
-  const [active, setActive] = useState<Category>("outfit");
   const [animation, setAnimation] = useState<WardrobeAnimation>("idle");
   // Default first-load look: a cohesive fully-clothed outfit so the atelier
   // opens on a styled avatar rather than the near-nude base body. Each index
@@ -153,6 +183,119 @@ export default function WardrobeBuilder() {
     [selection, colors, animation]
   );
 
+  // A single category's vertical menu section: heading, scrollable stack of
+  // option cards (thumbnail above name), and a compact colour-swatch row. Used
+  // for all four categories in both side menus.
+  const renderCategorySection = (cat: Category) => {
+    const headingId = `wardrobe-section-${cat}`;
+    return (
+      <section
+        key={cat}
+        aria-labelledby={headingId}
+        className="flex flex-col min-h-0"
+      >
+        <h3
+          id={headingId}
+          style={{ fontFamily: "'Cormorant Garamond', serif" }}
+          className="text-lg font-semibold tracking-wide mb-2 text-[#2c2a26]"
+        >
+          {LABELS[cat]}
+        </h3>
+
+        {/* option cards — thumbnail above name, stacked vertically; scrolls
+            when the list is long. Cards keep button semantics + aria labels. */}
+        <div className="flex flex-col gap-2 overflow-y-auto pr-1 max-h-[300px] lg:max-h-[38vh]">
+          {OPTIONS[cat].map((name, idx) => {
+            const isSel = selection[cat] === idx;
+            const thumb = THUMBNAILS[cat][idx] ?? null;
+            return (
+              <button
+                key={name}
+                onClick={() => setOption(cat, idx)}
+                aria-pressed={isSel}
+                aria-label={`${LABELS[cat]}: ${name}`}
+                className={[
+                  "group flex items-center gap-3 p-2 rounded-2xl border transition-all duration-150 text-left w-full",
+                  isSel
+                    ? "bg-[#a65a4b]/10 border-[#a65a4b] ring-2 ring-[#a65a4b]/30"
+                    : "bg-white/70 border-[#e2ded6] hover:border-[#bcb7ac]",
+                ].join(" ")}
+              >
+                <span
+                  className={[
+                    "relative grid place-items-center w-[56px] h-[56px] shrink-0 rounded-xl overflow-hidden border",
+                    isSel ? "border-[#a65a4b]/40" : "border-[#e6e2da]",
+                  ].join(" ")}
+                  style={{
+                    background:
+                      "repeating-conic-gradient(#f3f0ea 0% 25%, #e9e5dd 0% 50%) 50% / 14px 14px",
+                  }}
+                >
+                  {thumb ? (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img
+                      src={asset(thumb)}
+                      alt={`${name} preview`}
+                      width={56}
+                      height={56}
+                      loading="lazy"
+                      decoding="async"
+                      className="w-full h-full object-cover"
+                    />
+                  ) : (
+                    <span className="text-[9px] tracking-widest uppercase text-[#a39d92] px-1 text-center">
+                      {name}
+                    </span>
+                  )}
+                </span>
+                <span
+                  className={[
+                    "text-sm tracking-wide",
+                    isSel ? "text-[#a65a4b] font-medium" : "text-[#4a463f]",
+                  ].join(" ")}
+                >
+                  {name}
+                </span>
+              </button>
+            );
+          })}
+        </div>
+
+        {/* per-section colour swatches — every category's colour is directly
+            adjustable within its own menu. */}
+        <div className="flex items-center gap-2 mt-3 flex-wrap">
+          {SWATCHES[cat].map((color) => {
+            const isSel = colors[cat].toLowerCase() === color.toLowerCase();
+            return (
+              <button
+                key={color}
+                onClick={() => setColor(cat, color)}
+                aria-label={`Set ${LABELS[cat]} colour to ${color}`}
+                className={[
+                  "w-6 h-6 rounded-full border transition-transform duration-150",
+                  isSel
+                    ? "border-[#2c2a26] scale-110 ring-2 ring-[#2c2a26]/25"
+                    : "border-[#d9d4cb] hover:scale-105",
+                ].join(" ")}
+                style={{ background: color }}
+              />
+            );
+          })}
+          <label className="relative w-6 h-6 rounded-full overflow-hidden border border-[#d9d4cb] cursor-pointer grid place-items-center bg-white/70">
+            <span className="text-[12px] leading-none text-[#8f8a80]">+</span>
+            <input
+              type="color"
+              value={colors[cat]}
+              onChange={(e) => setColor(cat, e.target.value)}
+              aria-label={`Pick a custom ${LABELS[cat]} colour`}
+              className="absolute inset-0 opacity-0 cursor-pointer"
+            />
+          </label>
+        </div>
+      </section>
+    );
+  };
+
   return (
     <div
       className="relative w-full flex flex-col overflow-hidden rounded-3xl"
@@ -181,166 +324,68 @@ export default function WardrobeBuilder() {
         </span>
       </header>
 
-      {/* 3D stage */}
-      <main className="relative z-10 flex-1 min-h-[420px]">
-        <div className="absolute inset-0">
-          <WardrobeScene {...sceneProps} />
-        </div>
-      </main>
+      {/* body: 3-column layout on wide screens (LEFT menu · stage · RIGHT
+          menu); stacks vertically on narrow screens (stage first, then the
+          menu sections full-width below). */}
+      <div className="relative z-10 flex-1 flex flex-col lg:grid lg:grid-cols-[minmax(220px,260px)_1fr_minmax(220px,260px)] lg:gap-4 px-4 sm:px-8 pb-7">
+        {/* LEFT vertical menu — Shoes + Hair */}
+        <nav
+          aria-label="Shoes and Hair options"
+          className="order-2 lg:order-1 flex flex-col gap-6 pt-4 lg:pt-2"
+        >
+          {LEFT_CATEGORIES.map(renderCategorySection)}
+        </nav>
 
-      {/* controls */}
-      <footer className="relative z-10 px-4 sm:px-8 pb-7 pt-3">
-        {/* category tabs */}
-        <div className="flex justify-center gap-2 mb-4 flex-wrap">
-          {ORDER.map((cat) => {
-            const isActive = active === cat;
-            return (
-              <button
-                key={cat}
-                onClick={() => setActive(cat)}
-                className={[
-                  "px-4 py-2 rounded-full text-sm tracking-wide transition-all duration-150 border",
-                  isActive
-                    ? "bg-[#2c2a26] text-[#f6f4ef] border-[#2c2a26]"
-                    : "bg-white/70 text-[#4a463f] border-[#e2ded6] hover:border-[#bcb7ac]",
-                ].join(" ")}
-              >
-                {LABELS[cat]}
-              </button>
-            );
-          })}
-        </div>
-
-        {/* option cards for the active category — each shows a garment
-            thumbnail preview above its name (option 0 = None/Default gets a
-            labeled placeholder tile). Cards keep the button semantics + aria
-            labels for keyboard/screen-reader access. */}
-        <div className="flex justify-center gap-3 mb-5 flex-wrap">
-          {OPTIONS[active].map((name, idx) => {
-            const isSel = selection[active] === idx;
-            const thumb = THUMBNAILS[active][idx] ?? null;
-            return (
-              <button
-                key={name}
-                onClick={() => setOption(active, idx)}
-                aria-pressed={isSel}
-                aria-label={`${LABELS[active]}: ${name}`}
-                className={[
-                  "group flex flex-col items-center gap-2 p-2 rounded-2xl border transition-all duration-150 w-[92px]",
-                  isSel
-                    ? "bg-[#a65a4b]/10 border-[#a65a4b] ring-2 ring-[#a65a4b]/30"
-                    : "bg-white/70 border-[#e2ded6] hover:border-[#bcb7ac]",
-                ].join(" ")}
-              >
-                <span
-                  className={[
-                    "relative grid place-items-center w-[72px] h-[72px] rounded-xl overflow-hidden border",
-                    isSel ? "border-[#a65a4b]/40" : "border-[#e6e2da]",
-                  ].join(" ")}
-                  style={{
-                    background:
-                      "repeating-conic-gradient(#f3f0ea 0% 25%, #e9e5dd 0% 50%) 50% / 16px 16px",
-                  }}
-                >
-                  {thumb ? (
-                    // eslint-disable-next-line @next/next/no-img-element
-                    <img
-                      src={asset(thumb)}
-                      alt={`${name} preview`}
-                      width={72}
-                      height={72}
-                      loading="lazy"
-                      decoding="async"
-                      className="w-full h-full object-cover"
-                    />
-                  ) : (
-                    <span className="text-[10px] tracking-widest uppercase text-[#a39d92] px-1 text-center">
-                      {name}
-                    </span>
-                  )}
-                </span>
-                <span
-                  className={[
-                    "text-xs tracking-wide",
-                    isSel ? "text-[#a65a4b] font-medium" : "text-[#4a463f]",
-                  ].join(" ")}
-                >
-                  {name}
-                </span>
-              </button>
-            );
-          })}
-        </div>
-
-        {/* animation selector — sets the clip played on the VRM rig. */}
-        <div className="flex items-center justify-center gap-3 mb-4 flex-wrap">
-          <span id="wardrobe-animation-label" className="text-[11px] tracking-widest uppercase text-[#a39d92]">
-            Animation
-          </span>
-          <div
-            role="radiogroup"
-            aria-labelledby="wardrobe-animation-label"
-            className="flex items-center gap-2 flex-wrap"
-          >
-            {ANIMATIONS.map(({ value, label }) => {
-              const isSel = animation === value;
-              return (
-                <button
-                  key={value}
-                  role="radio"
-                  onClick={() => setAnimation(value)}
-                  aria-checked={isSel}
-                  aria-label={`Play ${label} animation`}
-                  className={[
-                    "px-3 py-1.5 rounded-full text-xs tracking-wide transition-all duration-150 border",
-                    isSel
-                      ? "bg-[#2c2a26] text-[#f6f4ef] border-[#2c2a26]"
-                      : "bg-white/70 text-[#4a463f] border-[#e2ded6] hover:border-[#bcb7ac]",
-                  ].join(" ")}
-                >
-                  {label}
-                </button>
-              );
-            })}
+        {/* CENTER 3D stage + global animation selector */}
+        <main className="order-1 lg:order-2 flex flex-col min-h-[420px] lg:min-h-0">
+          <div className="relative flex-1 min-h-[420px]">
+            <div className="absolute inset-0">
+              <WardrobeScene {...sceneProps} />
+            </div>
           </div>
-        </div>
 
-        {/* color swatches */}
-        <div className="flex items-center justify-center gap-3 flex-wrap">
-          <span className="text-[11px] tracking-widest uppercase text-[#a39d92]">
-            {LABELS[active]} colour
-          </span>
-          <div className="flex items-center gap-2">
-            {SWATCHES[active].map((color) => {
-              const isSel = colors[active].toLowerCase() === color.toLowerCase();
-              return (
-                <button
-                  key={color}
-                  onClick={() => setColor(active, color)}
-                  aria-label={`Set ${LABELS[active]} colour to ${color}`}
-                  className={[
-                    "w-7 h-7 rounded-full border transition-transform duration-150",
-                    isSel
-                      ? "border-[#2c2a26] scale-110 ring-2 ring-[#2c2a26]/25"
-                      : "border-[#d9d4cb] hover:scale-105",
-                  ].join(" ")}
-                  style={{ background: color }}
-                />
-              );
-            })}
-            <label className="relative w-7 h-7 rounded-full overflow-hidden border border-[#d9d4cb] cursor-pointer grid place-items-center bg-white/70">
-              <span className="text-[13px] leading-none text-[#8f8a80]">+</span>
-              <input
-                type="color"
-                value={colors[active]}
-                onChange={(e) => setColor(active, e.target.value)}
-                aria-label={`Pick a custom ${LABELS[active]} colour`}
-                className="absolute inset-0 opacity-0 cursor-pointer"
-              />
-            </label>
+          {/* animation selector — global; applies to the whole avatar. */}
+          <div className="flex items-center justify-center gap-3 mt-3 flex-wrap">
+            <span id="wardrobe-animation-label" className="text-[11px] tracking-widest uppercase text-[#a39d92]">
+              Animation
+            </span>
+            <div
+              role="radiogroup"
+              aria-labelledby="wardrobe-animation-label"
+              className="flex items-center gap-2 flex-wrap"
+            >
+              {ANIMATIONS.map(({ value, label }) => {
+                const isSel = animation === value;
+                return (
+                  <button
+                    key={value}
+                    role="radio"
+                    onClick={() => setAnimation(value)}
+                    aria-checked={isSel}
+                    aria-label={`Play ${label} animation`}
+                    className={[
+                      "px-3 py-1.5 rounded-full text-xs tracking-wide transition-all duration-150 border",
+                      isSel
+                        ? "bg-[#2c2a26] text-[#f6f4ef] border-[#2c2a26]"
+                        : "bg-white/70 text-[#4a463f] border-[#e2ded6] hover:border-[#bcb7ac]",
+                    ].join(" ")}
+                  >
+                    {label}
+                  </button>
+                );
+              })}
+            </div>
           </div>
-        </div>
-      </footer>
+        </main>
+
+        {/* RIGHT vertical menu — Top + Bottoms */}
+        <nav
+          aria-label="Top and Bottoms options"
+          className="order-3 flex flex-col gap-6 pt-4 lg:pt-2"
+        >
+          {RIGHT_CATEGORIES.map(renderCategorySection)}
+        </nav>
+      </div>
     </div>
   );
 }
