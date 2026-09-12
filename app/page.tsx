@@ -3,6 +3,8 @@ import Link from "next/link";
 import BrandMark from "@/components/BrandMark";
 import { stack, cases, badges, caps, projects, ticker } from "@/lib/data";
 
+const basePath = process.env.NEXT_PUBLIC_BASE_PATH ?? "";
+
 export default function Home() {
   const stackLoop = [...stack, ...stack];
   const tickerLoop = [...ticker, ...ticker];
@@ -65,7 +67,7 @@ export default function Home() {
 
           <div className="absolute right-0 bottom-0 top-0 w-[56%]">
             <Image
-              src="/images/final_futuristic_avatar.png"
+              src={`${basePath}/images/final_futuristic_avatar.png`}
               alt="Frank portrait"
               fill
               className="object-cover"
