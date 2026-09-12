@@ -402,7 +402,19 @@ export default function Home() {
                     className="absolute inset-0"
                     style={{ background: "radial-gradient(120% 90% at 70% 10%, rgba(63,169,255,0.14), transparent 55%)" }}
                   />
-                  {p.image ? (
+                  {p.video ? (
+                    <video
+                      src={asset(p.video)}
+                      poster={p.image ? asset(p.image) : undefined}
+                      aria-label={p.title}
+                      autoPlay
+                      muted
+                      loop
+                      playsInline
+                      preload="metadata"
+                      className="absolute inset-0 h-full w-full object-cover opacity-80"
+                    />
+                  ) : p.image ? (
                     <Image src={asset(p.image)} alt={p.title} fill className="object-cover opacity-80" />
                   ) : (
                     <span className="relative font-mono text-xs text-[#6b7286] tracking-wide px-5 text-center">
