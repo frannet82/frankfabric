@@ -48,12 +48,33 @@ const LABELS: Record<Category, string> = {
   hat: "Hat",
 };
 
-// Curated swatches per category.
+// ---------------------------------------------------------------------------
+// Atelier palette — a curated, accessible capsule wardrobe.
+//
+// The palette is built from warm neutrals plus a small set of muted, fashion
+// forward accents so any combination reads as a coherent outfit. Every hue is
+// chosen to hold contrast against the light atelier background (#efede8 /
+// #faf9f7) and the dark UI chrome (#2c2a26). Shared roles:
+//   #f4f1ea  Ivory      near-white; kept bordered so it stays visible on the light bg
+//   #d9cdbb  Sand       warm light neutral
+//   #b8b0a4  Stone      mid greige neutral
+//   #2f2b28  Espresso   near-black; anchors an outfit and reads on light bg
+//   #a65a4b  Terracotta warm clay accent (primary brand-ish accent)
+//   #5f7355  Sage       muted olive green accent
+//   #3f5a6b  Slate      desaturated blue accent
+//   #c98a3c  Ochre      golden amber accent
+//   #7d5a72  Plum       dusty mauve accent
+//   #8a5a3c  Cognac     rich tan/leather tone (footwear)
+// ---------------------------------------------------------------------------
 const SWATCHES: Record<Category, string[]> = {
-  outfit: ["#e9e6df", "#b2645f", "#3b556e", "#2c2a26", "#6d7f5b"],
-  bottom: ["#3f5266", "#2c2a26", "#8a6d4b", "#9aa0a6", "#5a4a52"],
-  shoes: ["#f2efe9", "#2c2a26", "#7a4a2b", "#b2645f"],
-  hat: ["#b2645f", "#2c2a26", "#e9e6df", "#3b556e"],
+  // Outfit: neutral base tones + two accents that flatter the avatar's torso.
+  outfit: ["#f4f1ea", "#a65a4b", "#3f5a6b", "#5f7355", "#2f2b28"],
+  // Bottoms: grounding darks + denim-like slate + a warm ochre option.
+  bottom: ["#3f5a6b", "#2f2b28", "#5f7355", "#c98a3c", "#b8b0a4"],
+  // Shoes: classic leather/neutral shoe tones.
+  shoes: ["#2f2b28", "#8a5a3c", "#f4f1ea", "#a65a4b"],
+  // Hat: accents and neutrals that top off the looks above.
+  hat: ["#2f2b28", "#a65a4b", "#d9cdbb", "#7d5a72"],
 };
 
 export default function WardrobeBuilder() {
@@ -64,11 +85,13 @@ export default function WardrobeBuilder() {
     shoes: 1,
     hat: 0,
   });
+  // Default first-load outfit: terracotta jacket over slate trousers, cognac
+  // boots and an espresso cap — a cohesive, warm-neutral starting look.
   const [colors, setColors] = useState<WardrobeColors>({
-    outfit: "#b2645f",
-    bottom: "#3f5266",
-    shoes: "#f2efe9",
-    hat: "#2c2a26",
+    outfit: "#a65a4b", // Terracotta
+    bottom: "#3f5a6b", // Slate
+    shoes: "#8a5a3c", // Cognac
+    hat: "#2f2b28", // Espresso
   });
 
   const setOption = (cat: Category, idx: number) =>
@@ -147,7 +170,7 @@ export default function WardrobeBuilder() {
                 className={[
                   "px-4 py-2 rounded-2xl text-sm transition-all duration-150 border",
                   isSel
-                    ? "bg-[#b2645f] text-white border-[#b2645f]"
+                    ? "bg-[#a65a4b] text-white border-[#a65a4b]"
                     : "bg-white/70 text-[#4a463f] border-[#e2ded6] hover:border-[#bcb7ac]",
                 ].join(" ")}
               >
