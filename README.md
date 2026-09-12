@@ -80,12 +80,18 @@ Seed-san's real bone proportions at runtime (see
 ### Preview image
 
 The Digital Wardrobe project card on the landing page uses
-`public/images/digital-wardrobe-preview.png`, an **original asset generated for
-this project** (no third-party license). It is produced programmatically by
-`scripts/gen-wardrobe-preview.mjs` (an SVG rasterized to PNG via `sharp`) and
-depicts a styled avatar in the wardrobe palette on the atelier background. Like
-every other bundled asset it is served offline through `asset()` under the
-`/frankfabric/` base path.
+`public/images/final_futuristic_avatar.jpg`, a **real JPEG render of the 3D
+avatar** from the wardrobe. The source render arrived mislabeled with a `.png`
+extension despite carrying JPEG bytes, so `scripts/convert-avatar-jpeg.mjs`
+re-encodes it via `sharp` (`jpeg({ quality: 90, mozjpeg: true })`) into a
+correctly-named `.jpg` with a matching `image/jpeg` container. Like every other
+bundled asset it is served offline through `asset()` under the `/frankfabric/`
+base path.
+
+The earlier SVG-generated `public/images/digital-wardrobe-preview.png` (produced
+by `scripts/gen-wardrobe-preview.mjs`, an original asset with no third-party
+license) is no longer the card image, but the generator script remains in the
+repo for reference.
 
 ## Deployment
 

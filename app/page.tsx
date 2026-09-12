@@ -66,7 +66,7 @@ export default function Home() {
 
           <div className="absolute right-0 bottom-0 top-0 w-[56%]">
             <Image
-              src={asset("/images/final_futuristic_avatar.png")}
+              src={asset("/images/final_futuristic_avatar.jpg")}
               alt="Frank portrait"
               fill
               className="object-cover"
