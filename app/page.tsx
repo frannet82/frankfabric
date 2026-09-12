@@ -2,8 +2,7 @@ import Image from "next/image";
 import Link from "next/link";
 import BrandMark from "@/components/BrandMark";
 import { stack, cases, badges, caps, projects, ticker } from "@/lib/data";
-
-const basePath = process.env.NEXT_PUBLIC_BASE_PATH ?? "";
+import { asset } from "@/lib/asset";
 
 export default function Home() {
   const stackLoop = [...stack, ...stack];
@@ -67,7 +66,7 @@ export default function Home() {
 
           <div className="absolute right-0 bottom-0 top-0 w-[56%]">
             <Image
-              src={`${basePath}/images/final_futuristic_avatar.png`}
+              src={asset("/images/final_futuristic_avatar.png")}
               alt="Frank portrait"
               fill
               className="object-cover"
@@ -404,7 +403,7 @@ export default function Home() {
                     style={{ background: "radial-gradient(120% 90% at 70% 10%, rgba(63,169,255,0.14), transparent 55%)" }}
                   />
                   {p.image ? (
-                    <Image src={p.image} alt={p.title} fill className="object-cover opacity-80" />
+                    <Image src={asset(p.image)} alt={p.title} fill className="object-cover opacity-80" />
                   ) : (
                     <span className="relative font-mono text-xs text-[#6b7286] tracking-wide px-5 text-center">
                       {p.label}

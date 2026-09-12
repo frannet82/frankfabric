@@ -2,6 +2,7 @@
 
 import Image from "next/image";
 import { useState, useRef } from "react";
+import { asset } from "@/lib/asset";
 
 // ---------------------------------------------------------------------------
 // Digital Wardrobe — the mannequin is assembled from pre-rendered, aligned
@@ -177,7 +178,7 @@ export default function WardrobeBuilder() {
           {layers.map((l) => (
             <Image
               key={l.alt}
-              src={l.src}
+              src={asset(l.src)}
               alt={l.alt}
               fill
               sizes="240px"
@@ -226,7 +227,7 @@ export default function WardrobeBuilder() {
             {ORDER.map((k) => (
               <button key={k} onClick={() => setActive(k)} className={btnStyle(k)}>
                 <div className="relative w-12 h-11 rounded-xl bg-[#f4f1ec] border border-[#e3ded5] overflow-hidden flex-none">
-                  <Image src={THUMB[k]} alt={LABELS[k]} fill sizes="48px" className="object-cover scale-[1.6]" style={{ objectPosition: "center 20%" }} />
+                  <Image src={asset(THUMB[k])} alt={LABELS[k]} fill sizes="48px" className="object-cover scale-[1.6]" style={{ objectPosition: "center 20%" }} />
                 </div>
                 <span className="text-xs tracking-wide leading-none">{LABELS[k]}</span>
                 <span className="text-[10px] text-[#a39d92] whitespace-nowrap max-w-[86px] overflow-hidden text-ellipsis">
