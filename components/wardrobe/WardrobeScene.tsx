@@ -276,14 +276,20 @@ function applyColor(material: THREE.Material, hex: string) {
 //
 // Returns the transplanted meshes plus the cloned materials that may be tinted,
 // so the caller can dispose them on change/unmount without touching the shared
-// base skeleton bones.
+// base skeleton bones. The `color` is applied to the cloned materials up front
+// so the garment renders in its selected tint on first paint (rather than its
+// VRM-authored default until the user touches a swatch).
 // ---------------------------------------------------------------------------
 type Transplant = {
   group: THREE.Group;
   materials: THREE.Material[];
 };
 
-function transplantGarment(garment: VRM, baseVrm: VRM): Transplant {
+function transplantGarment(
+  garment: VRM,
+  baseVrm: VRM,
+  color: string
+): Transplant {
   // Build a lookup of the base body's bone nodes by name (walk once).
   const baseBonesByName = new Map<string, THREE.Object3D>();
   baseVrm.scene.traverse((obj) => {
@@ -304,10 +310,24 @@ function transplantGarment(garment: VRM, baseVrm: VRM): Transplant {
   for (const mesh of skinnedMeshes) {
     const srcSkeleton = mesh.skeleton;
     // For each garment skeleton bone, find the base-body node with the same
-    // name; fall back to the original bone if no match exists.
-    const newBones = srcSkeleton.bones.map(
-      (bone) => (baseBonesByName.get(bone.name) as THREE.Bone) ?? bone
-    );
+    // name; fall back to the original bone if no match exists. A miss means the
+    // garment rig diverges from the base rig, so the mesh would bind to a
+    // detached bone and not follow the animation — surface it in development so
+    // the mismatch is visible rather than silent.
+    const newBones = srcSkeleton.bones.map((bone) => {
+      const baseBone = baseBonesByName.get(bone.name) as THREE.Bone | undefined;
+      if (!baseBone) {
+        if (process.env.NODE_ENV !== "production") {
+          console.warn(
+            `[wardrobe] garment bone "${bone.name}" has no match in the base ` +
+              `body skeleton; the mesh will bind to a detached bone and will ` +
+              `not follow the animated rig.`
+          );
+        }
+        return bone;
+      }
+      return baseBone;
+    });
     const newSkeleton = new THREE.Skeleton(newBones, srcSkeleton.boneInverses);
 
     // Clone materials so tinting a garment never bleeds into another VRM's
@@ -334,6 +354,10 @@ function transplantGarment(garment: VRM, baseVrm: VRM): Transplant {
     group.add(mesh);
   }
 
+  // Apply the initial selected tint so the garment shows its chosen colour on
+  // first paint, not the VRM-authored default.
+  materials.forEach((mat) => applyColor(mat, color));
+
   return { group, materials };
 }
 
@@ -354,6 +378,14 @@ function Garment({
   // The garment VRM scene we must deep-dispose on change/unmount (its own
   // skeleton/graph — never the shared base skeleton bones).
   const disposeScene = useRef<THREE.Object3D | null>(null);
+  // Latest requested colour, tracked in a ref so the async load callback can
+  // apply the CURRENT tint even though the load effect below does not depend on
+  // `color` (avoids re-loading the garment when only the colour changes). The
+  // ref is synced in an effect (never during render) to satisfy react-hooks.
+  const colorRef = useRef(color);
+  useEffect(() => {
+    colorRef.current = color;
+  }, [color]);
 
   useEffect(() => {
     if (!url) return;
@@ -369,7 +401,10 @@ function Garment({
       const garment = gltf.userData.vrm as VRM | undefined;
       if (!garment) return;
 
-      const transplant = transplantGarment(garment, baseVrm);
+      // Apply the current colour during transplant so the garment renders in
+      // its selected tint on first paint (fixes the initial-colour drop where
+      // the tint effect ran before this async load populated mounted.current).
+      const transplant = transplantGarment(garment, baseVrm, colorRef.current);
       baseVrm.scene.add(transplant.group);
       mounted.current = transplant;
       disposeScene.current = garment.scene;
@@ -396,7 +431,10 @@ function Garment({
     };
   }, [baseVrm, url]);
 
-  // Live-tint the mounted garment's materials from the category colour control.
+  // Live-tint the mounted garment's materials when the colour changes AFTER the
+  // garment is already mounted. The initial tint is applied inside the load
+  // callback above (via transplantGarment), so the early-return here on an
+  // unpopulated mount.current no longer drops the first-paint colour.
   useEffect(() => {
     const t = mounted.current;
     if (!t) return;
