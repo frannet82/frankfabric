@@ -69,9 +69,9 @@ export const projects: Project[] = [
     label: "LIVE DEMO · Interactive avatar builder",
     tag: "Next.js",
     title: "Digital Wardrobe Avatar Builder",
-    meta: "Upload a photo, style a full outfit in real time",
+    meta: "Rotate a 3D model and swap garments and colors in real time",
     href: "/projects/digital-wardrobe",
-    image: "/images/mannequin_placeholder.png",
+    image: "/images/final_futuristic_avatar.png",
   },
 ];
 
