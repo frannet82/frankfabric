@@ -20,6 +20,21 @@ Then open http://localhost:3000.
 - `components/WardrobeBuilder.tsx` — the Digital Wardrobe: an interactive 3D dress-up builder for swapping outfits and colors on a model
 - `lib/data.ts` — content for stack, case studies, badges, and project gallery cards
 
+## Attribution
+
+The Digital Wardrobe builder (`components/WardrobeBuilder.tsx` and
+`components/wardrobe/WardrobeScene.tsx`) is built on the following open-source
+libraries, all MIT-licensed:
+
+- [three.js](https://github.com/mrdoob/three.js) (MIT)
+- [@react-three/fiber](https://github.com/pmndrs/react-three-fiber) (MIT)
+- [@react-three/drei](https://github.com/pmndrs/drei) (MIT)
+
+All 3D geometry (the avatar and every garment) is generated procedurally
+in-scene from three.js primitive meshes. No third-party 3D model assets
+(`.glb`/`.gltf`), textures, or environment maps are bundled or fetched, so
+there is nothing to license beyond the libraries above.
+
 ## Deployment
 
 The site is a static export (`output: 'export'`) and deploys automatically to

@@ -5,7 +5,7 @@ import WardrobeBuilder from "@/components/WardrobeBuilder";
 export const metadata = {
   title: "Digital Wardrobe Avatar Builder — Frank Cloud Fabric",
   description:
-    "An interactive avatar dress-up builder: upload a photo and style a full outfit in real time.",
+    "A real-time interactive 3D outfit builder: rotate the model and swap garments and colors live in the browser.",
 };
 
 export default function DigitalWardrobePage() {
@@ -37,8 +37,9 @@ export default function DigitalWardrobePage() {
           Digital Wardrobe Avatar Builder
         </h1>
         <p className="text-[15px] leading-relaxed text-[#9aa2b4] max-w-[560px] mx-auto font-light">
-          Mix tops, bottoms, shoes, outerwear, hats, and accessories on a live mannequin assembled from layered
-          renders. Built as a fully interactive React component — part of the Frank Cloud Fabric portfolio.
+          Style a real-time 3D model: rotate and zoom the avatar, swap tops, bottoms, shoes, and hats, and
+          recolor each piece on the fly. Built as a fully interactive React Three Fiber component, part of
+          the Frank Cloud Fabric portfolio.
         </p>
       </section>
 
