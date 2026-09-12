@@ -34,7 +34,7 @@ export default function Home() {
             <span className="w-[6px] h-[6px] rounded-full bg-cloud-blue shadow-[0_0_8px_#3fa9ff] animate-emberPulse" />
             SYS.ONLINE
           </span>
-          <span className="opacity-60">//</span>
+          <span className="opacity-60">{"//"}</span>
           <div className="flex-1 overflow-hidden [mask-image:linear-gradient(90deg,transparent,#000_6%,#000_94%,transparent)]">
             <div className="flex gap-9 w-max animate-ticker whitespace-nowrap">
               {tickerLoop.map((t, i) => (
@@ -66,7 +66,7 @@ export default function Home() {
 
           <div className="absolute right-0 bottom-0 top-0 w-[56%]">
             <Image
-              src={asset("/images/final_futuristic_avatar.png")}
+              src={asset("/images/final_futuristic_avatar.jpg")}
               alt="Frank portrait"
               fill
               className="object-cover"
@@ -180,7 +180,7 @@ export default function Home() {
           <div className="inline-flex items-center gap-3 mb-4">
             <span className="h-[10px] w-12 bg-[repeating-linear-gradient(90deg,rgba(63,169,255,0.45)_0_1px,transparent_1px_9px)]" />
             <span className="font-mono text-xs tracking-[2px] uppercase text-cloud-blue whitespace-nowrap">
-              // Capabilities
+              {"// Capabilities"}
             </span>
           </div>
           <h2 className="font-display font-semibold text-[clamp(28px,3.2vw,42px)] tracking-tight text-[#f4f6fb]">
@@ -271,7 +271,7 @@ export default function Home() {
         <div className="max-w-[640px] mb-12">
           <div className="flex items-center gap-4 mb-4">
             <span className="font-mono text-xs tracking-[2px] uppercase text-cloud-blue whitespace-nowrap">
-              // Selected Work
+              {"// Selected Work"}
             </span>
             <span className="flex-1 h-[10px] bg-[repeating-linear-gradient(90deg,rgba(63,169,255,0.45)_0_1px,transparent_1px_9px)]" />
           </div>
@@ -332,7 +332,7 @@ export default function Home() {
         />
         <div className="relative max-w-[1280px] mx-auto px-10">
           <div className="text-center max-w-[600px] mx-auto mb-14">
-            <span className="font-mono text-xs tracking-[2px] uppercase text-cloud-blue">// Verified</span>
+            <span className="font-mono text-xs tracking-[2px] uppercase text-cloud-blue">{"// Verified"}</span>
             <h2 className="font-display font-semibold text-[clamp(28px,3.2vw,42px)] tracking-tight text-[#f4f6fb] mt-4">
               Credentials &amp; Certifications
             </h2>
@@ -378,7 +378,7 @@ export default function Home() {
         <div className="max-w-[640px] mb-12">
           <div className="flex items-center gap-4 mb-4">
             <span className="font-mono text-xs tracking-[2px] uppercase text-cloud-blue whitespace-nowrap">
-              // Project Gallery
+              {"// Project Gallery"}
             </span>
             <span className="flex-1 h-[10px] bg-[repeating-linear-gradient(90deg,rgba(63,169,255,0.45)_0_1px,transparent_1px_9px)]" />
           </div>
@@ -442,7 +442,7 @@ export default function Home() {
           }}
         />
         <div className="relative max-w-[760px] mx-auto text-center">
-          <span className="font-mono text-xs tracking-[2px] uppercase text-cloud-blue">// Let&apos;s Build</span>
+          <span className="font-mono text-xs tracking-[2px] uppercase text-cloud-blue">{"// Let's Build"}</span>
           <h2 className="font-display font-semibold text-[clamp(30px,3.6vw,48px)] tracking-tight leading-[1.08] mt-4 mb-5 text-[#f4f6fb]">
             Have an architecture challenge{" "}
             <span className="bg-gradient-to-r from-cloud-blue to-cloud-violet bg-clip-text text-transparent">

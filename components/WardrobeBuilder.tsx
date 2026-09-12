@@ -21,7 +21,9 @@ import {
   type Category,
   type WardrobeSelection,
   type WardrobeColors,
+  type WardrobeAnimation,
 } from "@/components/wardrobe/WardrobeScene";
+import { asset } from "@/lib/asset";
 
 const WardrobeScene = dynamic(
   () => import("@/components/wardrobe/WardrobeScene"),
@@ -77,8 +79,36 @@ const SWATCHES: Record<Category, string[]> = {
   hat: ["#2f2b28", "#a65a4b", "#d9cdbb", "#7d5a72"],
 };
 
+// Genuine 512x512 garment thumbnails copied from the frannet82/assets repo
+// into public/wardrobe/thumbnails/. Each entry maps a category + option index
+// to a preview image so users can see what each selection looks like. Option 0
+// ("Default"/"None") has no garment, so it renders a labeled placeholder tile
+// instead. Every path is wrapped in asset() so it carries the /frankfabric
+// base path in production.
+const THUMBNAILS: Record<Category, (string | null)[]> = {
+  outfit: [null, "/wardrobe/thumbnails/outfit-jacket.png", "/wardrobe/thumbnails/outfit-vest.png"],
+  bottom: [
+    null,
+    "/wardrobe/thumbnails/bottom-trousers.png",
+    "/wardrobe/thumbnails/bottom-shorts.png",
+    "/wardrobe/thumbnails/bottom-skirt.png",
+  ],
+  shoes: [null, "/wardrobe/thumbnails/shoes-sneakers.png", "/wardrobe/thumbnails/shoes-boots.png"],
+  hat: [null, "/wardrobe/thumbnails/hat-cap.png", "/wardrobe/thumbnails/hat-beanie.png"],
+};
+
+// Animation selector options. "rest" is the static, auto-rotating pose; the
+// others play the retargeted FBX clips on the VRM rig.
+const ANIMATIONS: { value: WardrobeAnimation; label: string }[] = [
+  { value: "rest", label: "Rest" },
+  { value: "idle", label: "Idle" },
+  { value: "walking", label: "Walking" },
+  { value: "waving", label: "Waving" },
+];
+
 export default function WardrobeBuilder() {
   const [active, setActive] = useState<Category>("outfit");
+  const [animation, setAnimation] = useState<WardrobeAnimation>("idle");
   // Default first-load look: a fully layered, cohesive outfit so the atelier
   // opens on the same styled avatar depicted in the project preview image,
   // rather than an unstyled default. Each index maps to a *visible* option in
@@ -105,7 +135,10 @@ export default function WardrobeBuilder() {
   const setColor = (cat: Category, color: string) =>
     setColors((c) => ({ ...c, [cat]: color }));
 
-  const sceneProps = useMemo(() => ({ selection, colors }), [selection, colors]);
+  const sceneProps = useMemo(
+    () => ({ selection, colors, animation }),
+    [selection, colors, animation]
+  );
 
   return (
     <div
@@ -165,25 +198,98 @@ export default function WardrobeBuilder() {
           })}
         </div>
 
-        {/* option buttons for the active category */}
-        <div className="flex justify-center gap-2 mb-4 flex-wrap">
+        {/* option cards for the active category — each shows a garment
+            thumbnail preview above its name (option 0 = None/Default gets a
+            labeled placeholder tile). Cards keep the button semantics + aria
+            labels for keyboard/screen-reader access. */}
+        <div className="flex justify-center gap-3 mb-5 flex-wrap">
           {OPTIONS[active].map((name, idx) => {
             const isSel = selection[active] === idx;
+            const thumb = THUMBNAILS[active][idx] ?? null;
             return (
               <button
                 key={name}
                 onClick={() => setOption(active, idx)}
+                aria-pressed={isSel}
+                aria-label={`${LABELS[active]}: ${name}`}
                 className={[
-                  "px-4 py-2 rounded-2xl text-sm transition-all duration-150 border",
+                  "group flex flex-col items-center gap-2 p-2 rounded-2xl border transition-all duration-150 w-[92px]",
                   isSel
-                    ? "bg-[#a65a4b] text-white border-[#a65a4b]"
-                    : "bg-white/70 text-[#4a463f] border-[#e2ded6] hover:border-[#bcb7ac]",
+                    ? "bg-[#a65a4b]/10 border-[#a65a4b] ring-2 ring-[#a65a4b]/30"
+                    : "bg-white/70 border-[#e2ded6] hover:border-[#bcb7ac]",
                 ].join(" ")}
               >
-                {name}
+                <span
+                  className={[
+                    "relative grid place-items-center w-[72px] h-[72px] rounded-xl overflow-hidden border",
+                    isSel ? "border-[#a65a4b]/40" : "border-[#e6e2da]",
+                  ].join(" ")}
+                  style={{
+                    background:
+                      "repeating-conic-gradient(#f3f0ea 0% 25%, #e9e5dd 0% 50%) 50% / 16px 16px",
+                  }}
+                >
+                  {thumb ? (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img
+                      src={asset(thumb)}
+                      alt={`${name} preview`}
+                      width={72}
+                      height={72}
+                      loading="lazy"
+                      decoding="async"
+                      className="w-full h-full object-cover"
+                    />
+                  ) : (
+                    <span className="text-[10px] tracking-widest uppercase text-[#a39d92] px-1 text-center">
+                      {name}
+                    </span>
+                  )}
+                </span>
+                <span
+                  className={[
+                    "text-xs tracking-wide",
+                    isSel ? "text-[#a65a4b] font-medium" : "text-[#4a463f]",
+                  ].join(" ")}
+                >
+                  {name}
+                </span>
               </button>
             );
           })}
+        </div>
+
+        {/* animation selector — sets the clip played on the VRM rig. */}
+        <div className="flex items-center justify-center gap-3 mb-4 flex-wrap">
+          <span id="wardrobe-animation-label" className="text-[11px] tracking-widest uppercase text-[#a39d92]">
+            Animation
+          </span>
+          <div
+            role="radiogroup"
+            aria-labelledby="wardrobe-animation-label"
+            className="flex items-center gap-2 flex-wrap"
+          >
+            {ANIMATIONS.map(({ value, label }) => {
+              const isSel = animation === value;
+              return (
+                <button
+                  key={value}
+                  role="radio"
+                  onClick={() => setAnimation(value)}
+                  aria-checked={isSel}
+                  aria-label={`Play ${label} animation`}
+                  className={[
+                    "px-3 py-1.5 rounded-full text-xs tracking-wide transition-all duration-150 border",
+                    isSel
+                      ? "bg-[#2c2a26] text-[#f6f4ef] border-[#2c2a26]"
+                      : "bg-white/70 text-[#4a463f] border-[#e2ded6] hover:border-[#bcb7ac]",
+                  ].join(" ")}
+                >
+                  {label}
+                </button>
+              );
+            })}
+          </div>
         </div>
 
         {/* color swatches */}

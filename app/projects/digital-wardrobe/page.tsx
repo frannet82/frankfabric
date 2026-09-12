@@ -32,7 +32,7 @@ export default function DigitalWardrobePage() {
       </div>
 
       <section className="max-w-[1100px] mx-auto px-6 pt-8 pb-4 text-center">
-        <span className="font-mono text-xs tracking-[2px] uppercase text-cloud-blue">// Live Demo</span>
+        <span className="font-mono text-xs tracking-[2px] uppercase text-cloud-blue">{"// Live Demo"}</span>
         <h1 className="font-display font-semibold text-[clamp(28px,3.6vw,42px)] tracking-tight text-[#f4f6fb] mt-3 mb-3">
           Digital Wardrobe Avatar Builder
         </h1>
