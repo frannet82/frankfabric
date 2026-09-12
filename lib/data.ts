@@ -71,7 +71,7 @@ export const projects: Project[] = [
     title: "Digital Wardrobe Avatar Builder",
     meta: "Rotate a 3D model and swap garments and colors in real time",
     href: "/projects/digital-wardrobe",
-    image: "/images/final_futuristic_avatar.png",
+    image: "/images/digital-wardrobe-preview.png",
   },
 ];
 

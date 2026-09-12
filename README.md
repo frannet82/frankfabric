@@ -58,6 +58,35 @@ deployed site. The wardrobe garments layered on top of the avatar (bottoms,
 shoes, hat, and the outfit overlay) are still generated procedurally from
 three.js primitive meshes and anchored to the avatar's humanoid bones.
 
+### Wardrobe garment assets — reviewed, not bundled
+
+We reviewed [memelotsqui/character-assets](https://github.com/memelotsqui/character-assets)
+as a potential source of ready-made VRM garments and deliberately did **not**
+bundle any of its assets, for two reasons:
+
+- **No license.** The repository (and its upstream
+  `webaverse-studios/character-assets`) ships with no `LICENSE`/`COPYING`/
+  `NOTICE` file and no stated terms, so it defaults to all-rights-reserved.
+  Redistributing those files inside this public project would not be legally
+  safe.
+- **Incompatible fit.** Its garments are full VRM part files rigged to the
+  Webaverse base bodies (drophunter/neurohacker), not to Seed-san's skeleton,
+  so they would not deform or fit our avatar correctly.
+
+Instead, the wardrobe garments are generated procedurally and sized from
+Seed-san's real bone proportions at runtime (see
+`components/wardrobe/WardrobeScene.tsx`).
+
+### Preview image
+
+The Digital Wardrobe project card on the landing page uses
+`public/images/digital-wardrobe-preview.png`, an **original asset generated for
+this project** (no third-party license). It is produced programmatically by
+`scripts/gen-wardrobe-preview.mjs` (an SVG rasterized to PNG via `sharp`) and
+depicts a styled avatar in the wardrobe palette on the atelier background. Like
+every other bundled asset it is served offline through `asset()` under the
+`/frankfabric/` base path.
+
 ## Deployment
 
 The site is a static export (`output: 'export'`) and deploys automatically to
