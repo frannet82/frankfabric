@@ -79,14 +79,20 @@ const SWATCHES: Record<Category, string[]> = {
 
 export default function WardrobeBuilder() {
   const [active, setActive] = useState<Category>("outfit");
+  // Default first-load look: a fully layered, cohesive outfit so the atelier
+  // opens on the same styled avatar depicted in the project preview image,
+  // rather than an unstyled default. Each index maps to a *visible* option in
+  // OPTIONS (see WardrobeScene): outfit=Jacket, bottom=Trousers, shoes=Boots,
+  // hat=Cap. Option 0 ("Default"/"None") stays meaningful — users can strip
+  // any layer back to it — but the initial selection intentionally skips it.
   const [selection, setSelection] = useState<WardrobeSelection>({
-    outfit: 0,
-    bottom: 1,
-    shoes: 1,
-    hat: 0,
+    outfit: 1, // Jacket
+    bottom: 1, // Trousers
+    shoes: 2, // Boots
+    hat: 1, // Cap
   });
-  // Default first-load outfit: terracotta jacket over slate trousers, cognac
-  // boots and an espresso cap — a cohesive, warm-neutral starting look.
+  // Colours pair with the selection above: terracotta jacket over slate
+  // trousers, cognac boots and an espresso cap — a warm-neutral starting look.
   const [colors, setColors] = useState<WardrobeColors>({
     outfit: "#a65a4b", // Terracotta
     bottom: "#3f5a6b", // Slate

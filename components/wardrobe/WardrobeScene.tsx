@@ -195,7 +195,19 @@ function deriveMeasurements(vrm: VRM): Measurements {
   // Approximate foot length from body height (~15%); width ~40% of length.
   m.footLength = (bodyHeight * 0.15) / footScale;
   m.footWidth = m.footLength * 0.42;
-  m.soleY = leftFoot ? leftFoot.y / footScale : m.footLength * 0.4;
+  // Ankle → ground drop. Use a scale-invariant DIFFERENCE (foot node down to
+  // the scene's floor plane, bodyBox.min.y) rather than the foot node's raw
+  // world Y, so the shoe underside lands at ground level regardless of where
+  // the model's origin sits. Fall back to a proportional guess if the foot
+  // bone or a sane bounding box is unavailable, and clamp to a positive drop.
+  const footToFloor =
+    leftFoot && Number.isFinite(bodyBox.min.y)
+      ? leftFoot.y - bodyBox.min.y
+      : null;
+  m.soleY =
+    footToFloor != null && footToFloor > 1e-4
+      ? footToFloor / footScale
+      : m.footLength * 0.4;
   // Ankle/lower-leg height for a boot shaft.
   if (leftFoot && leftUpperLeg) {
     m.ankleHeight = (Math.abs(leftFoot.y - leftUpperLeg.y) * 0.32) / footScale;
@@ -309,6 +321,15 @@ function Trousers({
 // Shoe / Boot — anchored to a foot bone. The foot node sits at ankle height
 // above the sole (m.soleY), so the shoe body drops to the ground and extends
 // forward along +Z by the real foot length.
+//
+// AXIS ASSUMPTION: the toe box extends along +Z and the sole drops along -Y in
+// the foot bone's LOCAL frame. @pixiv/three-vrm's *normalized* humanoid rig
+// (which we anchor to via getNormalizedBoneNode) rebuilds every bone with a
+// canonical rest-pose orientation — identity-aligned to the model's world axes
+// with +Z forward and +Y up — so this holds for Seed-san and any spec-conformant
+// VRM. A non-standard rig whose normalized foot bone was rotated would push the
+// toe off-axis; if that ever surfaces, orient this group from the bone's world
+// quaternion instead. Kept assumption-only here to avoid extra per-frame math.
 function Shoe({
   option,
   color,
@@ -356,6 +377,12 @@ function Shoe({
 
 // Cap / Beanie — anchored to the head bone, sized from the real head radius
 // and sitting on the crown (m.crownY above the head node).
+//
+// AXIS ASSUMPTION: the crown offset is applied along +Y and the cap brim along
+// +Z in the head bone's LOCAL frame. As with the shoe above, three-vrm's
+// normalized humanoid gives every bone a canonical rest orientation (+Y up,
+// +Z forward) aligned to the model, so the cap sits on top of the skull and the
+// brim points forward for Seed-san and any spec-conformant VRM.
 function Hat({
   option,
   color,
