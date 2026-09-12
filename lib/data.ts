@@ -44,6 +44,7 @@ export type Project = {
   meta: string;
   href?: string;
   image?: string;
+  video?: string;
 };
 
 export const projects: Project[] = [
@@ -72,6 +73,7 @@ export const projects: Project[] = [
     meta: "Rotate a 3D model and swap garments and colors in real time",
     href: "/projects/digital-wardrobe",
     image: "/images/final_futuristic_avatar.jpg",
+    video: "/videos/digital-wardrobe-preview.mp4",
   },
 ];
 
