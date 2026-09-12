@@ -29,6 +29,7 @@ import { Canvas, useFrame, useLoader } from "@react-three/fiber";
 import { OrbitControls, ContactShadows } from "@react-three/drei";
 import * as THREE from "three";
 import { GLTFLoader } from "three/examples/jsm/loaders/GLTFLoader.js";
+import { FBXLoader } from "three/examples/jsm/loaders/FBXLoader.js";
 import {
   VRMLoaderPlugin,
   VRMUtils,
@@ -39,6 +40,21 @@ import {
 import { asset } from "@/lib/asset";
 
 export type Category = "outfit" | "bottom" | "shoes" | "hat";
+
+// Which humanoid animation the avatar plays. "rest" means no clip is playing
+// (the avatar stays in its idle rest pose while the scene auto-rotates); the
+// others map to the retargeted FBX clips bundled in public/animations/.
+export type WardrobeAnimation = "rest" | "idle" | "walking" | "waving";
+
+// FBX animation clips (Mixamo-style humanoid rigs, sourced from
+// frannet82/assets loot/animations). Loaded client-side only via FBXLoader and
+// retargeted onto the VRM humanoid — see loadRetargetedClip below. URLs are
+// base-path-prefixed so they resolve under /frankfabric/ in production.
+const ANIMATION_URLS: Record<Exclude<WardrobeAnimation, "rest">, string> = {
+  idle: asset("/animations/idle.fbx"),
+  walking: asset("/animations/walking.fbx"),
+  waving: asset("/animations/waving.fbx"),
+};
 
 export type WardrobeSelection = Record<Category, number>;
 export type WardrobeColors = Record<Category, string>;
@@ -75,6 +91,7 @@ const CLOTHING_MATERIAL_NAMES = new Set([
 type SceneProps = {
   selection: WardrobeSelection;
   colors: WardrobeColors;
+  animation: WardrobeAnimation;
 };
 
 // Real-world garment measurements derived from the loaded VRM at runtime.
@@ -150,7 +167,6 @@ function deriveMeasurements(vrm: VRM): Measurements {
   const head = boneWorld("head" as VRMHumanBoneName);
   const leftUpperLeg = boneWorld("leftUpperLeg" as VRMHumanBoneName);
   const leftFoot = boneWorld("leftFoot" as VRMHumanBoneName);
-  const rightFoot = boneWorld("rightFoot" as VRMHumanBoneName);
   const leftUpperArm = boneWorld("leftUpperArm" as VRMHumanBoneName);
   const rightUpperArm = boneWorld("rightUpperArm" as VRMHumanBoneName);
 
@@ -228,6 +244,132 @@ function deriveMeasurements(vrm: VRM): Measurements {
   m.crownY = (headSpanWorld * 0.55) / headScale;
 
   return m;
+}
+
+// ---------------------------------------------------------------------------
+// Mixamo -> VRM animation retargeting.
+//
+// The bundled FBX clips are authored on a Mixamo-style humanoid whose bones are
+// named "mixamorigHips", "mixamorigSpine", "mixamorigLeftUpLeg", etc. To play
+// them on the VRM we follow the well-known three-vrm Mixamo remap pattern
+// (https://github.com/pixiv/three-vrm examples): for each Mixamo bone we look
+// up the corresponding VRM humanoid bone via
+// vrm.humanoid.getNormalizedBoneNode(<VRMHumanBoneName>), rebuild the clip's
+// rotation (quaternion) tracks so they target the normalized bone node names,
+// scale the hips position track to the VRM's hip height, and drop any track
+// whose bone doesn't map. The resulting clip drives a THREE.AnimationMixer.
+// ---------------------------------------------------------------------------
+const MIXAMO_TO_VRM_BONE: Record<string, VRMHumanBoneName> = {
+  mixamorigHips: "hips" as VRMHumanBoneName,
+  mixamorigSpine: "spine" as VRMHumanBoneName,
+  mixamorigSpine1: "chest" as VRMHumanBoneName,
+  mixamorigSpine2: "upperChest" as VRMHumanBoneName,
+  mixamorigNeck: "neck" as VRMHumanBoneName,
+  mixamorigHead: "head" as VRMHumanBoneName,
+  mixamorigLeftShoulder: "leftShoulder" as VRMHumanBoneName,
+  mixamorigLeftArm: "leftUpperArm" as VRMHumanBoneName,
+  mixamorigLeftForeArm: "leftLowerArm" as VRMHumanBoneName,
+  mixamorigLeftHand: "leftHand" as VRMHumanBoneName,
+  mixamorigRightShoulder: "rightShoulder" as VRMHumanBoneName,
+  mixamorigRightArm: "rightUpperArm" as VRMHumanBoneName,
+  mixamorigRightForeArm: "rightLowerArm" as VRMHumanBoneName,
+  mixamorigRightHand: "rightHand" as VRMHumanBoneName,
+  mixamorigLeftUpLeg: "leftUpperLeg" as VRMHumanBoneName,
+  mixamorigLeftLeg: "leftLowerLeg" as VRMHumanBoneName,
+  mixamorigLeftFoot: "leftFoot" as VRMHumanBoneName,
+  mixamorigLeftToeBase: "leftToes" as VRMHumanBoneName,
+  mixamorigRightUpLeg: "rightUpperLeg" as VRMHumanBoneName,
+  mixamorigRightLeg: "rightLowerLeg" as VRMHumanBoneName,
+  mixamorigRightFoot: "rightFoot" as VRMHumanBoneName,
+  mixamorigRightToeBase: "rightToes" as VRMHumanBoneName,
+};
+
+// Build a VRM-compatible AnimationClip from a raw Mixamo FBX clip. Returns null
+// if no tracks could be mapped (e.g. an unexpected rig), so callers can skip.
+function retargetMixamoClip(
+  asset3d: THREE.Group,
+  clip: THREE.AnimationClip,
+  vrm: VRM
+): THREE.AnimationClip | null {
+  const humanoid = vrm.humanoid;
+  if (!humanoid) return null;
+
+  const tracks: THREE.KeyframeTrack[] = [];
+
+  // Restspace correction: Mixamo hips vs VRM hips height, so the root motion of
+  // the hips position track is scaled into the VRM's proportions.
+  const motionHipsNode = asset3d.getObjectByName("mixamorigHips");
+  const vrmHipsNode = humanoid.getNormalizedBoneNode(
+    "hips" as VRMHumanBoneName
+  );
+  const motionHipsHeight = motionHipsNode
+    ? motionHipsNode.getWorldPosition(new THREE.Vector3()).y
+    : 1;
+  const vrmHipsHeight = vrmHipsNode
+    ? vrmHipsNode.getWorldPosition(new THREE.Vector3()).y
+    : 1;
+  const hipsScale =
+    motionHipsHeight > 1e-6 ? vrmHipsHeight / motionHipsHeight : 1;
+
+  const restRotationInverse = new THREE.Quaternion();
+  const parentRestWorldRotation = new THREE.Quaternion();
+  const _quatA = new THREE.Quaternion();
+  const _vec3 = new THREE.Vector3();
+
+  for (const track of clip.tracks) {
+    // Track names look like "mixamorigLeftArm.quaternion".
+    const trackSplit = track.name.split(".");
+    const mixamoBoneName = trackSplit[0];
+    const propertyName = trackSplit[1];
+    const vrmBoneName = MIXAMO_TO_VRM_BONE[mixamoBoneName];
+    if (!vrmBoneName) continue;
+
+    const vrmNode = humanoid.getNormalizedBoneNode(vrmBoneName);
+    if (!vrmNode) continue;
+    const vrmNodeName = vrmNode.name;
+
+    const mixamoNode = asset3d.getObjectByName(mixamoBoneName);
+    if (!mixamoNode) continue;
+
+    if (propertyName === "quaternion") {
+      // Rebuild rotation into the VRM bone's rest frame.
+      mixamoNode.getWorldQuaternion(restRotationInverse).invert();
+      mixamoNode.parent?.getWorldQuaternion(parentRestWorldRotation);
+
+      const quatTrack = track as THREE.QuaternionKeyframeTrack;
+      const values = Array.from(quatTrack.values);
+      for (let i = 0; i < values.length; i += 4) {
+        _quatA.fromArray(values, i);
+        _quatA
+          .premultiply(parentRestWorldRotation)
+          .multiply(restRotationInverse);
+        _quatA.toArray(values, i);
+      }
+      tracks.push(
+        new THREE.QuaternionKeyframeTrack(
+          `${vrmNodeName}.quaternion`,
+          Array.from(quatTrack.times),
+          values
+        )
+      );
+    } else if (propertyName === "position" && vrmBoneName === "hips") {
+      // Only the hips carry meaningful translation; scale it to the VRM rig.
+      const posTrack = track as THREE.VectorKeyframeTrack;
+      const values = Array.from(posTrack.values).map((v) => v * hipsScale);
+      // VRM 1.0 avatars face +Z like Mixamo, so no axis flip is needed here.
+      void _vec3;
+      tracks.push(
+        new THREE.VectorKeyframeTrack(
+          `${vrmNodeName}.position`,
+          Array.from(posTrack.times),
+          values
+        )
+      );
+    }
+  }
+
+  if (tracks.length === 0) return null;
+  return new THREE.AnimationClip(clip.name || "mixamo", clip.duration, tracks);
 }
 
 // Apply a hex color to a material, covering both standard three materials and
@@ -463,7 +605,7 @@ function OutfitLayer({
   );
 }
 
-function Avatar({ selection, colors }: SceneProps) {
+function Avatar({ selection, colors, animation }: SceneProps) {
   const gltf = useLoader(
     GLTFLoader,
     MODEL_URL,
@@ -535,9 +677,84 @@ function Avatar({ selection, colors }: SceneProps) {
   // clothing fits the actual body instead of relying on magic numbers.
   const measurements = useMemo(() => deriveMeasurements(vrm), [vrm]);
 
-  // CharacterStudio's per-frame update contract: vrm.update(delta) advances
-  // SpringBones and lookAt every frame so the rig animates.
+  // --- Animation: load + retarget the Mixamo FBX clips -------------------
+  //
+  // useLoader with FBXLoader runs entirely client-side (this whole component
+  // is loaded via next/dynamic { ssr:false }, so FBXLoader never executes
+  // during static generation). Each raw FBX is retargeted onto the VRM
+  // humanoid via retargetMixamoClip and driven by a single AnimationMixer.
+  const idleFbx = useLoader(FBXLoader, ANIMATION_URLS.idle);
+  const walkingFbx = useLoader(FBXLoader, ANIMATION_URLS.walking);
+  const wavingFbx = useLoader(FBXLoader, ANIMATION_URLS.waving);
+
+  // All mutable playback state (mixer + per-clip actions + the action that is
+  // currently faded in) lives in a single ref that this component owns and
+  // mutates. Keeping it in a ref — rather than in useMemo return values — keeps
+  // the AnimationAction mutations (reset/fadeIn/play) off React-tracked values.
+  const playback = useRef<{
+    mixer: THREE.AnimationMixer;
+    actions: Record<Exclude<WardrobeAnimation, "rest">, THREE.AnimationAction | null>;
+  } | null>(null);
+  // The action currently faded in (null at rest). Its own ref so the crossfade
+  // effect only mutates `ref.current`, which is a permitted ref write.
+  const currentAction = useRef<THREE.AnimationAction | null>(null);
+
+  // (Re)build the mixer and retargeted actions whenever the avatar or a loaded
+  // FBX changes. Retargeting maps each Mixamo clip onto the VRM humanoid bones.
+  useEffect(() => {
+    const mixer = new THREE.AnimationMixer(vrm.scene);
+    const build = (fbx: THREE.Group): THREE.AnimationAction | null => {
+      const raw = fbx.animations?.[0];
+      if (!raw) return null;
+      const clip = retargetMixamoClip(fbx, raw, vrm);
+      return clip ? mixer.clipAction(clip) : null;
+    };
+    playback.current = {
+      mixer,
+      actions: {
+        idle: build(idleFbx),
+        walking: build(walkingFbx),
+        waving: build(wavingFbx),
+      },
+    };
+    currentAction.current = null;
+    return () => {
+      mixer.stopAllAction();
+      playback.current = null;
+      currentAction.current = null;
+    };
+  }, [vrm, idleFbx, walkingFbx, wavingFbx]);
+
+  // Crossfade to the requested clip when `animation` changes; "rest" fades all
+  // actions out so the avatar returns to its rest pose.
+  useEffect(() => {
+    const state = playback.current;
+    if (!state) return;
+    const next = animation === "rest" ? null : state.actions[animation];
+    const prev = currentAction.current;
+    if (next === prev) return;
+
+    const FADE = 0.35;
+    if (next) {
+      // reset() re-enables the action and zeroes its time/weight; fadeIn then
+      // ramps its weight to 1 over FADE seconds as we play it.
+      next.reset();
+      next.setEffectiveWeight(1);
+      next.fadeIn(FADE);
+      next.play();
+    }
+    if (prev) {
+      prev.fadeOut(FADE);
+    }
+    currentAction.current = next;
+  }, [animation, idleFbx, walkingFbx, wavingFbx, vrm]);
+
+  // CharacterStudio's per-frame update contract: advance the animation mixer
+  // first (which poses the normalized humanoid bones), then vrm.update(delta)
+  // so SpringBones/lookAt and the retargeted pose are both applied. Garments
+  // parented to the bone nodes follow automatically.
   useFrame((_, delta) => {
+    playback.current?.mixer.update(delta);
     vrm.update(delta);
   });
 
@@ -571,7 +788,14 @@ function Avatar({ selection, colors }: SceneProps) {
   );
 }
 
-export default function WardrobeScene({ selection, colors }: SceneProps) {
+export default function WardrobeScene({
+  selection,
+  colors,
+  animation,
+}: SceneProps) {
+  // Keep the showroom turntable spinning at rest; hold still while a clip
+  // plays so the motion reads clearly.
+  const autoRotate = animation === "rest";
   return (
     <Canvas
       shadows
@@ -596,7 +820,7 @@ export default function WardrobeScene({ selection, colors }: SceneProps) {
 
       <Suspense fallback={null}>
         <group position={[0, 0, 0]}>
-          <Avatar selection={selection} colors={colors} />
+          <Avatar selection={selection} colors={colors} animation={animation} />
         </group>
       </Suspense>
 
@@ -616,7 +840,7 @@ export default function WardrobeScene({ selection, colors }: SceneProps) {
         minPolarAngle={Math.PI / 6}
         maxPolarAngle={Math.PI / 1.9}
         target={[0, 1.1, 0]}
-        autoRotate
+        autoRotate={autoRotate}
         autoRotateSpeed={0.6}
       />
     </Canvas>

@@ -77,6 +77,44 @@ Instead, the wardrobe garments are generated procedurally and sized from
 Seed-san's real bone proportions at runtime (see
 `components/wardrobe/WardrobeScene.tsx`).
 
+### Bundled animation clips
+
+The avatar can play a few humanoid motions (Idle / Walking / Waving, plus a
+static Rest pose) selected from the builder UI. The motion clips are
+Mixamo-style humanoid FBX files bundled at `public/animations/`:
+
+- `idle.fbx`, `walking.fbx`, `waving.fbx`, and `t-pose.fbx`, sourced from
+  [frannet82/assets](https://github.com/frannet82/assets) (`loot/animations/`).
+
+Because the clips are authored on a Mixamo skeleton, they are **retargeted onto
+Seed-san's VRM humanoid at runtime** following the well-known
+[three-vrm](https://github.com/pixiv/three-vrm) Mixamo remap pattern: each
+`mixamorig*` bone track is mapped to the corresponding VRM humanoid bone node
+(via `vrm.humanoid.getNormalizedBoneNode(...)`), rotation (quaternion) tracks
+are rebuilt into the VRM bone rest frame, the hips position track is scaled to
+the VRM's hip height, and unmapped tracks are dropped. The retargeted clips are
+driven by a `THREE.AnimationMixer` updated each frame alongside
+`vrm.update(delta)`, so the procedural garments (parented to the humanoid bones)
+follow the motion. The FBX files are loaded **client-side only** (the WebGL
+scene is a `next/dynamic { ssr:false }` component, so `FBXLoader` never runs
+during static export) and their URLs are wrapped in `asset()` for the base path.
+
+### Garment selection thumbnails
+
+To preview each clothing option, the builder shows a genuine 512×512 PNG
+thumbnail per garment, bundled at `public/wardrobe/thumbnails/`:
+
+- Sourced from [frannet82/assets](https://github.com/frannet82/assets) character
+  thumbnails (`characters/drophunter/**`, e.g. `outer/jacket.png`,
+  `legs/cargopants.png`, `feet/sneakers.png`).
+
+These images are used **only as selection previews** for the procedural
+garments — the underlying garment `.vrm` files from that repo are still **not**
+bundled (see the no-license note above). The `None`/`Default` option for each
+category has no garment and renders a neutral placeholder tile instead. All
+thumbnail URLs are served offline through `asset()` under the `/frankfabric/`
+base path.
+
 ### Preview image
 
 The Digital Wardrobe project card on the landing page uses
