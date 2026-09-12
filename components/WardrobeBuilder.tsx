@@ -3,11 +3,11 @@
 // ---------------------------------------------------------------------------
 // Digital Wardrobe — interactive 3D outfit builder.
 //
-// The 3D avatar is a real rigged VRM humanoid ("Seed-san") loaded with
-// @pixiv/three-vrm (see components/wardrobe/WardrobeScene.tsx). This file
-// renders the control UI (category tabs, per-category option buttons, and a
-// color picker) and streams the selection state into the scene, where it
-// recolors the avatar's built-in outfit and toggles bone-anchored garments.
+// The 3D avatar is a minimally-clothed modular base body VRM ("drophunter")
+// loaded with @pixiv/three-vrm (see components/wardrobe/WardrobeScene.tsx).
+// This file renders the control UI (category tabs, per-category option buttons,
+// and a color picker) and streams the selection state into the scene, where it
+// loads REAL fitted garment VRMs and transplants them onto the base skeleton.
 //
 // The WebGL canvas MUST NOT run during Next.js static generation (three.js
 // touches window/document), so WardrobeScene is loaded via next/dynamic with
@@ -44,10 +44,10 @@ const WardrobeScene = dynamic(
 
 const ORDER: Category[] = ["outfit", "bottom", "shoes", "hat"];
 const LABELS: Record<Category, string> = {
-  outfit: "Outfit",
+  outfit: "Top",
   bottom: "Bottoms",
   shoes: "Shoes",
-  hat: "Hat",
+  hat: "Hair",
 };
 
 // ---------------------------------------------------------------------------
@@ -69,32 +69,45 @@ const LABELS: Record<Category, string> = {
 //   #8a5a3c  Cognac     rich tan/leather tone (footwear)
 // ---------------------------------------------------------------------------
 const SWATCHES: Record<Category, string[]> = {
-  // Outfit: neutral base tones + two accents that flatter the avatar's torso.
+  // Top: neutral base tones + two accents that flatter the avatar's torso.
   outfit: ["#f4f1ea", "#a65a4b", "#3f5a6b", "#5f7355", "#2f2b28"],
   // Bottoms: grounding darks + denim-like slate + a warm ochre option.
   bottom: ["#3f5a6b", "#2f2b28", "#5f7355", "#c98a3c", "#b8b0a4"],
   // Shoes: classic leather/neutral shoe tones.
   shoes: ["#2f2b28", "#8a5a3c", "#f4f1ea", "#a65a4b"],
-  // Hat: accents and neutrals that top off the looks above.
-  hat: ["#2f2b28", "#a65a4b", "#d9cdbb", "#7d5a72"],
+  // Hair: natural hair tones (near-black, brown, blonde) plus a bold accent.
+  hat: ["#2f2b28", "#8a5a3c", "#d9cdbb", "#7d5a72"],
 };
 
-// Genuine 512x512 garment thumbnails copied from the frannet82/assets repo
-// into public/wardrobe/thumbnails/. Each entry maps a category + option index
-// to a preview image so users can see what each selection looks like. Option 0
-// ("Default"/"None") has no garment, so it renders a labeled placeholder tile
+// Genuine 512x512 garment thumbnails copied into public/wardrobe/thumbnails/
+// (named <category>-<name>.png). Each entry maps a category + option index to a
+// preview image so users can see what each selection looks like. Option 0
+// ("Base"/"None") mounts no garment, so it renders a labeled placeholder tile
 // instead. Every path is wrapped in asset() so it carries the /frankfabric
-// base path in production.
+// base path in production. Order matches OPTIONS in WardrobeScene exactly.
 const THUMBNAILS: Record<Category, (string | null)[]> = {
-  outfit: [null, "/wardrobe/thumbnails/outfit-jacket.png", "/wardrobe/thumbnails/outfit-vest.png"],
+  outfit: [
+    null,
+    "/wardrobe/thumbnails/chest-tanktop.png",
+    "/wardrobe/thumbnails/chest-shirt.png",
+    "/wardrobe/thumbnails/chest-hoodie.png",
+  ],
   bottom: [
     null,
-    "/wardrobe/thumbnails/bottom-trousers.png",
-    "/wardrobe/thumbnails/bottom-shorts.png",
-    "/wardrobe/thumbnails/bottom-skirt.png",
+    "/wardrobe/thumbnails/legs-cargopants.png",
+    "/wardrobe/thumbnails/legs-casualshorts.png",
+    "/wardrobe/thumbnails/legs-skirt.png",
   ],
-  shoes: [null, "/wardrobe/thumbnails/shoes-sneakers.png", "/wardrobe/thumbnails/shoes-boots.png"],
-  hat: [null, "/wardrobe/thumbnails/hat-cap.png", "/wardrobe/thumbnails/hat-beanie.png"],
+  shoes: [
+    null,
+    "/wardrobe/thumbnails/feet-sneakers.png",
+    "/wardrobe/thumbnails/feet-shortboots.png",
+  ],
+  hat: [
+    null,
+    "/wardrobe/thumbnails/head-short.png",
+    "/wardrobe/thumbnails/head-ponytail.png",
+  ],
 };
 
 // Animation selector options. "rest" is the static, auto-rotating pose; the
@@ -109,24 +122,24 @@ const ANIMATIONS: { value: WardrobeAnimation; label: string }[] = [
 export default function WardrobeBuilder() {
   const [active, setActive] = useState<Category>("outfit");
   const [animation, setAnimation] = useState<WardrobeAnimation>("idle");
-  // Default first-load look: a fully layered, cohesive outfit so the atelier
-  // opens on the same styled avatar depicted in the project preview image,
-  // rather than an unstyled default. Each index maps to a *visible* option in
-  // OPTIONS (see WardrobeScene): outfit=Jacket, bottom=Trousers, shoes=Boots,
-  // hat=Cap. Option 0 ("Default"/"None") stays meaningful — users can strip
-  // any layer back to it — but the initial selection intentionally skips it.
+  // Default first-load look: a cohesive fully-clothed outfit so the atelier
+  // opens on a styled avatar rather than the near-nude base body. Each index
+  // maps to a *visible* garment in OPTIONS (see WardrobeScene): outfit=Shirt,
+  // bottom=Cargo Pants, shoes=Sneakers, hat=Short (hair). Option 0
+  // ("Base"/"None") stays meaningful — users can strip any layer back to the
+  // base body — but the initial selection intentionally skips it.
   const [selection, setSelection] = useState<WardrobeSelection>({
-    outfit: 1, // Jacket
-    bottom: 1, // Trousers
-    shoes: 2, // Boots
-    hat: 1, // Cap
+    outfit: 2, // Shirt
+    bottom: 1, // Cargo Pants
+    shoes: 1, // Sneakers
+    hat: 1, // Short (hair)
   });
-  // Colours pair with the selection above: terracotta jacket over slate
-  // trousers, cognac boots and an espresso cap — a warm-neutral starting look.
+  // Colours pair with the selection above: a warm-neutral starting look that
+  // tints each real garment's materials via the scene's applyColor().
   const [colors, setColors] = useState<WardrobeColors>({
     outfit: "#a65a4b", // Terracotta
     bottom: "#3f5a6b", // Slate
-    shoes: "#8a5a3c", // Cognac
+    shoes: "#2f2b28", // Espresso
     hat: "#2f2b28", // Espresso
   });
 
