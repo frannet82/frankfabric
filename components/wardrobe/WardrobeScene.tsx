@@ -80,6 +80,15 @@ export const OPTIONS: Record<Category, string[]> = {
 // "/models/..." path — it would 404 on GitHub Pages.
 const MODEL_URL = asset("/models/characters/drophunter/body.vrm");
 
+// The eyes are a SEPARATE required trait of this modular avatar (the drophunter
+// manifest lists requiredTraits=['body','eyes']). The base body VRM ships with
+// empty eye sockets — without this mesh they render as black holes. We bundle
+// the "Regular Eyes" VRM and transplant it onto the base skeleton UNCONDITIONALLY
+// on load, using the same bone-rebind path garments use. It is NOT a
+// user-selectable option, so it never appears in OPTIONS/GARMENT_URLS/THUMBNAILS.
+// Routed through asset() so it resolves under /frankfabric/ in production.
+const EYES_URL = asset("/models/characters/drophunter/eyes/regulareyes.vrm");
+
 // Per-category, per-option-index map to the real garment VRM public paths.
 // Index 0 is null (Base/None → no garment mounted). Every non-null path is
 // routed through asset() so it carries the base path in production. The order
@@ -288,7 +297,11 @@ type Transplant = {
 function transplantGarment(
   garment: VRM,
   baseVrm: VRM,
-  color: string
+  color: string,
+  // When true, keep the VRM's authored materials untinted. Used for the eyes
+  // trait, whose authored irises/whites must render naturally rather than being
+  // washed into a single flat colour.
+  preserveMaterials = false
 ): Transplant {
   // Build a lookup of the base body's bone nodes by name (walk once).
   const baseBonesByName = new Map<string, THREE.Object3D>();
@@ -355,8 +368,11 @@ function transplantGarment(
   }
 
   // Apply the initial selected tint so the garment shows its chosen colour on
-  // first paint, not the VRM-authored default.
-  materials.forEach((mat) => applyColor(mat, color));
+  // first paint, not the VRM-authored default. Skipped for materials we want to
+  // preserve verbatim (the eyes' authored irises/whites).
+  if (!preserveMaterials) {
+    materials.forEach((mat) => applyColor(mat, color));
+  }
 
   return { group, materials };
 }
@@ -368,10 +384,14 @@ function Garment({
   baseVrm,
   url,
   color,
+  preserveMaterials = false,
 }: {
   baseVrm: VRM;
   url: string | null;
   color: string;
+  // When true, the transplanted VRM's authored materials are kept untinted
+  // (used for the always-mounted eyes trait). Default false = normal garment.
+  preserveMaterials?: boolean;
 }) {
   // Rendered group + tintable materials for the currently-mounted garment.
   const mounted = useRef<Transplant | null>(null);
@@ -404,7 +424,12 @@ function Garment({
       // Apply the current colour during transplant so the garment renders in
       // its selected tint on first paint (fixes the initial-colour drop where
       // the tint effect ran before this async load populated mounted.current).
-      const transplant = transplantGarment(garment, baseVrm, colorRef.current);
+      const transplant = transplantGarment(
+        garment,
+        baseVrm,
+        colorRef.current,
+        preserveMaterials
+      );
       baseVrm.scene.add(transplant.group);
       mounted.current = transplant;
       disposeScene.current = garment.scene;
@@ -429,17 +454,19 @@ function Garment({
         disposeScene.current = null;
       }
     };
-  }, [baseVrm, url]);
+  }, [baseVrm, url, preserveMaterials]);
 
   // Live-tint the mounted garment's materials when the colour changes AFTER the
   // garment is already mounted. The initial tint is applied inside the load
   // callback above (via transplantGarment), so the early-return here on an
-  // unpopulated mount.current no longer drops the first-paint colour.
+  // unpopulated mount.current no longer drops the first-paint colour. Skipped
+  // entirely when preserveMaterials is set (the eyes keep their authored look).
   useEffect(() => {
+    if (preserveMaterials) return;
     const t = mounted.current;
     if (!t) return;
     t.materials.forEach((mat) => applyColor(mat, color));
-  }, [color, url]);
+  }, [color, url, preserveMaterials]);
 
   return null;
 }
@@ -566,6 +593,18 @@ function Avatar({ selection, colors, animation }: SceneProps) {
   return (
     <group>
       <primitive object={vrm.scene} />
+
+      {/* Required eyes trait. The base body ships with empty eye sockets (the
+          "black hole" bug); this transplants the authored "Regular Eyes" mesh
+          onto the base skeleton ALWAYS, independent of any selection. It is not
+          a user-selectable option. preserveMaterials keeps the VRM's authored
+          irises/whites so the eyes render naturally rather than a flat tint. */}
+      <Garment
+        baseVrm={vrm}
+        url={EYES_URL}
+        color="#000000"
+        preserveMaterials
+      />
 
       {/* Real fitted garment VRMs, transplanted onto the base skeleton. Each
           category mounts nothing at option 0 (Base/None), so the base body
