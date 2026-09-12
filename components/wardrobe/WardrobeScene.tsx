@@ -311,6 +311,14 @@ function retargetMixamoClip(
   const hipsScale =
     motionHipsHeight > 1e-6 ? vrmHipsHeight / motionHipsHeight : 1;
 
+  // NOTE: the rest-frame rotations below (restRotationInverse and
+  // parentRestWorldRotation) are read from each FBX node's *current* world
+  // orientation, i.e. the loaded group's frame-0 pose. This is the canonical
+  // three-vrm retarget assumption: Mixamo clips ship with frame 0 == the bind
+  // (T/rest) pose, so frame-0 orientation is the correct rest frame. If a
+  // source clip's frame 0 ever deviated from bind pose, that offset would be
+  // baked into the correction — but the bundled idle/walking/waving clips all
+  // satisfy this, so no explicit bind-pose sampling is needed.
   const restRotationInverse = new THREE.Quaternion();
   const parentRestWorldRotation = new THREE.Quaternion();
   const _quatA = new THREE.Quaternion();

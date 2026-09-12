@@ -261,17 +261,22 @@ export default function WardrobeBuilder() {
 
         {/* animation selector — sets the clip played on the VRM rig. */}
         <div className="flex items-center justify-center gap-3 mb-4 flex-wrap">
-          <span className="text-[11px] tracking-widest uppercase text-[#a39d92]">
+          <span id="wardrobe-animation-label" className="text-[11px] tracking-widest uppercase text-[#a39d92]">
             Animation
           </span>
-          <div className="flex items-center gap-2 flex-wrap">
+          <div
+            role="radiogroup"
+            aria-labelledby="wardrobe-animation-label"
+            className="flex items-center gap-2 flex-wrap"
+          >
             {ANIMATIONS.map(({ value, label }) => {
               const isSel = animation === value;
               return (
                 <button
                   key={value}
+                  role="radio"
                   onClick={() => setAnimation(value)}
-                  aria-pressed={isSel}
+                  aria-checked={isSel}
                   aria-label={`Play ${label} animation`}
                   className={[
                     "px-3 py-1.5 rounded-full text-xs tracking-wide transition-all duration-150 border",

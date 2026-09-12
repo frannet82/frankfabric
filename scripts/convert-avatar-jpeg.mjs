@@ -9,6 +9,11 @@
 //
 // No new deps, no runtime CDN fetches — the output is a committed static asset
 // served offline through lib/asset.ts's asset() base-path helper.
+//
+// NOTE: this is a one-time conversion. The already-converted
+// final_futuristic_avatar.jpg is committed, and the mislabeled source .png has
+// since been removed from the tree, so this script is kept only to document how
+// the .jpg was produced; re-running it requires re-supplying the source .png.
 import sharp from "sharp";
 import { fileURLToPath } from "node:url";
 import { dirname, join } from "node:path";

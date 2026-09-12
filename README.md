@@ -58,24 +58,44 @@ deployed site. The wardrobe garments layered on top of the avatar (bottoms,
 shoes, hat, and the outfit overlay) are still generated procedurally from
 three.js primitive meshes and anchored to the avatar's humanoid bones.
 
-### Wardrobe garment assets — reviewed, not bundled
+### Asset sourcing and licensing
 
-We reviewed [memelotsqui/character-assets](https://github.com/memelotsqui/character-assets)
+This project bundles two kinds of external assets, from two different sources,
+under two different licensing situations. They are handled differently on
+purpose:
+
+**1. The project owner's own assets — bundled with permission.**
+The animation clips (`public/animations/`) and garment selection thumbnails
+(`public/wardrobe/thumbnails/`) are sourced from
+[frannet82/assets](https://github.com/frannet82/assets), which is the **project
+owner's own repository** (same GitHub owner, `frannet82`, as this `frankfabric`
+repo). They are bundled here **at the owner's direction and with their
+permission**, so redistributing them inside this project is authorized by the
+rights holder. The absence of a formal `LICENSE` file in that repo does not
+create the redistribution risk that a third-party repository would, because it
+is the same owner electing to bundle their own files here. See the "Bundled
+animation clips" and "Garment selection thumbnails" sections below for details.
+
+**2. Third-party garment VRMs — reviewed and deliberately NOT bundled.**
+We separately reviewed
+[memelotsqui/character-assets](https://github.com/memelotsqui/character-assets)
 as a potential source of ready-made VRM garments and deliberately did **not**
 bundle any of its assets, for two reasons:
 
-- **No license.** The repository (and its upstream
-  `webaverse-studios/character-assets`) ships with no `LICENSE`/`COPYING`/
-  `NOTICE` file and no stated terms, so it defaults to all-rights-reserved.
-  Redistributing those files inside this public project would not be legally
-  safe.
+- **No license, and not ours.** That repository (and its upstream
+  `webaverse-studios/character-assets`) is owned by a **third party** and ships
+  with no `LICENSE`/`COPYING`/`NOTICE` file and no stated terms, so it defaults
+  to all-rights-reserved. Unlike the owner's own `frannet82/assets` above, we
+  have no permission from that rights holder, so redistributing those files
+  inside this public project would not be legally safe.
 - **Incompatible fit.** Its garments are full VRM part files rigged to the
   Webaverse base bodies (drophunter/neurohacker), not to Seed-san's skeleton,
   so they would not deform or fit our avatar correctly.
 
-Instead, the wardrobe garments are generated procedurally and sized from
-Seed-san's real bone proportions at runtime (see
-`components/wardrobe/WardrobeScene.tsx`).
+Instead, the wardrobe garments themselves are generated procedurally and sized
+from Seed-san's real bone proportions at runtime (see
+`components/wardrobe/WardrobeScene.tsx`); the thumbnails from the owner's repo
+are used only as selection previews for those procedural garments.
 
 ### Bundled animation clips
 
@@ -83,8 +103,11 @@ The avatar can play a few humanoid motions (Idle / Walking / Waving, plus a
 static Rest pose) selected from the builder UI. The motion clips are
 Mixamo-style humanoid FBX files bundled at `public/animations/`:
 
-- `idle.fbx`, `walking.fbx`, `waving.fbx`, and `t-pose.fbx`, sourced from
-  [frannet82/assets](https://github.com/frannet82/assets) (`loot/animations/`).
+- `idle.fbx`, `walking.fbx`, and `waving.fbx`, sourced from the project owner's
+  own [frannet82/assets](https://github.com/frannet82/assets) (`loot/animations/`)
+  and bundled here with the owner's permission (see "Asset sourcing and
+  licensing" above). The static Rest pose plays no clip, so no separate file is
+  bundled for it.
 
 Because the clips are authored on a Mixamo skeleton, they are **retargeted onto
 Seed-san's VRM humanoid at runtime** following the well-known
@@ -104,13 +127,16 @@ during static export) and their URLs are wrapped in `asset()` for the base path.
 To preview each clothing option, the builder shows a genuine 512×512 PNG
 thumbnail per garment, bundled at `public/wardrobe/thumbnails/`:
 
-- Sourced from [frannet82/assets](https://github.com/frannet82/assets) character
-  thumbnails (`characters/drophunter/**`, e.g. `outer/jacket.png`,
-  `legs/cargopants.png`, `feet/sneakers.png`).
+- Sourced from the project owner's own
+  [frannet82/assets](https://github.com/frannet82/assets) character thumbnails
+  (`characters/drophunter/**`, e.g. `outer/jacket.png`, `legs/cargopants.png`,
+  `feet/sneakers.png`) and bundled here with the owner's permission (see "Asset
+  sourcing and licensing" above).
 
 These images are used **only as selection previews** for the procedural
-garments — the underlying garment `.vrm` files from that repo are still **not**
-bundled (see the no-license note above). The `None`/`Default` option for each
+garments — the underlying garment `.vrm` files are still **not** bundled; the
+full third-party VRM garments from `memelotsqui/character-assets` remain
+excluded (see the no-license note above). The `None`/`Default` option for each
 category has no garment and renders a neutral placeholder tile instead. All
 thumbnail URLs are served offline through `asset()` under the `/frankfabric/`
 base path.
@@ -126,10 +152,11 @@ correctly-named `.jpg` with a matching `image/jpeg` container. Like every other
 bundled asset it is served offline through `asset()` under the `/frankfabric/`
 base path.
 
-The earlier SVG-generated `public/images/digital-wardrobe-preview.png` (produced
-by `scripts/gen-wardrobe-preview.mjs`, an original asset with no third-party
-license) is no longer the card image, but the generator script remains in the
-repo for reference.
+The one-time conversion script is kept at `scripts/convert-avatar-jpeg.mjs` to
+document how the `.jpg` was produced; the committed `.jpg` is the only image the
+card and hero reference. An earlier SVG-generated preview PNG and its generator
+script were used before the real avatar render replaced them and have since been
+removed.
 
 ## Deployment
 
