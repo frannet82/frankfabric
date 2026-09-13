@@ -1,7 +1,6 @@
 import Image from "next/image";
 import Link from "next/link";
 import BrandMark from "@/components/BrandMark";
-import ChefChatbot from "@/components/chef/ChefChatbot";
 import { stack, cases, badges, caps, projects, ticker } from "@/lib/data";
 import { asset } from "@/lib/asset";
 
@@ -403,8 +402,40 @@ export default function Home() {
                     className="absolute inset-0"
                     style={{ background: "radial-gradient(120% 90% at 70% 10%, rgba(63,169,255,0.14), transparent 55%)" }}
                   />
-                  {p.kind === "chef-chatbot" ? (
-                    <ChefChatbot />
+                  {p.href === "/projects/chef-chatbot" ? (
+                    <div className="absolute inset-0 grid place-items-center px-6 text-center">
+                      {/* Stylized chef toque mark — pure CSS/SVG poster, no 3D
+                          canvas. The whole card links out to the live chef. */}
+                      <div className="flex flex-col items-center gap-3">
+                        <span className="grid place-items-center w-16 h-16 rounded-2xl border border-cloud-blue/35 bg-cloud-blue/10 shadow-[0_0_26px_rgba(63,169,255,0.28)]">
+                          <svg
+                            viewBox="0 0 24 24"
+                            aria-hidden="true"
+                            className="w-9 h-9"
+                            fill="none"
+                            stroke="url(#chef-toque)"
+                            strokeWidth="1.4"
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                          >
+                            <defs>
+                              <linearGradient id="chef-toque" x1="0" y1="0" x2="1" y2="1">
+                                <stop offset="0" stopColor="#5ff2df" />
+                                <stop offset="1" stopColor="#9b6bff" />
+                              </linearGradient>
+                            </defs>
+                            <path d="M6 14a4 4 0 0 1-1-7.87A4 4 0 0 1 12 4a4 4 0 0 1 7 2.13A4 4 0 0 1 18 14z" />
+                            <path d="M6 14v4.5A1.5 1.5 0 0 0 7.5 20h9a1.5 1.5 0 0 0 1.5-1.5V14" />
+                          </svg>
+                        </span>
+                        <span className="font-display font-semibold text-[20px] tracking-tight bg-gradient-to-r from-cloud-mist to-cloud-violet bg-clip-text text-transparent">
+                          Chef Fabric
+                        </span>
+                        <span className="font-mono text-[10.5px] tracking-widest uppercase text-cloud-mist/80">
+                          Live recipe assistant · click to chat
+                        </span>
+                      </div>
+                    </div>
                   ) : p.video ? (
                     <video
                       src={asset(p.video)}
