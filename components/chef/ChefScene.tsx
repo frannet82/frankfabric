@@ -30,6 +30,18 @@
 // morph/blendshape targets, so the mouth MUST be bone-driven. If the jaw bone
 // is missing at runtime we skip mouth motion gracefully.
 //
+// HAND / ARM MOTION: the SAME `speaking` window that drives the jaw also drives
+// subtle arm/hand gesturing. We resolve the Biped arm-chain bones
+// (Bip001_{L,R}_UpperArm / _Forearm / _Hand) by name on the cloned model and
+// capture each bone's rest rotation once. In useFrame a single smoothed 0..1
+// "gesture amount" eases toward 1 while speaking and back to 0 when silent; it
+// multiplies small, per-bone time-based oscillations (offset in frequency and
+// phase between bones and between the two sides) added ON TOP OF each captured
+// rest rotation, so the chef gesticulates naturally while talking and eases
+// back to its exact rest pose when done. Amplitudes are kept small (a few
+// degrees to ~0.3 rad) so it reads within the fixed head-and-torso framing and
+// never flails. Any missing arm bone is skipped gracefully, like the jaw.
+//
 // CLONING: the FBX contains a SkinnedMesh + 57-bone Biped skeleton. A plain
 // Object3D.clone(true) does NOT rebind the cloned skin to the cloned bones, so
 // the skinned mesh renders collapsed/invisible (an empty container). We clone
@@ -63,6 +75,20 @@ type SceneProps = {
 const JAW_BONE = "Bip001_Jaw";
 // Max additional rotation (radians) applied to open the jaw fully.
 const JAW_OPEN = 0.32;
+
+// HAND/ARM MOTION: bone names of the Biped arm chain (verified headlessly by
+// name against the FBX). While `speaking` is true the chef gesticulates with
+// subtle, natural arm/hand gestures driven by the SAME speaking window as the
+// jaw; when it stops we ease the arms back to their captured rest rotation.
+const ARM_BONES = {
+  rUpperArm: "Bip001_R_UpperArm",
+  rForearm: "Bip001_R_Forearm",
+  rHand: "Bip001_R_Hand",
+  lUpperArm: "Bip001_L_UpperArm",
+  lForearm: "Bip001_L_Forearm",
+  lHand: "Bip001_L_Hand",
+} as const;
+type ArmBoneKey = keyof typeof ARM_BONES;
 
 // Swedish Chef FBX + its diffuse texture. Every path is base-path-prefixed via
 // asset() so it resolves to /frankfabric/models/... in production. Never
@@ -106,6 +132,14 @@ function Avatar({
   const jawRestX = useRef(0);
   // Smoothed 0..1 "openness" so the jaw eases between frames.
   const openRef = useRef(0);
+
+  // The arm-chain bones and each bone's captured rest rotation (x/y/z). Bones
+  // absent at runtime are skipped gracefully (like the jaw's missing guard).
+  const armBonesRef = useRef<Partial<Record<ArmBoneKey, THREE.Object3D>>>({});
+  const armRestRef = useRef<Partial<Record<ArmBoneKey, THREE.Euler>>>({});
+  // Smoothed 0..1 "gesture amount" easing toward 1 while speaking, 0 otherwise.
+  // Multiplies every arm oscillation so the gesture fades in/out with no snap.
+  const gestureRef = useRef(0);
 
   // Clone the FBX with SkeletonUtils so the SkinnedMesh's skeleton is correctly
   // rebound to the cloned bones (a plain Object3D.clone would collapse/hide the
@@ -199,28 +233,129 @@ function Avatar({
     };
   }, [model]);
 
+  // Resolve the arm-chain bones on the cloned root and capture each bone's rest
+  // rotation once, mirroring the jaw approach. Any missing bone is skipped
+  // gracefully (we simply never animate it) so a rig change can't throw.
+  useEffect(() => {
+    const bones: Partial<Record<ArmBoneKey, THREE.Object3D>> = {};
+    const rests: Partial<Record<ArmBoneKey, THREE.Euler>> = {};
+    (Object.keys(ARM_BONES) as ArmBoneKey[]).forEach((key) => {
+      const bone = model.getObjectByName(ARM_BONES[key]) ?? null;
+      if (bone) {
+        bones[key] = bone;
+        // Capture rest rotation as a fresh Euler so runtime writes never lose it.
+        rests[key] = bone.rotation.clone();
+      } else {
+        console.warn(
+          `[ChefScene] arm bone "${ARM_BONES[key]}" not found; skipping its gesture.`
+        );
+      }
+    });
+    armBonesRef.current = bones;
+    armRestRef.current = rests;
+    return () => {
+      armBonesRef.current = {};
+      armRestRef.current = {};
+    };
+  }, [model]);
+
   // Drive the jaw open/closed each frame. While speaking, use live audio
   // loudness (0..1) when available, else a smooth sine wobble; ease back to
   // rest when not speaking.
   useFrame((state, delta) => {
-    const jaw = jawRef.current;
-    if (!jaw) return;
+    const t = state.clock.elapsedTime;
 
-    let target = 0;
-    if (speaking) {
-      const loud = getLoudness ? getLoudness() : 0;
-      if (loud > 0.01) {
-        target = Math.min(1, loud);
-      } else {
-        // Fallback oscillation (e.g. muted-but-speaking): 0..1 sine.
-        target = 0.5 + 0.5 * Math.sin(state.clock.elapsedTime * 13);
+    // --- Mouth (jaw) motion --------------------------------------------------
+    const jaw = jawRef.current;
+    if (jaw) {
+      let target = 0;
+      if (speaking) {
+        const loud = getLoudness ? getLoudness() : 0;
+        if (loud > 0.01) {
+          target = Math.min(1, loud);
+        } else {
+          // Fallback oscillation (e.g. muted-but-speaking): 0..1 sine.
+          target = 0.5 + 0.5 * Math.sin(t * 13);
+        }
       }
+      // Exponential smoothing toward target, framerate-independent.
+      const kJaw = 1 - Math.exp(-delta * 18);
+      openRef.current += (target - openRef.current) * kJaw;
+      jaw.rotation.x = jawRestX.current + openRef.current * JAW_OPEN;
     }
 
-    // Exponential smoothing toward target, framerate-independent.
-    const k = 1 - Math.exp(-delta * 18);
-    openRef.current += (target - openRef.current) * k;
-    jaw.rotation.x = jawRestX.current + openRef.current * JAW_OPEN;
+    // --- Hand / arm gesturing ------------------------------------------------
+    // A single smoothed 0..1 amount eases toward 1 while speaking and 0 when
+    // silent, framerate-independent, so gestures fade in/out with no snap. It
+    // multiplies every oscillation, so at rest the arms sit at their captured
+    // rest rotation exactly (amount == 0 -> zero offset).
+    const gTarget = speaking ? 1 : 0;
+    const kGesture = 1 - Math.exp(-delta * 6);
+    gestureRef.current += (gTarget - gestureRef.current) * kGesture;
+    const amt = gestureRef.current;
+
+    const bones = armBonesRef.current;
+    const rests = armRestRef.current;
+    // Small, tasteful talking gestures. Amplitudes stay a few degrees to
+    // ~0.3 rad so the chef reads as gesticulating, never flailing. Frequencies
+    // and phases differ per bone and between sides so it looks lively, not
+    // robotic. Offsets are ADDED on top of each bone's captured rest rotation.
+    const setBone = (
+      key: ArmBoneKey,
+      dx: number,
+      dy: number,
+      dz: number
+    ) => {
+      const bone = bones[key];
+      const rest = rests[key];
+      if (!bone || !rest) return;
+      bone.rotation.set(
+        rest.x + dx * amt,
+        rest.y + dy * amt,
+        rest.z + dz * amt
+      );
+    };
+
+    // Right arm: gentle forearm raise/rotate + a little upper-arm sway.
+    setBone(
+      "rUpperArm",
+      0.10 * Math.sin(t * 2.1),
+      0.08 * Math.sin(t * 1.7 + 0.5),
+      0.06 * Math.sin(t * 2.4)
+    );
+    setBone(
+      "rForearm",
+      0.22 * (0.5 + 0.5 * Math.sin(t * 3.1)),
+      0.10 * Math.sin(t * 2.6 + 0.9),
+      0.08 * Math.sin(t * 3.4)
+    );
+    setBone(
+      "rHand",
+      0.14 * Math.sin(t * 4.2),
+      0.10 * Math.sin(t * 3.7 + 1.2),
+      0.08 * Math.sin(t * 4.6)
+    );
+
+    // Left arm: same motif, out of phase (offset frequencies/phases) so the two
+    // sides never mirror each other exactly.
+    setBone(
+      "lUpperArm",
+      0.10 * Math.sin(t * 1.9 + 1.6),
+      0.08 * Math.sin(t * 1.5 + 2.1),
+      0.06 * Math.sin(t * 2.2 + 1.1)
+    );
+    setBone(
+      "lForearm",
+      0.22 * (0.5 + 0.5 * Math.sin(t * 2.8 + 1.3)),
+      0.10 * Math.sin(t * 2.3 + 2.4),
+      0.08 * Math.sin(t * 3.1 + 0.7)
+    );
+    setBone(
+      "lHand",
+      0.14 * Math.sin(t * 3.9 + 2.0),
+      0.10 * Math.sin(t * 3.4 + 0.4),
+      0.08 * Math.sin(t * 4.3 + 1.8)
+    );
   });
 
   // On unmount, dispose ONLY the resources this component owns. SkeletonUtils

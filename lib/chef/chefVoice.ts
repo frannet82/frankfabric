@@ -13,6 +13,27 @@
 // first so replies never overlap. When muted, nothing is spoken and any ongoing
 // utterance is canceled.
 //
+// STUCK-ENGINE BUG ("only the first reply is spoken"): Chrome's SpeechSynthesis
+// can be left in a paused/stuck state so that subsequent speak() calls are
+// queued but never spoken. This wrapper applies several mitigations so EVERY
+// reply is spoken and onStart/onEnd fire every time (the mouth + hand motion
+// depend on that):
+//   1. stop() only calls cancel() when the synth is actually speaking/pending —
+//      an unconditional cancel() on an idle engine can itself wedge it — and
+//      calls resume() afterwards because cancel() can leave Chrome paused.
+//   2. speak() defers the synth.speak(utter) to a 0-timeout after the cancel so
+//      the cancel fully settles before the new utterance is enqueued (enqueuing
+//      in the same tick as a cancel is a known trigger of the stuck state), and
+//      calls resume() defensively before speaking in case the engine was paused.
+//   3. The in-flight utterance is retained on this.current (not just a local
+//      that could be GC'd mid-speech — a dropped utterance fires no onend and
+//      wedges the queue), and a single-shot finish() handler (onend + onerror,
+//      including Chrome's benign 'canceled'/'interrupted' errors) always resets
+//      state so the next reply can speak.
+//   4. A watchdog timer force-finishes the utterance if neither onend nor
+//      onerror fires within a generous bound, so a silently-dropped utterance
+//      can never permanently wedge the queue.
+//
 // VOICE CHARACTER: the chef should sound like an OLD MAN speaking English,
 // ideally with an ITALIAN accent. The reply text is always English and is
 // NEVER translated. We get the Italian-accent effect by preferring an Italian
@@ -56,6 +77,13 @@ export class ChefVoice {
   private current: SpeechSynthesisUtterance | null = null;
   // Fallback timer id when SpeechSynthesis is unavailable.
   private fallbackTimer: ReturnType<typeof setTimeout> | null = null;
+  // Deferred-speak timer: after cancel() we enqueue the next utterance on a
+  // 0-timeout so the cancel fully settles first (Chrome stuck-engine bug).
+  private speakTimer: ReturnType<typeof setTimeout> | null = null;
+  // Safety timer: if neither onend nor onerror fires for the in-flight utterance
+  // within a bound (some engines silently drop an utterance and never fire an
+  // end event, wedging the queue), we force-finish so the next reply can speak.
+  private watchdogTimer: ReturnType<typeof setTimeout> | null = null;
   // Cached preferred voice, refreshed when 'voiceschanged' fires so a
   // later-loaded Italian/male voice is picked up on subsequent replies.
   private pickedVoice: SpeechSynthesisVoice | null = null;
@@ -97,11 +125,29 @@ export class ChefVoice {
     }
   }
 
-  /** Cancel any in-flight speech/timer and close the mouth-motion window. */
+  /**
+   * Cancel any in-flight speech/timers and close the mouth-motion window.
+   *
+   * STUCK-ENGINE MITIGATION: Chrome can be left in a paused/stuck state if
+   * cancel() is called when nothing is actually speaking, or if a new speak()
+   * follows a cancel() in the same tick — after which subsequent utterances are
+   * queued but never spoken (the "only the first reply is heard" bug). So we
+   * only call cancel() when the synth is genuinely speaking or has a pending
+   * utterance, and we call resume() afterwards because cancel() can leave the
+   * engine paused.
+   */
   private stop(): void {
     if (this.fallbackTimer) {
       clearTimeout(this.fallbackTimer);
       this.fallbackTimer = null;
+    }
+    if (this.speakTimer) {
+      clearTimeout(this.speakTimer);
+      this.speakTimer = null;
+    }
+    if (this.watchdogTimer) {
+      clearTimeout(this.watchdogTimer);
+      this.watchdogTimer = null;
     }
     if (this.current) {
       // Detach so the cancel's onend does not re-fire the caller's onEnd twice.
@@ -110,7 +156,16 @@ export class ChefVoice {
       this.current.onerror = null;
       this.current = null;
     }
-    this.synth?.cancel();
+    const synth = this.synth;
+    if (!synth) return;
+    // Only cancel when there's actually something to cancel — an unconditional
+    // cancel() on an idle engine is one trigger of Chrome's stuck state.
+    if (synth.speaking || synth.pending) {
+      synth.cancel();
+      // cancel() can leave the engine paused on Chrome; nudge it back to ready
+      // so the NEXT speak() is not silently swallowed.
+      synth.resume();
+    }
   }
 
   /**
@@ -239,18 +294,62 @@ export class ChefVoice {
       if (voice.lang) utter.lang = voice.lang;
     }
 
-    utter.onstart = () => {
-      onStart?.();
-    };
+    // finish() runs exactly once per utterance, whether it ends normally, is
+    // canceled/interrupted, or errors. It clears the in-flight reference and
+    // fires onEnd so the mouth + hand motion window closes and — crucially — so
+    // the wrapper is never left in a state where the NEXT speak() no-ops. Note
+    // Chrome fires a benign 'canceled'/'interrupted' onerror when cancel() runs;
+    // routing that through finish() (rather than leaving state dangling) is what
+    // lets the second, third, … reply speak.
+    let finished = false;
     const finish = () => {
+      if (finished) return;
+      finished = true;
+      if (this.watchdogTimer) {
+        clearTimeout(this.watchdogTimer);
+        this.watchdogTimer = null;
+      }
+      // Only clear the reference if this utterance is still the current one, so
+      // a superseding speak() (which already set a new this.current) is untouched.
       if (this.current === utter) this.current = null;
       onEnd?.();
+    };
+
+    utter.onstart = () => {
+      onStart?.();
     };
     utter.onend = finish;
     utter.onerror = finish;
 
+    // Retain a reference to the in-flight utterance for the whole call. Keeping
+    // it on `this.current` (not just as a local that could be GC'd mid-speech,
+    // which some engines treat as a dropped utterance that fires no onend and
+    // wedges the queue) holds it alive until onend/onerror actually fires.
     this.current = utter;
-    synth.speak(utter);
+
+    // Estimate a generous upper bound on the utterance's duration (~150 wpm at
+    // rate 0.9) and arm a watchdog: if neither onend nor onerror fires within
+    // that bound (a silently-dropped utterance), force-finish so state resets
+    // and the next reply can speak.
+    const words = trimmed.split(/\s+/).length;
+    const estMs = Math.max(1500, Math.min(20000, (words / 150) * 60000));
+    this.watchdogTimer = setTimeout(finish, estMs + 4000);
+
+    // Defensive resume(): if the engine was left paused (by a prior cancel or
+    // an OS media event), speak() alone won't produce audio. resume() first.
+    synth.resume();
+
+    // Defer the actual enqueue to the next tick so any cancel() issued in stop()
+    // above has fully settled before we speak — enqueuing in the SAME tick as a
+    // cancel is a known trigger of Chrome's "queued but never spoken" state.
+    this.speakTimer = setTimeout(() => {
+      this.speakTimer = null;
+      // If a newer speak() or stop() superseded this utterance before the tick
+      // elapsed, don't enqueue the stale one.
+      if (this.current !== utter) return;
+      synth.resume();
+      synth.speak(utter);
+    }, 0);
   }
 
   /**
