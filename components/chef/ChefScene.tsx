@@ -115,9 +115,12 @@ function Avatar({
   const model = useMemo(() => {
     const root = cloneSkeleton(fbx);
 
-    // FBX diffuse textures are authored top-left origin and in sRGB.
+    // This diffuse JPEG is loaded independently via THREE.TextureLoader (it is
+    // NOT embedded in the FBX), so it uses TextureLoader's default flipY=true.
+    // That is the correct orientation for a standalone image sampled against
+    // the mesh's channel-0 UVs (u,v within [0,1]). We keep sRGB color space for
+    // the color/diffuse map.
     const texture = loadedTexture.clone();
-    texture.flipY = false;
     texture.colorSpace = THREE.SRGBColorSpace;
     texture.needsUpdate = true;
 
