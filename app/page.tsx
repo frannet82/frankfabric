@@ -403,11 +403,13 @@ export default function Home() {
                     style={{ background: "radial-gradient(120% 90% at 70% 10%, rgba(63,169,255,0.14), transparent 55%)" }}
                   />
                   {p.href === "/projects/chef-chatbot" ? (
-                    <div className="absolute inset-0 grid place-items-center px-6 text-center">
+                    <div className="absolute inset-0 grid place-items-center px-6 text-center bg-gradient-to-b from-ac-sky/40 to-ac-leaf/25">
                       {/* Stylized chef toque mark — pure CSS/SVG poster, no 3D
-                          canvas. The whole card links out to the live chef. */}
+                          canvas. Cozy Animal-Crossing palette so the preview
+                          matches the live chatbot. The whole card links out to
+                          the live chef. */}
                       <div className="flex flex-col items-center gap-3">
-                        <span className="grid place-items-center w-16 h-16 rounded-2xl border border-cloud-blue/35 bg-cloud-blue/10 shadow-[0_0_26px_rgba(63,169,255,0.28)]">
+                        <span className="grid place-items-center w-16 h-16 rounded-2xl border border-ac-leaf/50 bg-ac-cream/90 shadow-[0_6px_20px_rgba(95,168,90,0.28)]">
                           <svg
                             viewBox="0 0 24 24"
                             aria-hidden="true"
@@ -420,18 +422,18 @@ export default function Home() {
                           >
                             <defs>
                               <linearGradient id="chef-toque" x1="0" y1="0" x2="1" y2="1">
-                                <stop offset="0" stopColor="#5ff2df" />
-                                <stop offset="1" stopColor="#9b6bff" />
+                                <stop offset="0" stopColor="#8fce7a" />
+                                <stop offset="1" stopColor="#f6a545" />
                               </linearGradient>
                             </defs>
                             <path d="M6 14a4 4 0 0 1-1-7.87A4 4 0 0 1 12 4a4 4 0 0 1 7 2.13A4 4 0 0 1 18 14z" />
                             <path d="M6 14v4.5A1.5 1.5 0 0 0 7.5 20h9a1.5 1.5 0 0 0 1.5-1.5V14" />
                           </svg>
                         </span>
-                        <span className="font-display font-semibold text-[20px] tracking-tight bg-gradient-to-r from-cloud-mist to-cloud-violet bg-clip-text text-transparent">
+                        <span className="font-display font-semibold text-[20px] tracking-tight bg-gradient-to-r from-ac-leafDark to-ac-orange bg-clip-text text-transparent">
                           Chef Fabric
                         </span>
-                        <span className="font-mono text-[10.5px] tracking-widest uppercase text-cloud-mist/80">
+                        <span className="font-mono text-[10.5px] tracking-widest uppercase text-ac-brown/80">
                           Live recipe assistant · click to chat
                         </span>
                       </div>

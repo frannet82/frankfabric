@@ -12,8 +12,8 @@
 // The conversation is driven entirely client-side by the deterministic,
 // dependency-free recipe engine in lib/chef/chefEngine.ts (no server, no API
 // key, no network). On send we append the user's message, compute the chef
-// reply, append it, and briefly play the avatar's "waving" animation before
-// settling back to "idle".
+// reply, and append it. On reply we open a short "speaking" window that drives
+// the avatar's bone-based mouth motion.
 //
 // Accessibility: the input carries a visible-to-screen-reader label, Enter
 // sends, and the message list is an aria-live region so new replies are
@@ -22,7 +22,6 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import dynamic from "next/dynamic";
-import type { ChefAnimation } from "@/components/chef/ChefScene";
 import { respondToMessage, type ChatMessage } from "@/lib/chef/chefEngine";
 import { ChefVoice } from "@/lib/chef/chefVoice";
 
@@ -56,13 +55,11 @@ export default function ChefChatbot() {
   ]);
   const [suggestions, setSuggestions] = useState<string[]>(GREETING_SUGGESTIONS);
   const [input, setInput] = useState("");
-  const [animation, setAnimation] = useState<ChefAnimation>("idle");
   // `speaking` opens the mouth-motion window; `muted` gates all audio.
   const [speaking, setSpeaking] = useState(false);
   const [muted, setMuted] = useState(false);
 
   const listRef = useRef<HTMLDivElement>(null);
-  const waveTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const speakTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   // Lazily-created in-browser voice synth (Web Audio). Created on first send so
   // its AudioContext starts from a user gesture and is not autoplay-blocked.
@@ -82,7 +79,6 @@ export default function ChefChatbot() {
   // Clear pending timers and release the AudioContext on unmount.
   useEffect(() => {
     return () => {
-      if (waveTimer.current) clearTimeout(waveTimer.current);
       if (speakTimer.current) clearTimeout(speakTimer.current);
       voiceRef.current?.dispose();
     };
@@ -113,11 +109,6 @@ export default function ChefChatbot() {
 
       setInput("");
 
-      // Wave briefly on reply, then return to idle.
-      setAnimation("waving");
-      if (waveTimer.current) clearTimeout(waveTimer.current);
-      waveTimer.current = setTimeout(() => setAnimation("idle"), 2600);
-
       // Lazily create the voice on this user gesture, then speak (unless muted).
       if (!voiceRef.current) {
         voiceRef.current = new ChefVoice();
@@ -146,11 +137,7 @@ export default function ChefChatbot() {
     <div className="absolute inset-0 z-[5] flex flex-col md:flex-row bg-ac-cream/90 backdrop-blur-[1px]">
       {/* 3D chef stage */}
       <div className="relative md:w-[42%] w-full h-[38%] md:h-full min-h-[120px] bg-gradient-to-b from-ac-sky/40 to-ac-leaf/25 border-b md:border-b-0 md:border-r border-ac-leaf/40">
-        <ChefScene
-          animation={animation}
-          speaking={speaking}
-          getLoudness={getLoudness}
-        />
+        <ChefScene speaking={speaking} getLoudness={getLoudness} />
         {/* Accessible mute toggle. Focusable, labeled, and reflects state. */}
         <button
           type="button"

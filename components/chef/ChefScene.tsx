@@ -13,11 +13,7 @@
 // through the VRMLoaderPlugin or the lib/vrm transplant/retarget helpers (those
 // remain in use by components/wardrobe/WardrobeScene.tsx only).
 //
-// The parent passes an `animation` prop ('idle' | 'waving'). The FBX has no
-// baked body-animation clips, so this prop currently has no visible body
-// effect; it is retained for API compatibility with ChefChatbot.tsx.
-//
-// MOUTH MOTION: the parent also passes `speaking` (true while the chef's reply
+// MOUTH MOTION: the parent passes `speaking` (true while the chef's reply
 // audio plays) and an optional `getLoudness` callback that returns a live 0..1
 // amplitude from the Web Audio AnalyserNode. While speaking we rotate the
 // 'Bip001_Jaw' bone open/closed — driven by that live loudness when available,
@@ -39,14 +35,7 @@ import * as THREE from "three";
 import { FBXLoader } from "three/examples/jsm/loaders/FBXLoader.js";
 import { asset } from "@/lib/asset";
 
-// Which chef animation state the parent requests. "idle" is the resting state;
-// "waving" is set briefly by the parent when the chef replies. The current FBX
-// has no baked body clips, so this has no visible body effect yet, but the type
-// and prop are kept so ChefChatbot.tsx compiles unchanged.
-export type ChefAnimation = "idle" | "waving";
-
 type SceneProps = {
-  animation: ChefAnimation;
   // True while the chef's reply is "playing"; opens the mouth-motion window.
   speaking?: boolean;
   // Returns a live 0..1 audio loudness (Web Audio AnalyserNode RMS). When it
@@ -186,15 +175,9 @@ function Avatar({
   return <primitive object={model} />;
 }
 
-// The `animation` prop is part of the public API (ChefChatbot.tsx passes it)
-// but has no visible body effect yet, since the FBX ships no baked body clips.
 // `speaking` + `getLoudness` drive the bone-based mouth motion in <Avatar />.
-export default function ChefScene({
-  animation: _animation,
-  speaking = false,
-  getLoudness,
-}: SceneProps) {
-  void _animation;
+// The FBX ships no baked body clips, so there is no body-animation prop.
+export default function ChefScene({ speaking = false, getLoudness }: SceneProps) {
   return (
     <Canvas
       shadows

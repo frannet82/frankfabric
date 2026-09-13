@@ -28,6 +28,10 @@ export class ChefVoice {
   private timeData: Uint8Array<ArrayBuffer> | null = null;
   private muted = false;
 
+  // Audible master level when unmuted. The per-blip envelopes peak at ~0.5, so
+  // this leaves comfortable headroom below clipping while staying clearly heard.
+  private static readonly AUDIBLE_GAIN = 0.9;
+
   /** Whether audio is currently muted. */
   get isMuted(): boolean {
     return this.muted;
@@ -35,10 +39,14 @@ export class ChefVoice {
 
   setMuted(muted: boolean): void {
     this.muted = muted;
-    if (muted && this.master) {
+    if (!this.master) return;
+    this.master.gain.cancelScheduledValues(0);
+    if (muted) {
       // Silence anything in flight immediately.
-      this.master.gain.cancelScheduledValues(0);
       this.master.gain.value = 0;
+    } else {
+      // Restore the audible level so unmuting actually produces sound.
+      this.master.gain.value = ChefVoice.AUDIBLE_GAIN;
     }
   }
 
@@ -55,7 +63,10 @@ export class ChefVoice {
       if (!Ctor) return null;
       this.ctx = new Ctor();
       this.master = this.ctx.createGain();
-      this.master.gain.value = 0.0001;
+      // Start at an audible level (respecting the current mute flag) so the
+      // synthesized voice is actually heard; the analyser taps this node, so an
+      // audible master is also what makes live-loudness jaw tracking work.
+      this.master.gain.value = this.muted ? 0 : ChefVoice.AUDIBLE_GAIN;
       this.analyser = this.ctx.createAnalyser();
       this.analyser.fftSize = 512;
       this.timeData = new Uint8Array(new ArrayBuffer(this.analyser.fftSize));
