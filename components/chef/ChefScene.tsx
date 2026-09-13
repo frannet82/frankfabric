@@ -35,6 +35,7 @@ import { FBXLoader } from "three/examples/jsm/loaders/FBXLoader.js";
 import {
   VRMLoaderPlugin,
   VRMUtils,
+  MToonMaterial,
   type VRM,
   type VRMHumanBoneName,
 } from "@pixiv/three-vrm";
@@ -188,12 +189,18 @@ type Transplant = {
   materials: THREE.Material[];
 };
 
+// Apply a hex color to a material, covering both standard three materials and
+// @pixiv/three-vrm's MToon materials (which expose their own `color` uniform).
+// The drophunter garments render through MToonMaterial, so the MToon branch is
+// what actually recolors the chef coat's near-white tint.
 function applyColor(material: THREE.Material, hex: string) {
   const color = new THREE.Color(hex);
-  const std = material as THREE.MeshStandardMaterial & {
-    color?: THREE.Color;
-    needsUpdate?: boolean;
-  };
+  if (material instanceof MToonMaterial) {
+    material.color.copy(color);
+    material.needsUpdate = true;
+    return;
+  }
+  const std = material as THREE.MeshStandardMaterial;
   if (std.color) {
     std.color.copy(color);
     std.needsUpdate = true;
@@ -483,6 +490,10 @@ export default function ChefScene({ animation }: SceneProps) {
       dpr={[1, 2]}
       camera={{ position: [0, 1.4, 2.2], fov: 34 }}
       gl={{ antialias: true, alpha: true }}
+      // react-three-fiber forwards unknown props to the underlying <canvas>, so
+      // these give assistive tech a text alternative for the avatar stage.
+      role="img"
+      aria-label="3D chef avatar"
       onCreated={({ gl }) => {
         gl.toneMapping = THREE.ACESFilmicToneMapping;
       }}
