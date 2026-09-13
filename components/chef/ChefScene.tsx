@@ -13,14 +13,21 @@
 // through the VRMLoaderPlugin or the lib/vrm transplant/retarget helpers (those
 // remain in use by components/wardrobe/WardrobeScene.tsx only).
 //
-// MOUTH MOTION: the parent passes `speaking` (true while the chef's reply
-// audio plays) and an optional `getLoudness` callback that returns a live 0..1
-// amplitude from the Web Audio AnalyserNode. While speaking we rotate the
-// 'Bip001_Jaw' bone open/closed — driven by that live loudness when available,
-// with a smooth sine oscillation as a fallback (e.g. when muted) — and ease it
-// back to its captured rest rotation when the chef stops talking. The FBX has
-// no morph/blendshape targets, so the mouth MUST be bone-driven. If the jaw
-// bone is missing at runtime we skip mouth motion gracefully.
+// MOUTH MOTION: the parent passes `speaking` (true while the chef's reply is
+// spoken by the browser SpeechSynthesis voice) and an optional `getLoudness`
+// callback. SpeechSynthesis exposes no audio-amplitude stream, so getLoudness
+// returns 0 and the jaw uses a smooth sine oscillation while speaking. We
+// rotate the 'Bip001_Jaw' bone open/closed while speaking and ease it back to
+// its captured rest rotation when the chef stops talking. The FBX has no
+// morph/blendshape targets, so the mouth MUST be bone-driven. If the jaw bone
+// is missing at runtime we skip mouth motion gracefully.
+//
+// CLONING: the FBX contains a SkinnedMesh + 57-bone Biped skeleton. A plain
+// Object3D.clone(true) does NOT rebind the cloned skin to the cloned bones, so
+// the skinned mesh renders collapsed/invisible (an empty container). We clone
+// with SkeletonUtils.clone, which correctly duplicates skinned meshes and
+// rebinds their skeletons. We then recenter the built model with a Box3 so the
+// fixed camera reliably frames a cozy, front-facing head-and-torso shot.
 //
 // All asset URLs are routed through lib/asset.ts so they resolve
 // under the /frankfabric/ base path in production. This whole component touches
@@ -33,6 +40,7 @@ import { Canvas, useLoader, useFrame } from "@react-three/fiber";
 import { ContactShadows } from "@react-three/drei";
 import * as THREE from "three";
 import { FBXLoader } from "three/examples/jsm/loaders/FBXLoader.js";
+import { clone as cloneSkeleton } from "three/examples/jsm/utils/SkeletonUtils.js";
 import { asset } from "@/lib/asset";
 
 type SceneProps = {
@@ -60,6 +68,17 @@ const TEXTURE_URL = asset(
 // space, so scale it down to a ~1.6-unit-tall figure that fits the camera.
 const MODEL_SCALE = 0.001;
 
+// World-space height the aim point sits at (chef's upper chest / lower face).
+// The camera is aimed here and the model is recentered so this point is where
+// the head-and-torso reads best in the fixed shot.
+const AIM_HEIGHT = 1.3;
+// Vertical fraction of the (scaled) model height that we place at AIM_HEIGHT.
+// ~0.82 puts the upper chest/neck at the aim point so the face sits just above
+// center — a cozy, front-facing chatbot framing.
+const AIM_MODEL_FRACTION = 0.82;
+// How far back the fixed camera sits from the aim point.
+const CAMERA_DISTANCE = 2.2;
+
 // Loads the FBX + texture and drives the bone-based mouth motion. The FBX has
 // no baked body clips, so `animation` has no body effect; mouth motion is
 // driven entirely by `speaking` + `getLoudness` here.
@@ -80,10 +99,13 @@ function Avatar({
   // Smoothed 0..1 "openness" so the jaw eases between frames.
   const openRef = useRef(0);
 
-  // Clone the FBX and texture so we never mutate the loader-cached values
-  // returned from the hooks (also keeps React strict-mode remounts clean).
+  // Clone the FBX with SkeletonUtils so the SkinnedMesh's skeleton is correctly
+  // rebound to the cloned bones (a plain Object3D.clone would collapse/hide the
+  // skinned mesh — the "empty container" bug). We also clone the texture so we
+  // never mutate the loader-cached values returned from the hooks (keeps React
+  // strict-mode remounts clean).
   const model = useMemo(() => {
-    const root = fbx.clone(true);
+    const root = cloneSkeleton(fbx);
 
     // FBX diffuse textures are authored top-left origin and in sRGB.
     const texture = loadedTexture.clone();
@@ -110,9 +132,25 @@ function Avatar({
     });
 
     root.scale.setScalar(MODEL_SCALE);
-    // Feet sit at the rig origin (y≈0), so no vertical offset is needed to
-    // stand on the ground plane.
-    root.position.set(0, 0, 0);
+
+    // Recenter deterministically off a fresh Box3 of the SCALED model so the
+    // fixed camera reliably frames the chef (never a speck, never clipped away).
+    // Center the model horizontally/in depth on the aim axis, and lift it so a
+    // point AIM_MODEL_FRACTION up its height sits at AIM_HEIGHT (upper chest).
+    root.updateMatrixWorld(true);
+    const box = new THREE.Box3().setFromObject(root);
+    if (!box.isEmpty()) {
+      const size = new THREE.Vector3();
+      const center = new THREE.Vector3();
+      box.getSize(size);
+      box.getCenter(center);
+      const aimWorldY = box.min.y + size.y * AIM_MODEL_FRACTION;
+      root.position.set(
+        root.position.x - center.x,
+        root.position.y - aimWorldY + AIM_HEIGHT,
+        root.position.z - center.z
+      );
+    }
     return root;
   }, [fbx, loadedTexture]);
 
@@ -158,16 +196,23 @@ function Avatar({
     jaw.rotation.x = jawRestX.current + openRef.current * JAW_OPEN;
   });
 
+  // On unmount, dispose ONLY the resources this component owns. SkeletonUtils
+  // .clone reuses geometries and materials by reference from the loader-cached
+  // fbx, so disposing them here would break a React strict-mode remount that
+  // reuses the same cached loader result. The one thing we uniquely created is
+  // the cloned diffuse texture, so dispose just that.
   useEffect(() => {
     return () => {
       model.traverse((obj) => {
         const mesh = obj as THREE.Mesh;
-        if (mesh.isMesh) {
-          mesh.geometry?.dispose();
-          const mat = mesh.material as THREE.Material | THREE.Material[];
-          if (Array.isArray(mat)) mat.forEach((m) => m.dispose());
-          else mat?.dispose();
-        }
+        if (!mesh.isMesh) return;
+        const materials = Array.isArray(mesh.material)
+          ? mesh.material
+          : [mesh.material];
+        materials.forEach((raw) => {
+          const mat = raw as THREE.MeshPhongMaterial | undefined;
+          mat?.map?.dispose();
+        });
       });
     };
   }, [model]);
@@ -182,7 +227,7 @@ export default function ChefScene({ speaking = false, getLoudness }: SceneProps)
     <Canvas
       shadows
       dpr={[1, 2]}
-      camera={{ position: [0, 1.4, 2.2], fov: 34 }}
+      camera={{ position: [0, AIM_HEIGHT, CAMERA_DISTANCE], fov: 34 }}
       gl={{ antialias: true, alpha: true }}
       // react-three-fiber forwards unknown props to the underlying <canvas>, so
       // these give assistive tech a text alternative for the avatar stage.
@@ -190,8 +235,10 @@ export default function ChefScene({ speaking = false, getLoudness }: SceneProps)
       aria-label="3D chef avatar"
       onCreated={({ gl, camera }) => {
         gl.toneMapping = THREE.ACESFilmicToneMapping;
-        // Fixed, front-facing framing: aim the camera at the chef's upper body.
-        camera.lookAt(0, 1.3, 0);
+        // Fixed, front-facing framing: aim the camera straight at the aim point
+        // the model was recentered onto (its upper chest). No OrbitControls,
+        // no zoom — the shot is intentionally locked.
+        camera.lookAt(0, AIM_HEIGHT, 0);
       }}
     >
       {/* Cozy Animal-Crossing lighting: warm, soft, evenly lit — no neon rim. */}
