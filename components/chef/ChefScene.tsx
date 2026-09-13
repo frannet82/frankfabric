@@ -3,22 +3,20 @@
 // ---------------------------------------------------------------------------
 // Chef chatbot — interactive 3D chef avatar.
 //
-// This renders a single VRM chef built by REUSING the repo's existing modular
-// "drophunter" avatar objects (public/models/characters/drophunter/): the base
-// body VRM plus the always-required eyes trait, a hair top, and a fitted top
-// garment (the full jacket, tinted neutral white) so it reads as a chef's
-// coat. A tiny three.js primitive chef's hat (a toque) sits on the head.
+// This renders the "Swedish Chef" avatar loaded from a single textured Biped
+// FBX (public/models/characters/swedish-chef/swedish-chef.fbx) with its diffuse
+// texture (swedish_chef_diff.jpg) applied to the mesh material. The FBX ships
+// its own hat (Biped Bip001_Cap* bones), so no procedural toque or garment
+// assembly is needed here.
 //
-// The loading / garment-transplant / Mixamo-FBX-retarget approach is the same
-// one used by components/wardrobe/WardrobeScene.tsx (CharacterStudio approach,
-// MIT): a GLTFLoader with the VRMLoaderPlugin, read gltf.userData.vrm, call
-// vrm.update(delta) every frame, and retarget the bundled Mixamo idle/waving
-// FBX clips onto the VRM humanoid. Garment VRMs carry the same 198-joint
-// skeleton as the base body, so each garment SkinnedMesh is rebound onto the
-// base body's bones (matched by name) and reparented under the base scene.
+// This is a plain FBX, NOT a VRM: it is loaded with FBXLoader and does not go
+// through the VRMLoaderPlugin or the lib/vrm transplant/retarget helpers (those
+// remain in use by components/wardrobe/WardrobeScene.tsx only).
 //
-// The parent passes a `animation` prop ('idle' | 'waving') so the chef can wave
-// briefly whenever it replies, then settle back to idle.
+// The parent passes an `animation` prop ('idle' | 'waving'). The FBX has no
+// baked body-animation clips, so this prop currently has no visible body
+// effect; it is retained for API compatibility with ChefChatbot.tsx and for a
+// later feature that drives mouth/jaw motion during the speaking window.
 //
 // All asset URLs are routed through lib/asset.ts's asset() so they resolve
 // under the /frankfabric/ base path in production. This whole component touches
@@ -26,94 +24,81 @@
 // { ssr:false } in ChefChatbot.tsx and never runs during static generation.
 // ---------------------------------------------------------------------------
 
-import { Suspense, useEffect, useMemo, useRef } from "react";
-import { Canvas, useFrame, useLoader } from "@react-three/fiber";
-import { OrbitControls, ContactShadows } from "@react-three/drei";
+import { Suspense, useEffect, useMemo } from "react";
+import { Canvas, useLoader } from "@react-three/fiber";
+import { ContactShadows } from "@react-three/drei";
 import * as THREE from "three";
-import { GLTFLoader } from "three/examples/jsm/loaders/GLTFLoader.js";
 import { FBXLoader } from "three/examples/jsm/loaders/FBXLoader.js";
-import {
-  VRMLoaderPlugin,
-  VRMUtils,
-  type VRM,
-  type VRMHumanBoneName,
-} from "@pixiv/three-vrm";
 import { asset } from "@/lib/asset";
-import { retargetMixamoClip } from "@/lib/vrm/retarget";
-import { Garment } from "@/lib/vrm/transplant";
 
-// Which humanoid animation the chef plays. "idle" is the resting loop; "waving"
-// is triggered briefly by the parent when the chef replies.
+// Which chef animation state the parent requests. "idle" is the resting state;
+// "waving" is set briefly by the parent when the chef replies. The current FBX
+// has no baked body clips, so this has no visible body effect yet, but the type
+// and prop are kept so ChefChatbot.tsx compiles unchanged.
 export type ChefAnimation = "idle" | "waving";
 
 type SceneProps = {
   animation: ChefAnimation;
 };
 
-// Reused drophunter avatar objects. Every path is base-path-prefixed via
+// Swedish Chef FBX + its diffuse texture. Every path is base-path-prefixed via
 // asset() so it resolves to /frankfabric/models/... in production. Never
 // hardcode a bare "/models/..." path — it would 404 on GitHub Pages.
-const MODEL_URL = asset("/models/characters/drophunter/body.vrm");
-const EYES_URL = asset("/models/characters/drophunter/eyes/regulareyes.vrm");
-const HAIR_URL = asset("/models/characters/drophunter/head/short.vrm");
-// A full jacket garment tinted a neutral white reads as a chef's coat.
-const COAT_URL = asset("/models/characters/drophunter/chest/fulljacket.vrm");
-const PANTS_URL = asset("/models/characters/drophunter/legs/cargopants.vrm");
+const MODEL_URL = asset("/models/characters/swedish-chef/swedish-chef.fbx");
+const TEXTURE_URL = asset(
+  "/models/characters/swedish-chef/swedish_chef_diff.jpg"
+);
 
-// The chef's coat tint (near-white) so the full jacket reads as chef whites.
-const COAT_COLOR = "#f3f1ea";
+// The FBX is authored in Biped units: the rig stands ~1632 units tall in world
+// space, so scale it down to a ~1.6-unit-tall figure that fits the camera.
+const MODEL_SCALE = 0.001;
 
-// Mixamo FBX animation clips (same reusable clips the wardrobe uses). Loaded
-// client-side only via FBXLoader and retargeted onto the VRM humanoid.
-const ANIMATION_URLS: Record<ChefAnimation, string> = {
-  idle: asset("/animations/idle.fbx"),
-  waving: asset("/animations/waving.fbx"),
-};
+// The `animation` prop is intentionally unused for now: the FBX has no baked
+// body clips, so there is no visible body animation to drive. It stays in the
+// public API for ChefChatbot.tsx and for the later mouth-motion feature.
+function Avatar() {
+  const fbx = useLoader(FBXLoader, MODEL_URL);
+  const loadedTexture = useLoader(THREE.TextureLoader, TEXTURE_URL);
 
-// A lightweight three.js primitive chef's toque, parented to the VRM head bone
-// so it follows the animated rig. No extra assets are downloaded for it.
-function ChefHat({ vrm }: { vrm: VRM }) {
-  const headNode = useMemo(
-    () => vrm.humanoid?.getNormalizedBoneNode("head" as VRMHumanBoneName) ?? null,
-    [vrm]
-  );
+  // Clone the FBX and texture so we never mutate the loader-cached values
+  // returned from the hooks (also keeps React strict-mode remounts clean).
+  const model = useMemo(() => {
+    const root = fbx.clone(true);
 
-  const hat = useMemo(() => {
-    const group = new THREE.Group();
-    const white = new THREE.MeshStandardMaterial({
-      color: new THREE.Color("#fbfaf6"),
-      roughness: 0.85,
-      metalness: 0,
+    // FBX diffuse textures are authored top-left origin and in sRGB.
+    const texture = loadedTexture.clone();
+    texture.flipY = false;
+    texture.colorSpace = THREE.SRGBColorSpace;
+    texture.needsUpdate = true;
+
+    root.traverse((obj) => {
+      obj.frustumCulled = false;
+      const mesh = obj as THREE.Mesh;
+      if (mesh.isMesh) {
+        mesh.castShadow = true;
+        mesh.receiveShadow = true;
+        const materials = Array.isArray(mesh.material)
+          ? mesh.material
+          : [mesh.material];
+        materials.forEach((raw) => {
+          const mat = raw as THREE.MeshPhongMaterial;
+          if (!mat) return;
+          mat.map = texture;
+          mat.needsUpdate = true;
+        });
+      }
     });
 
-    // Stiff band around the head.
-    const band = new THREE.Mesh(
-      new THREE.CylinderGeometry(0.105, 0.105, 0.07, 24),
-      white
-    );
-    band.position.y = 0.13;
-    band.castShadow = true;
-    group.add(band);
-
-    // Puffy crown of the toque.
-    const crown = new THREE.Mesh(
-      new THREE.SphereGeometry(0.12, 24, 20),
-      white
-    );
-    crown.scale.set(1, 1.15, 1);
-    crown.position.y = 0.24;
-    crown.castShadow = true;
-    group.add(crown);
-
-    return group;
-  }, []);
+    root.scale.setScalar(MODEL_SCALE);
+    // Feet sit at the rig origin (y≈0), so no vertical offset is needed to
+    // stand on the ground plane.
+    root.position.set(0, 0, 0);
+    return root;
+  }, [fbx, loadedTexture]);
 
   useEffect(() => {
-    if (!headNode) return;
-    headNode.add(hat);
     return () => {
-      headNode.remove(hat);
-      hat.traverse((obj) => {
+      model.traverse((obj) => {
         const mesh = obj as THREE.Mesh;
         if (mesh.isMesh) {
           mesh.geometry?.dispose();
@@ -123,117 +108,15 @@ function ChefHat({ vrm }: { vrm: VRM }) {
         }
       });
     };
-  }, [headNode, hat]);
+  }, [model]);
 
-  return null;
+  return <primitive object={model} />;
 }
 
-function Avatar({ animation }: SceneProps) {
-  const gltf = useLoader(GLTFLoader, MODEL_URL, (loader) => {
-    loader.register(
-      (parser) => new VRMLoaderPlugin(parser, { autoUpdateHumanBones: true })
-    );
-  });
-
-  const vrm = gltf.userData.vrm as VRM;
-
-  useMemo(() => {
-    VRMUtils.removeUnnecessaryVertices(vrm.scene);
-    vrm.scene.traverse((obj) => {
-      obj.frustumCulled = false;
-      const mesh = obj as THREE.Mesh;
-      if (mesh.isMesh) {
-        mesh.castShadow = true;
-        mesh.receiveShadow = true;
-      }
-    });
-    return vrm;
-  }, [vrm]);
-
-  useEffect(() => {
-    return () => {
-      VRMUtils.deepDispose(vrm.scene);
-    };
-  }, [vrm]);
-
-  // Load + retarget the Mixamo FBX clips (client-side only).
-  const idleFbx = useLoader(FBXLoader, ANIMATION_URLS.idle);
-  const wavingFbx = useLoader(FBXLoader, ANIMATION_URLS.waving);
-
-  const playback = useRef<{
-    mixer: THREE.AnimationMixer;
-    actions: Record<ChefAnimation, THREE.AnimationAction | null>;
-  } | null>(null);
-  const currentAction = useRef<THREE.AnimationAction | null>(null);
-
-  useEffect(() => {
-    const mixer = new THREE.AnimationMixer(vrm.scene);
-    const build = (fbx: THREE.Group): THREE.AnimationAction | null => {
-      const raw = fbx.animations?.[0];
-      if (!raw) return null;
-      const clip = retargetMixamoClip(fbx, raw, vrm);
-      return clip ? mixer.clipAction(clip) : null;
-    };
-    playback.current = {
-      mixer,
-      actions: {
-        idle: build(idleFbx),
-        waving: build(wavingFbx),
-      },
-    };
-    currentAction.current = null;
-    return () => {
-      mixer.stopAllAction();
-      playback.current = null;
-      currentAction.current = null;
-    };
-  }, [vrm, idleFbx, wavingFbx]);
-
-  // Crossfade to the requested clip when `animation` changes.
-  useEffect(() => {
-    const state = playback.current;
-    if (!state) return;
-    const next = state.actions[animation];
-    const prev = currentAction.current;
-    if (next === prev) return;
-
-    const FADE = 0.3;
-    if (next) {
-      next.reset();
-      next.setEffectiveWeight(1);
-      next.fadeIn(FADE);
-      next.play();
-    }
-    if (prev) {
-      prev.fadeOut(FADE);
-    }
-    currentAction.current = next;
-  }, [animation, idleFbx, wavingFbx, vrm]);
-
-  useFrame((_, delta) => {
-    playback.current?.mixer.update(delta);
-    vrm.update(delta);
-  });
-
-  return (
-    <group>
-      <primitive object={vrm.scene} />
-
-      {/* Required eyes trait (base body ships with empty sockets). */}
-      <Garment baseVrm={vrm} url={EYES_URL} color={null} />
-      {/* Hair. */}
-      <Garment baseVrm={vrm} url={HAIR_URL} color={null} />
-      {/* Chef whites: a full jacket tinted near-white + neutral trousers. */}
-      <Garment baseVrm={vrm} url={COAT_URL} color={COAT_COLOR} />
-      <Garment baseVrm={vrm} url={PANTS_URL} color="#20242e" />
-
-      {/* Lightweight primitive chef's toque parented to the head bone. */}
-      <ChefHat vrm={vrm} />
-    </group>
-  );
-}
-
-export default function ChefScene({ animation }: SceneProps) {
+// The `animation` prop is part of the public API (ChefChatbot.tsx passes it)
+// but has no visible body effect yet, since the FBX ships no baked body clips.
+export default function ChefScene({ animation: _animation }: SceneProps) {
+  void _animation;
   return (
     <Canvas
       shadows
@@ -244,8 +127,10 @@ export default function ChefScene({ animation }: SceneProps) {
       // these give assistive tech a text alternative for the avatar stage.
       role="img"
       aria-label="3D chef avatar"
-      onCreated={({ gl }) => {
+      onCreated={({ gl, camera }) => {
         gl.toneMapping = THREE.ACESFilmicToneMapping;
+        // Fixed, front-facing framing: aim the camera at the chef's upper body.
+        camera.lookAt(0, 1.3, 0);
       }}
     >
       <ambientLight intensity={0.75} />
@@ -261,7 +146,7 @@ export default function ChefScene({ animation }: SceneProps) {
 
       <Suspense fallback={null}>
         <group position={[0, 0, 0]}>
-          <Avatar animation={animation} />
+          <Avatar />
         </group>
       </Suspense>
 
@@ -272,18 +157,6 @@ export default function ChefScene({ animation }: SceneProps) {
         blur={2.4}
         far={2}
         color="#05060c"
-      />
-
-      <OrbitControls
-        enablePan={false}
-        enableZoom={false}
-        minDistance={1.6}
-        maxDistance={4}
-        minPolarAngle={Math.PI / 5}
-        maxPolarAngle={Math.PI / 1.9}
-        target={[0, 1.3, 0]}
-        autoRotate={animation === "idle"}
-        autoRotateSpeed={0.5}
       />
     </Canvas>
   );
