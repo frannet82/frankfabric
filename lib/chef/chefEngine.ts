@@ -320,6 +320,7 @@ export function respondToMessage(
     wantsSuggest ||
     wantsFind ||
     llmResult.query.includeIngredients.length > 0 ||
+    llmResult.query.softIncludeIngredients.length > 0 ||
     llmResult.query.excludeIngredients.length > 0 ||
     llmResult.query.maxTime !== null ||
     llmResult.query.mealType !== null ||
