@@ -205,8 +205,8 @@ New files: `lib/chef/recipes.ts`, `lib/chef/chefEngine.ts`,
 
 ## Coach trainer
 
-The **Coach trainer interface** project card on the landing page (a second
-`GenAI` tile in `lib/data.ts`) renders **Coach Fabric**, an energetic Smart Fit
+The **Coach trainer interface** project card on the landing page (the `Fitness`
+tile, `projects[1]` in `lib/data.ts`) renders **Coach Fabric**, an energetic Smart Fit
 gym coach you can talk to. It mirrors the Chef chatbot pattern exactly: tell it
 your goal (lose weight, build muscle, endurance, or mobility), ask it to suggest
 a workout, filter by your level or the equipment you have, list the exercises
@@ -238,6 +238,13 @@ is isolated behind `next/dynamic { ssr:false }` in
 generation, and every asset URL is wrapped in `asset()` for the `/frankfabric/`
 base path. The whole coach UI is themed with the Smart Fit `sf` Tailwind tokens
 (bold yellow/black with magenta accents).
+
+On the home-page project gallery, the coach preview occupies the slot that
+previously held the DAM/AEM **"Asset Automation Console"** card (`projects[1]`):
+that entry was replaced in place by the Coach Fabric card, so the coach preview
+renders exactly where the old DAM pipeline tile used to sit, with a bespoke
+Smart Fit CSS/SVG dumbbell poster rendered by the
+`p.href === "/projects/coach-trainer"` branch in `app/page.tsx`.
 
 New files: `lib/coach/workouts.ts`, `data/workouts.json`,
 `lib/coach/coachEngine.ts`, `lib/coach/coachVoice.ts`,

@@ -55,10 +55,11 @@ export const projects: Project[] = [
     meta: "Landing-zone & cost telemetry",
   },
   {
-    label: "PROJECT SHOT · DAM pipeline UI",
-    tag: "AEM",
-    title: "Asset Automation Console",
-    meta: "ML metadata enrichment at scale",
+    label: "PROJECT SHOT · Coach trainer interface",
+    tag: "Fitness",
+    title: "Coach Fabric Smart Fit Trainer",
+    meta: "Client-side conversational gym coach with a 3D avatar",
+    href: "/projects/coach-trainer",
   },
   {
     label: "PROJECT SHOT · Chatbot interface",
@@ -66,13 +67,6 @@ export const projects: Project[] = [
     title: "Chef Fabric Recipe Assistant",
     meta: "Client-side conversational chef with a 3D avatar",
     href: "/projects/chef-chatbot",
-  },
-  {
-    label: "PROJECT SHOT · Coach trainer interface",
-    tag: "GenAI",
-    title: "Coach Fabric Smart Fit Trainer",
-    meta: "Client-side conversational gym coach with a 3D avatar",
-    href: "/projects/coach-trainer",
   },
   {
     label: "LIVE DEMO · Interactive avatar builder",
