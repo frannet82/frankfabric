@@ -326,8 +326,12 @@ export function respondToMessage(
     llmResult.query.mealType !== null ||
     llmResult.query.cuisine !== null;
 
-  // Prefer a direct description when the user simply named a known dish and did
-  // not ask us to find/suggest/filter, so "margherita pizza" stays specific.
+  // Defensive fallback only. A bare dish name is now soft-included by the llm
+  // parser (populating softIncludeIngredients), which sets wantsMultiOptions and
+  // routes through the ranked reply below; for a distinctive name that yields a
+  // single-option ranked reply led by that dish. This branch therefore rarely
+  // fires for a bare dish name and remains just as a safety net for cases where
+  // no soft-include or other constraint was parsed.
   if (namedRecipe && !wantsMultiOptions) {
     return {
       reply: describeRecipe(namedRecipe),
