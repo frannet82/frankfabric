@@ -1,6 +1,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import BrandMark from "@/components/BrandMark";
+import ChefChatbot from "@/components/chef/ChefChatbot";
 import { stack, cases, badges, caps, projects, ticker } from "@/lib/data";
 import { asset } from "@/lib/asset";
 
@@ -402,7 +403,9 @@ export default function Home() {
                     className="absolute inset-0"
                     style={{ background: "radial-gradient(120% 90% at 70% 10%, rgba(63,169,255,0.14), transparent 55%)" }}
                   />
-                  {p.video ? (
+                  {p.kind === "chef-chatbot" ? (
+                    <ChefChatbot />
+                  ) : p.video ? (
                     <video
                       src={asset(p.video)}
                       poster={p.image ? asset(p.image) : undefined}

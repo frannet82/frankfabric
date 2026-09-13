@@ -45,6 +45,10 @@ export type Project = {
   href?: string;
   image?: string;
   video?: string;
+  // Marker for cards that render a live interactive component inside the
+  // gallery tile instead of a static placeholder/image. "chef-chatbot" renders
+  // the ChefChatbot widget (see app/page.tsx).
+  kind?: "chef-chatbot";
 };
 
 export const projects: Project[] = [
@@ -65,6 +69,7 @@ export const projects: Project[] = [
     tag: "GenAI",
     title: "Grounded AI Assistant",
     meta: "Retrieval + guardrails on Bedrock",
+    kind: "chef-chatbot",
   },
   {
     label: "LIVE DEMO · Interactive avatar builder",
