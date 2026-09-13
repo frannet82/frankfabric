@@ -161,9 +161,14 @@ function Avatar({
     return root;
   }, [obj]);
 
-  // Capture the model's rest Y once so the bob is applied on top of it.
+  // The OUTER group rests at Y=0 and carries ONLY the animated bob/sway/lean
+  // deltas; the inner model already carries the full recenter offset (its own
+  // position.y). Seeding the group at 0 keeps the exact same on-screen rest
+  // position while ensuring the recenter offset is never double-counted (net
+  // world Y = model.y + bob, not model.y + bob + model.y). This stays correct
+  // even if AIM_HEIGHT / AIM_MODEL_FRACTION change.
   useEffect(() => {
-    restY.current = model.position.y;
+    restY.current = 0;
   }, [model]);
 
   // Drive the whole-group talking / idle motion each frame. Unrigged model, so
