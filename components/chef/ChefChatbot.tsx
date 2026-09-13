@@ -12,8 +12,9 @@
 // The conversation is driven entirely client-side by the deterministic,
 // dependency-free recipe engine in lib/chef/chefEngine.ts (no server, no API
 // key, no network). On send we append the user's message, compute the chef
-// reply, and append it. On reply we open a short "speaking" window that drives
-// the avatar's bone-based mouth motion.
+// reply, and append it. On reply we read the text aloud with the browser Web
+// Speech API and open a "speaking" window (driven by the real utterance's
+// start/end events) that animates the avatar's bone-based mouth motion.
 //
 // Accessibility: the input carries a visible-to-screen-reader label, Enter
 // sends, and the message list is an aria-live region so new replies are
@@ -60,11 +61,12 @@ export default function ChefChatbot() {
   const [muted, setMuted] = useState(false);
 
   const listRef = useRef<HTMLDivElement>(null);
-  const speakTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
-  // Lazily-created in-browser voice synth (Web Audio). Created on first send so
-  // its AudioContext starts from a user gesture and is not autoplay-blocked.
+  // Lazily-created in-browser voice (Web Speech API SpeechSynthesis). Created on
+  // first send so speaking begins from a user gesture and is not blocked by
+  // browser autoplay/gesture policies.
   const voiceRef = useRef<ChefVoice | null>(null);
-  // Stable getter passed to the 3D scene so it can read live audio loudness.
+  // Stable getter passed to the 3D scene. SpeechSynthesis exposes no live
+  // amplitude, so this returns 0 and the scene uses its sine-wobble fallback.
   const getLoudness = useCallback(
     () => voiceRef.current?.getLoudness() ?? 0,
     []
@@ -76,10 +78,9 @@ export default function ChefChatbot() {
     if (node) node.scrollTop = node.scrollHeight;
   }, [messages]);
 
-  // Clear pending timers and release the AudioContext on unmount.
+  // Cancel any in-flight speech and release the voice on unmount.
   useEffect(() => {
     return () => {
-      if (speakTimer.current) clearTimeout(speakTimer.current);
       voiceRef.current?.dispose();
     };
   }, []);
@@ -114,16 +115,14 @@ export default function ChefChatbot() {
         voiceRef.current = new ChefVoice();
         voiceRef.current.setMuted(muted);
       }
-      const spokenMs = voiceRef.current.speak(reply);
-      // Open the mouth-motion window. When muted, speak() returns 0, so use a
-      // fixed duration proportional to the reply so the jaw still animates.
-      const windowMs =
-        spokenMs > 0
-          ? spokenMs + 120
-          : Math.max(900, Math.min(3200, reply.length * 32));
-      setSpeaking(true);
-      if (speakTimer.current) clearTimeout(speakTimer.current);
-      speakTimer.current = setTimeout(() => setSpeaking(false), windowMs);
+      // Read the reply aloud with the browser SpeechSynthesis voice. The
+      // mouth-motion window is driven by the REAL utterance: open it on start,
+      // close it on end (or error / cancel). When muted, speak() is a no-op and
+      // neither callback fires, so the jaw stays at rest.
+      voiceRef.current.speak(reply, {
+        onStart: () => setSpeaking(true),
+        onEnd: () => setSpeaking(false),
+      });
     },
     [muted]
   );
