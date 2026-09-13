@@ -15,6 +15,24 @@ const config: Config = {
           violet: "#9b6bff",
           mist: "#5ff2df",
         },
+        // Animal-Crossing-inspired cozy pastel palette. Warm cream/beige
+        // backgrounds, soft leaf greens, sunflower yellow/orange accents, a
+        // gentle sky blue, and soft brown text. Used by the chef chatbot to
+        // give it a friendly, rounded, cozy look. Kept separate from `cloud`
+        // (which the rest of the site still uses).
+        ac: {
+          cream: "#fdf6e3",
+          sand: "#f5e8c7",
+          beige: "#efdfb8",
+          leaf: "#8fce7a",
+          leafDark: "#5fa85a",
+          moss: "#3f7d3a",
+          sun: "#ffcf5c",
+          orange: "#f6a545",
+          sky: "#8fd3e8",
+          brown: "#6b4f2a",
+          brownSoft: "#8a6b42",
+        },
       },
       fontFamily: {
         display: ["var(--font-display)", "sans-serif"],
