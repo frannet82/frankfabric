@@ -68,6 +68,13 @@ export const projects: Project[] = [
     href: "/projects/chef-chatbot",
   },
   {
+    label: "PROJECT SHOT · Coach trainer interface",
+    tag: "GenAI",
+    title: "Coach Fabric Smart Fit Trainer",
+    meta: "Client-side conversational gym coach with a 3D avatar",
+    href: "/projects/coach-trainer",
+  },
+  {
     label: "LIVE DEMO · Interactive avatar builder",
     tag: "Next.js",
     title: "Digital Wardrobe Avatar Builder",
