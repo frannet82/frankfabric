@@ -1,0 +1,45 @@
+[
+  {
+    "id": "pull-day-strength",
+    "name": "Pull Day Strength",
+    "goal": "build muscle",
+    "level": "intermediate",
+    "equipment": "gym",
+    "tags": ["strength", "pull", "back", "biceps", "gym"],
+    "targetMuscles": ["back", "lats", "biceps"],
+    "durationMinutes": 50,
+    "exercises": [
+      { "name": "Deadlift", "sets": "4", "reps": "5", "rest": "150s" },
+      { "name": "Pull-Up", "sets": "4", "reps": "6-8", "rest": "120s" },
+      { "name": "Seated Cable Row", "sets": "3", "reps": "10", "rest": "90s" },
+      { "name": "Face Pull", "sets": "3", "reps": "15", "rest": "60s" },
+      { "name": "Hammer Curl", "sets": "3", "reps": "12", "rest": "60s" }
+    ],
+    "tips": [
+      "Lead every row and pull-up with the elbows to feel your back working.",
+      "If pull-ups are tough, use a band or the assisted machine and build up.",
+      "Finish with face pulls to keep your shoulders healthy and balanced."
+    ]
+  },
+  {
+    "id": "tabata-express",
+    "name": "Tabata Express",
+    "goal": "endurance",
+    "level": "advanced",
+    "equipment": "none",
+    "tags": ["hiit", "tabata", "cardio", "conditioning", "bodyweight"],
+    "targetMuscles": ["full-body", "heart", "legs"],
+    "durationMinutes": 16,
+    "exercises": [
+      { "name": "Squat Jumps", "sets": "8", "duration": "20s", "rest": "10s" },
+      { "name": "Push-Up", "sets": "8", "duration": "20s", "rest": "10s" },
+      { "name": "Burpees", "sets": "8", "duration": "20s", "rest": "10s" },
+      { "name": "Mountain Climbers", "sets": "8", "duration": "20s", "rest": "10s" }
+    ],
+    "tips": [
+      "Each Tabata block is four minutes of eight all-out 20-second efforts.",
+      "Pick a movement you can keep good form on even when fatigued.",
+      "Rest a full minute between blocks and stop if your form breaks down."
+    ]
+  }
+]

@@ -1,0 +1,24 @@
+{
+  "id": "FEAT-001",
+  "type": "chore",
+  "description": "Environment setup and green baseline. Install dependencies and confirm the existing project lints and builds cleanly BEFORE any code changes, so later features start from a known-good state. No new npm dependencies may be added at any point in this task.",
+  "status": "completed",
+  "steps": [
+    "cd /projects/sandbox/frankfabric && run `npm install` (OPEN_INTERNET; npm registry reachable). Do NOT add or upgrade any dependency — install exactly what package.json / package-lock.json declare.",
+    "Run `npm run lint` and confirm it exits 0 with no errors.",
+    "Run `npm run build` and confirm the Next.js static export completes successfully (emits out/). Note the existing routes it generates (should include /, /projects/chef-chatbot, /projects/digital-wardrobe).",
+    "Record in the feature `findings` the exact lint result, build result, and the list of statically-exported routes, as the baseline to compare against after later features."
+  ],
+  "acceptance_criteria": [
+    "`npm install` completes with no errors and node_modules is present.",
+    "`npm run lint` exits 0 with no reported problems.",
+    "`npm run build` completes a successful static export with no errors.",
+    "No changes were made to package.json or package-lock.json dependency lists."
+  ],
+  "verification": [
+    "cd /projects/sandbox/frankfabric && npm run lint",
+    "cd /projects/sandbox/frankfabric && npm run build"
+  ],
+  "blocked_reason": null,
+  "findings": "BASELINE GREEN (established before any coach code changes).\n\nENVIRONMENT: Node v22, npm 11.4.2. `npm install` succeeded: added 515 packages, audited 516, exit 0. No new deps added; package.json and package-lock.json are unchanged (git status --porcelain clean for both). npm reported 4 vulnerabilities (3 high, 1 critical) via audit and deprecation warnings for eslint@9.39.5 and a new npm major (12.0.2) available — these are informational only and NOT addressed (do NOT run `npm audit fix` / do NOT change deps).\n\nLINT (`npm run lint` = `eslint .`): exit 0. 1 problem = 0 errors, 1 WARNING only (pre-existing): app/layout.tsx:20:9 @next/next/no-page-custom-font ('Custom fonts not added in pages/_document.js...'). This warning exists on the clean baseline; it is acceptable and lint still exits 0. Later features should not introduce new lint errors.\n\nBUILD (`npm run build` = `next build`, Next.js 16.2.11 with Turbopack): exit 0. Compiled successfully in ~4.2s, TypeScript finished in ~3.0s, static export generated 5/5 pages. `out/` emitted (out/index.html, out/404.html, out/projects/chef-chatbot/index.html, out/projects/digital-wardrobe/index.html, plus models/animations/images asset dirs).\n\nBASELINE STATICALLY-EXPORTED ROUTES (all prerendered as static ○):\n  - /                             (out/index.html)\n  - /_not-found                   (out/404.html)\n  - /projects/chef-chatbot        (out/projects/chef-chatbot/index.html)\n  - /projects/digital-wardrobe    (out/projects/digital-wardrobe/index.html)\nAfter the coach feature, expect one additional route /projects/coach-trainer (out/projects/coach-trainer/index.html) => 5 app routes / 6 pages counting _not-found.\n\nNOTES FOR LATER FEATURES: out/ and .next/ are gitignored build artifacts (do not commit). Verification gate for this project = green `npm run lint` (0 errors) + successful `npm run build` static export; there is no unit-test runner. Do not add any npm dependency at any point."
+}

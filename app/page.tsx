@@ -438,6 +438,41 @@ export default function Home() {
                         </span>
                       </div>
                     </div>
+                  ) : p.href === "/projects/coach-trainer" ? (
+                    <div className="absolute inset-0 grid place-items-center px-6 text-center bg-gradient-to-b from-sf-ink to-sf-gray">
+                      {/* Stylized dumbbell mark — pure CSS/SVG poster, no 3D
+                          canvas. Bold Smart Fit yellow/black/magenta palette so
+                          the preview matches the live coach. The whole card
+                          links out to the live coach. */}
+                      <div className="flex flex-col items-center gap-3">
+                        <span className="grid place-items-center w-16 h-16 rounded-2xl border border-sf-yellow/50 bg-sf-black/90 shadow-[0_6px_20px_rgba(230,0,126,0.35)]">
+                          <svg
+                            viewBox="0 0 24 24"
+                            aria-hidden="true"
+                            className="w-9 h-9"
+                            fill="none"
+                            stroke="url(#coach-dumbbell)"
+                            strokeWidth="1.6"
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                          >
+                            <defs>
+                              <linearGradient id="coach-dumbbell" x1="0" y1="0" x2="1" y2="1">
+                                <stop offset="0" stopColor="#FFF200" />
+                                <stop offset="1" stopColor="#E6007E" />
+                              </linearGradient>
+                            </defs>
+                            <path d="M6.5 6.5v11M17.5 6.5v11M3.5 9v6M20.5 9v6M6.5 12h11" />
+                          </svg>
+                        </span>
+                        <span className="font-display font-bold text-[20px] tracking-tight bg-gradient-to-r from-sf-yellow to-sf-magenta bg-clip-text text-transparent">
+                          Coach Fabric
+                        </span>
+                        <span className="font-mono text-[10.5px] tracking-widest uppercase text-sf-mist/80">
+                          Live Smart Fit trainer · click to chat
+                        </span>
+                      </div>
+                    </div>
                   ) : p.video ? (
                     <video
                       src={asset(p.video)}

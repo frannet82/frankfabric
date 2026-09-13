@@ -203,6 +203,54 @@ base path.
 New files: `lib/chef/recipes.ts`, `lib/chef/chefEngine.ts`,
 `components/chef/ChefScene.tsx`, and `components/chef/ChefChatbot.tsx`.
 
+## Coach trainer
+
+The **Coach trainer interface** project card on the landing page (the `Fitness`
+tile, `projects[1]` in `lib/data.ts`) renders **Coach Fabric**, an energetic Smart Fit
+gym coach you can talk to. It mirrors the Chef chatbot pattern exactly: tell it
+your goal (lose weight, build muscle, endurance, or mobility), ask it to suggest
+a workout, filter by your level or the equipment you have, list the exercises
+for a routine, or ask it to walk you through one rep by rep — and a 3D coach
+avatar bobs and sways while it speaks. It also has a dedicated page at
+`/projects/coach-trainer`.
+
+Like the chef, it runs **100% client-side** — no server, no API route, no API
+key, and no model download — because the site is a static export
+(`output: 'export'`) served from GitHub Pages. The conversation is driven by a
+deterministic, dependency-free rule/retrieval engine (`lib/coach/coachEngine.ts`)
+grounded in a small, **self-authored** workout knowledge base
+(`lib/coach/workouts.ts` plus `data/workouts.json`). Speech uses the browser Web
+Speech API (`lib/coach/coachVoice.ts`) with an energetic English voice, so
+nothing is downloaded and there is nothing to license for the audio.
+
+The 3D coach is a **static, unrigged OBJ** mesh bundled at
+`public/models/characters/coach/` (`coach.obj` + `coach.mtl` and two PNG
+textures). Because it has no skeleton, the whole model group is animated (a
+gentle bob, sway, and lean while speaking) rather than bone-driven. Its source
+is [frannet82/assets](https://github.com/frannet82/assets) (`coach.zip`) — the
+**project owner's own repository** — bundled here with their permission, so
+there is no third-party redistribution concern. The Coach trainer adds **no new**
+open-source library or external dataset; it reuses the three.js /
+`@react-three/fiber` / `@react-three/drei` stack already bundled for the other
+projects. As with the chef, the WebGL scene (`components/coach/CoachScene.tsx`)
+is isolated behind `next/dynamic { ssr:false }` in
+`components/coach/CoachChatbot.tsx` so three.js never runs during static
+generation, and every asset URL is wrapped in `asset()` for the `/frankfabric/`
+base path. The whole coach UI is themed with the Smart Fit `sf` Tailwind tokens
+(bold yellow/black with magenta accents).
+
+On the home-page project gallery, the coach preview occupies the slot that
+previously held the DAM/AEM **"Asset Automation Console"** card (`projects[1]`):
+that entry was replaced in place by the Coach Fabric card, so the coach preview
+renders exactly where the old DAM pipeline tile used to sit, with a bespoke
+Smart Fit CSS/SVG dumbbell poster rendered by the
+`p.href === "/projects/coach-trainer"` branch in `app/page.tsx`.
+
+New files: `lib/coach/workouts.ts`, `data/workouts.json`,
+`lib/coach/coachEngine.ts`, `lib/coach/coachVoice.ts`,
+`components/coach/CoachScene.tsx`, `components/coach/CoachChatbot.tsx`, and
+`app/projects/coach-trainer/page.tsx`.
+
 ## Deployment
 
 The site is a static export (`output: 'export'`) and deploys automatically to

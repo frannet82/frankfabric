@@ -33,6 +33,20 @@ const config: Config = {
           brown: "#6b4f2a",
           brownSoft: "#8a6b42",
         },
+        // Smart Fit gym-inspired palette: bold, high-energy yellow/black with
+        // magenta accents (the chain's signature look). Used by the coach
+        // trainer page/widget/preview to give it an energetic fitness vibe.
+        // Kept separate from `cloud` and `ac`, which the rest of the site uses.
+        sf: {
+          yellow: "#FFF200",
+          gold: "#FCE300",
+          black: "#111111",
+          ink: "#1a1a1a",
+          magenta: "#E6007E",
+          pink: "#ff4fb0",
+          gray: "#2a2a2a",
+          mist: "#f4f4f4",
+        },
       },
       fontFamily: {
         display: ["var(--font-display)", "sans-serif"],
