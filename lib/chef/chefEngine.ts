@@ -12,6 +12,7 @@
 // degrade to this engine, but this module must remain fully functional alone.
 
 import { allRecipes as recipes, type Recipe, type DietaryFlag } from "./recipes";
+import { suggestRecipes, type RankedOption, type SuggestResult } from "./llm";
 
 export type { Recipe, Ingredient, DietaryFlag } from "./recipes";
 
@@ -139,24 +140,48 @@ function findRecipeByName(text: string): Recipe | undefined {
   return best?.recipe;
 }
 
-function recipeMatchesIngredient(recipe: Recipe, needle: string): boolean {
-  const variants = wordVariants(needle);
-  return recipe.ingredients.some((ingredient) => {
-    const itemWords = normalize(ingredient.item).split(" ").flatMap(wordVariants);
-    return variants.some((variant) => itemWords.includes(variant));
-  });
-}
-
-function listNames(list: Recipe[]): string {
-  return list.map((recipe) => recipe.name).join(", ");
-}
-
 function describeRecipe(recipe: Recipe): string {
   return (
     `${recipe.name} is a ${recipe.cuisine} dish that serves ${recipe.servings}. ` +
     `It takes about ${formatTime(recipe)}.${dietaryPhrase(recipe)} ` +
     `Ask me for the ingredients or how to make it whenever you are ready.`
   );
+}
+
+/**
+ * Render a warm chef reply that lists several ranked options, each with the
+ * short rationale produced by the offline intelligence layer (llm.js).
+ */
+function rankedOptionsReply(opener: string, options: RankedOption[]): string {
+  const lines = options
+    .map((option, index) => {
+      const total = option.recipe.prepMinutes + option.recipe.cookMinutes;
+      return `${index + 1}. ${option.recipe.name} — ${option.rationale} (${total} min, ${option.recipe.cuisine}).`;
+    })
+    .join("\n");
+  const lead = options[0].recipe.name;
+  return (
+    `${opener}\n${lines}\n` +
+    `I'd start with ${lead}. Ask me for its ingredients or how to make it whenever you're ready.`
+  );
+}
+
+/**
+ * Build a ChefResponse from an llm SuggestResult, falling back to a friendly
+ * prompt when nothing scored. `opener` sets the tone for the specific intent.
+ */
+function replyFromLlm(result: SuggestResult, opener: string): ChefResponse {
+  if (result.options.length === 0) {
+    return {
+      reply:
+        "I couldn't find a great match for all of that, but tell me one must-have ingredient or loosen a constraint and I'll find something tasty.",
+      suggestions: DEFAULT_SUGGESTIONS,
+    };
+  }
+  return {
+    reply: rankedOptionsReply(opener, result.options),
+    suggestions: result.chips.length > 0 ? result.chips : DEFAULT_SUGGESTIONS,
+  };
 }
 
 function ingredientsReply(recipe: Recipe): string {
@@ -172,16 +197,6 @@ function stepsReply(recipe: Recipe): string {
     `Let's make ${recipe.name}! ${formatTime(recipe)}.\n${lines}\n` +
     `Enjoy, and give it a taste before serving.`
   );
-}
-
-function pickSuggestion(seedText: string, list: Recipe[]): Recipe {
-  // Deterministic pseudo-random pick: hash the input so repeated identical
-  // inputs return the same recipe, but different inputs vary the suggestion.
-  let hash = 0;
-  for (let i = 0; i < seedText.length; i += 1) {
-    hash = (hash * 31 + seedText.charCodeAt(i)) >>> 0;
-  }
-  return list[hash % list.length];
 }
 
 const GREETING_WORDS = new Set([
@@ -294,74 +309,47 @@ export function respondToMessage(
     };
   }
 
-  // Diet filter, e.g. "show me something vegan".
-  if (diet) {
-    const matches = recipes.filter((recipe) => recipe.dietary.includes(diet));
-    if (matches.length > 0) {
-      const pick = pickSuggestion(normalized, matches);
-      return {
-        reply:
-          `Here are some ${DIETARY_LABELS[diet]} options: ${listNames(matches)}. ` +
-          `How about ${pick.name}? ${describeRecipe(pick)}`,
-        suggestions: [
-          `Show ingredients for ${pick.name}`,
-          `How do I make ${pick.name}?`,
-        ],
-      };
-    }
+  // Multi-constraint / find / diet / suggest queries are handled by the offline
+  // intelligence layer (llm.js), which parses the message into a structured
+  // query, ranks the whole 74-recipe corpus with synonym + fuzzy matching, and
+  // returns several options each with a short rationale plus follow-up chips.
+  // The plain named-dish description below still takes priority when the user
+  // clearly named a single dish without asking to find/suggest/filter.
+  const llmResult = suggestRecipes(raw, recipes, 4);
+  const wantsMultiOptions =
+    diet !== undefined ||
+    wantsSuggest ||
+    wantsFind ||
+    llmResult.query.includeIngredients.length > 0 ||
+    llmResult.query.excludeIngredients.length > 0 ||
+    llmResult.query.maxTime !== null ||
+    llmResult.query.mealType !== null ||
+    llmResult.query.cuisine !== null;
+
+  // Prefer a direct description when the user simply named a known dish and did
+  // not ask us to find/suggest/filter, so "margherita pizza" stays specific.
+  if (namedRecipe && !wantsMultiOptions) {
     return {
-      reply: `I don't have a ${DIETARY_LABELS[diet]} recipe on hand right now, but I can suggest something else tasty. Want a suggestion?`,
-      suggestions: DEFAULT_SUGGESTIONS,
+      reply: describeRecipe(namedRecipe),
+      suggestions: [
+        `Show ingredients for ${namedRecipe.name}`,
+        `How do I make ${namedRecipe.name}?`,
+      ],
     };
   }
 
-  // "Find recipes with <ingredient>" (also covers "I have <ingredient>").
-  if ((wantsFind || tokens.length > 0) && !wantsSuggest) {
-    const ingredientTokens = tokens.filter((token) => token.length > 2);
-    const matchesByIngredient = recipes.filter((recipe) =>
-      ingredientTokens.some((token) => recipeMatchesIngredient(recipe, token)),
-    );
-    if (matchesByIngredient.length > 0) {
-      const found = ingredientTokens.find((token) =>
-        matchesByIngredient.some((recipe) => recipeMatchesIngredient(recipe, token)),
-      );
-      const pick = pickSuggestion(normalized, matchesByIngredient);
-      return {
-        reply:
-          `Nice, ${found} is a great start. You could make: ${listNames(matchesByIngredient)}. ` +
-          `I'd go with ${pick.name}. ${describeRecipe(pick)}`,
-        suggestions: [
-          `Show ingredients for ${pick.name}`,
-          `How do I make ${pick.name}?`,
-        ],
-      };
+  if (wantsMultiOptions && llmResult.options.length > 0) {
+    let opener: string;
+    if (diet) {
+      opener = `Here are some ${DIETARY_LABELS[diet]} options I'd recommend:`;
+    } else if (llmResult.query.surprise) {
+      opener = "Let me surprise you with a few ideas:";
+    } else if (wantsSuggest) {
+      opener = "Here are a few ideas you might like:";
+    } else {
+      opener = "Here are a few options that fit:";
     }
-
-    // Named a dish without an explicit verb, e.g. "margherita pizza".
-    if (namedRecipe) {
-      return {
-        reply: describeRecipe(namedRecipe),
-        suggestions: [
-          `Show ingredients for ${namedRecipe.name}`,
-          `How do I make ${namedRecipe.name}?`,
-        ],
-      };
-    }
-  }
-
-  // General suggestion request.
-  if (wantsSuggest || namedRecipe === undefined) {
-    const pick = pickSuggestion(normalized, recipes);
-    if (wantsSuggest) {
-      return {
-        reply: `How about ${pick.name}? ${describeRecipe(pick)}`,
-        suggestions: [
-          `Show ingredients for ${pick.name}`,
-          `How do I make ${pick.name}?`,
-          "Suggest something else",
-        ],
-      };
-    }
+    return replyFromLlm(llmResult, opener);
   }
 
   // Named a dish that we recognised in some other phrasing.
@@ -373,6 +361,11 @@ export function respondToMessage(
         `How do I make ${namedRecipe.name}?`,
       ],
     };
+  }
+
+  // Nothing named and no constraint parsed: offer a spread of ranked ideas.
+  if (llmResult.options.length > 0) {
+    return replyFromLlm(llmResult, "Here are a few ideas you might like:");
   }
 
   // Graceful fallback.
