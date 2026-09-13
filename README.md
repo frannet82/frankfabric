@@ -18,6 +18,10 @@ Then open http://localhost:3000.
 - `app/page.tsx` — landing page (hero, capabilities, case studies, credentials, project gallery, contact)
 - `app/projects/digital-wardrobe/page.tsx` — live interactive project page
 - `components/WardrobeBuilder.tsx` — the Digital Wardrobe: an interactive 3D dress-up builder for swapping outfits and colors on a rigged VRM avatar
+- `components/chef/ChefChatbot.tsx` — Chef Fabric: a fully client-side conversational recipe assistant with a 3D VRM chef avatar (see "Chef chatbot" below)
+- `components/chef/ChefScene.tsx` — the chef's WebGL stage, reusing the drophunter avatar objects and the idle/waving animation clips
+- `lib/chef/recipes.ts` — self-authored recipe knowledge base that grounds the chef's answers
+- `lib/chef/chefEngine.ts` — deterministic, dependency-free retrieval/rule engine that turns a message into a recipe reply
 - `lib/data.ts` — content for stack, case studies, badges, and project gallery cards
 
 ## Attribution
@@ -37,6 +41,14 @@ libraries, all MIT-licensed:
   from `gltf.userData.vrm`, and calling `vrm.update(delta)` every frame so the
   rig's SpringBones and lookAt animate) rather than vendoring the editor
   application itself.
+
+The **Chef chatbot** (`components/chef/`) adds **no new** open-source library,
+model, or external recipe dataset. Its 3D chef avatar reuses the same three.js /
+`@react-three/fiber` / `@react-three/drei` / `@pixiv/three-vrm` stack credited
+above (already bundled for the Digital Wardrobe), and its recipe knowledge base
+(`lib/chef/recipes.ts`) is **self-authored** for this project — it is not
+derived from a third-party dataset, so there is nothing further to attribute
+here. See the "Chef chatbot" section below.
 
 ### Bundled 3D model
 
@@ -157,6 +169,39 @@ document how the `.jpg` was produced; the committed `.jpg` is the only image the
 card and hero reference. An earlier SVG-generated preview PNG and its generator
 script were used before the real avatar render replaced them and have since been
 removed.
+
+## Chef chatbot
+
+The **Chatbot interface** project card on the landing page (the `GenAI` tile,
+`projects[2]` in `lib/data.ts`) renders **Chef Fabric**, a conversational recipe
+assistant you can talk to right inside the card. Ask it for a recipe, tell it an
+ingredient you have on hand, or ask how to cook a dish, and a 3D VRM chef avatar
+waves back and answers.
+
+It runs **100% client-side** — there is no server, no API route, no API key, and
+no model download. That is deliberate: the site is a static export
+(`output: 'export'`) served from GitHub Pages, which has no Node/server runtime,
+so a server-hosted LLM would break the build. Instead the conversation is driven
+by a deterministic, dependency-free retrieval/rule engine
+(`lib/chef/chefEngine.ts`) grounded in a small, self-authored recipe knowledge
+base (`lib/chef/recipes.ts`). It works instantly and offline and adds negligible
+bundle weight.
+
+The 3D chef reuses the existing **drophunter** avatar objects from
+`public/models/characters/drophunter/` (the base `body.vrm`, the required eyes
+trait, a hair top, and the `fulljacket.vrm` tinted near-white so it reads as chef
+whites over `cargopants.vrm`), topped with a lightweight three.js primitive
+toque. It plays the already-bundled `public/animations/idle.fbx` and
+`waving.fbx` Mixamo clips (retargeted onto the VRM humanoid the same way the
+Digital Wardrobe does), waving briefly whenever it replies before settling back
+to idle. As with the wardrobe, the WebGL scene (`components/chef/ChefScene.tsx`)
+is isolated behind `next/dynamic { ssr:false }` in
+`components/chef/ChefChatbot.tsx`, so three.js never runs during static
+generation, and every asset URL is wrapped in `asset()` for the `/frankfabric/`
+base path.
+
+New files: `lib/chef/recipes.ts`, `lib/chef/chefEngine.ts`,
+`components/chef/ChefScene.tsx`, and `components/chef/ChefChatbot.tsx`.
 
 ## Deployment
 
