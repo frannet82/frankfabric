@@ -12,7 +12,12 @@
 // degrade to this engine, but this module must remain fully functional alone.
 
 import { allRecipes as recipes, type Recipe, type DietaryFlag } from "./recipes";
-import { suggestRecipes, type RankedOption, type SuggestResult } from "./llm";
+import {
+  suggestRecipes,
+  singularize,
+  type RankedOption,
+  type SuggestResult,
+} from "./llm";
 
 export type { Recipe, Ingredient, DietaryFlag } from "./recipes";
 
@@ -95,14 +100,8 @@ function tokenize(text: string): string[] {
     .filter((word) => word.length > 0 && !STOP_WORDS.has(word));
 }
 
-// Very small singular helper so "tomatoes" matches "tomato", etc.
-function singularize(word: string): string {
-  if (word.endsWith("ies") && word.length > 4) return `${word.slice(0, -3)}y`;
-  if (word.endsWith("es") && word.length > 3) return word.slice(0, -2);
-  if (word.endsWith("s") && word.length > 3) return word.slice(0, -1);
-  return word;
-}
-
+// Singularisation is shared with the offline intelligence layer (llm.js) so
+// name-matching here and ingredient-matching there normalise words identically.
 function wordVariants(word: string): string[] {
   const singular = singularize(word);
   return singular === word ? [word] : [word, singular];

@@ -839,14 +839,14 @@
       { "quantity": "2 tsp", "item": "shawarma spice" },
       { "quantity": "2 cloves", "item": "garlic" },
       { "quantity": "1", "item": "lemon" },
-      { "quantity": "4", "item": "flatbreads" }
+      { "quantity": "4", "item": "gluten-free flatbreads" }
     ],
     "steps": [
       "Mix the yogurt, spice, garlic, and lemon into a marinade.",
       "Coat the chicken and marinate for at least an hour.",
       "Roast or pan-fry the chicken until charred and cooked.",
       "Rest, then slice the chicken thinly.",
-      "Serve in warm flatbreads with salad and sauce."
+      "Serve in warm gluten-free flatbreads with salad and sauce."
     ],
     "prepMinutes": 70,
     "cookMinutes": 20,
@@ -886,7 +886,7 @@
       { "quantity": "1 head", "item": "cauliflower" },
       { "quantity": "2", "item": "eggs" },
       { "quantity": "1 cup", "item": "peas" },
-      { "quantity": "2 tbsp", "item": "soy sauce" },
+      { "quantity": "2 tbsp", "item": "tamari" },
       { "quantity": "2", "item": "spring onions" },
       { "quantity": "2 tbsp", "item": "vegetable oil" }
     ],
@@ -894,7 +894,7 @@
       "Blitz the cauliflower into rice-sized pieces.",
       "Scramble the eggs in a hot pan, then set aside.",
       "Stir-fry the cauliflower and peas until tender.",
-      "Return the eggs and add the soy sauce.",
+      "Return the eggs and add the tamari.",
       "Toss with sliced spring onions and serve."
     ],
     "prepMinutes": 10,
@@ -1205,12 +1205,12 @@
       { "quantity": "8", "item": "rice paper wrappers" },
       { "quantity": "1", "item": "carrot" },
       { "quantity": "1", "item": "cucumber" },
-      { "quantity": "100g", "item": "vermicelli noodles" },
+      { "quantity": "100g", "item": "rice vermicelli noodles" },
       { "quantity": "1 handful", "item": "mint" },
       { "quantity": "1 handful", "item": "coriander" }
     ],
     "steps": [
-      "Soak the vermicelli noodles until soft, then drain.",
+      "Soak the rice vermicelli noodles until soft, then drain.",
       "Julienne the carrot and cucumber into thin strips.",
       "Dip a rice paper wrapper in warm water until pliable.",
       "Lay noodles, vegetables, and herbs across the centre and roll tightly.",
