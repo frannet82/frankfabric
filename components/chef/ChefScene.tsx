@@ -9,6 +9,14 @@
 // its own hat (Biped Bip001_Cap* bones), so no procedural toque or garment
 // assembly is needed here.
 //
+// COLORS: the FBX's material is a MeshPhongMaterial with a white specular and
+// mid shininess, which under warm lights washes the diffuse texture out to a
+// shiny white. We therefore swap it for a matte MeshStandardMaterial (roughness
+// 0.9, metalness 0, white color) carrying the same sRGB diffuse map so the
+// texture's real colors read faithfully, and we keep the scene lights near
+// neutral (white / faintly warm) so nothing recolors the chef while still
+// feeling cozy.
+//
 // This is a plain FBX, NOT a VRM: it is loaded with FBXLoader and does not go
 // through the VRMLoaderPlugin or the lib/vrm transplant/retarget helpers (those
 // remain in use by components/wardrobe/WardrobeScene.tsx only).
@@ -119,15 +127,31 @@ function Avatar({
       if (mesh.isMesh) {
         mesh.castShadow = true;
         mesh.receiveShadow = true;
+        // COLOR FIX: the FBX ships a MeshPhongMaterial with a WHITE specular
+        // (#ffffff) and shininess ~52. Under any warm light that produces harsh
+        // shiny/plasticky highlights that wash the diffuse texture out to white.
+        // Replace it with a matte MeshStandardMaterial (roughness 0.9,
+        // metalness 0) carrying the same diffuse map so the texture's true
+        // colors read faithfully with no blown-out specular. color stays white
+        // (#ffffff) so the material never tints the map.
         const materials = Array.isArray(mesh.material)
           ? mesh.material
           : [mesh.material];
-        materials.forEach((raw) => {
-          const mat = raw as THREE.MeshPhongMaterial;
-          if (!mat) return;
-          mat.map = texture;
-          mat.needsUpdate = true;
+        const replaced = materials.map((raw) => {
+          const matte = new THREE.MeshStandardMaterial({
+            map: texture,
+            color: new THREE.Color(0xffffff),
+            roughness: 0.9,
+            metalness: 0,
+          });
+          matte.needsUpdate = true;
+          const src = raw as THREE.Material | undefined;
+          if (src && "name" in src && src.name) matte.name = src.name;
+          return matte;
         });
+        mesh.material = Array.isArray(mesh.material)
+          ? replaced
+          : replaced[0];
       }
     });
 
@@ -197,10 +221,11 @@ function Avatar({
   });
 
   // On unmount, dispose ONLY the resources this component owns. SkeletonUtils
-  // .clone reuses geometries and materials by reference from the loader-cached
-  // fbx, so disposing them here would break a React strict-mode remount that
-  // reuses the same cached loader result. The one thing we uniquely created is
-  // the cloned diffuse texture, so dispose just that.
+  // .clone reuses geometries by reference from the loader-cached fbx, so we do
+  // NOT dispose geometry here. The materials, however, are freshly created
+  // MeshStandardMaterials (see the color fix above) and each carries the cloned
+  // diffuse texture we uniquely created, so dispose both the material and its
+  // map.
   useEffect(() => {
     return () => {
       model.traverse((obj) => {
@@ -210,8 +235,9 @@ function Avatar({
           ? mesh.material
           : [mesh.material];
         materials.forEach((raw) => {
-          const mat = raw as THREE.MeshPhongMaterial | undefined;
+          const mat = raw as THREE.MeshStandardMaterial | undefined;
           mat?.map?.dispose();
+          mat?.dispose();
         });
       });
     };
@@ -241,20 +267,25 @@ export default function ChefScene({ speaking = false, getLoudness }: SceneProps)
         camera.lookAt(0, AIM_HEIGHT, 0);
       }}
     >
-      {/* Cozy Animal-Crossing lighting: warm, soft, evenly lit — no neon rim. */}
-      <ambientLight intensity={0.95} color="#fff4dc" />
+      {/* Cozy Animal-Crossing lighting: soft and evenly lit, but kept NEAR
+          NEUTRAL so the chef's diffuse texture shows its true colors. The
+          previous strongly warm casts (#fff4dc / #fff1cf / #ffe3a8) pushed the
+          whole model yellow/orange and hid the texture; these are now white or
+          only very subtly warm (#fff6ec) at modest intensity so the vibe stays
+          cozy without recoloring the chef. */}
+      <ambientLight intensity={0.85} color="#ffffff" />
       <directionalLight
         position={[3, 6, 4]}
-        intensity={1.15}
-        color="#fff1cf"
+        intensity={1.05}
+        color="#fff6ec"
         castShadow
         shadow-mapSize-width={1024}
         shadow-mapSize-height={1024}
       />
-      {/* Soft warm fill from the opposite side (replaces the violet rim). */}
-      <directionalLight position={[-4, 3, -3]} intensity={0.5} color="#ffe3a8" />
-      {/* Sky-to-ground bounce in gentle pastel sky/leaf tones. */}
-      <hemisphereLight args={["#bfe8ff", "#dff3cf", 0.6]} />
+      {/* Soft neutral fill from the opposite side. */}
+      <directionalLight position={[-4, 3, -3]} intensity={0.45} color="#ffffff" />
+      {/* Very gentle sky-to-ground bounce, near-neutral so it never tints. */}
+      <hemisphereLight args={["#eef4ff", "#f3efe6", 0.45]} />
 
       <Suspense fallback={null}>
         <group position={[0, 0, 0]}>
