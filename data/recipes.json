@@ -1,0 +1,1519 @@
+[
+  {
+    "id": "shakshuka",
+    "name": "Shakshuka",
+    "cuisine": "Middle Eastern",
+    "tags": ["breakfast", "one-pan", "brunch", "comfort", "eggs"],
+    "ingredients": [
+      { "quantity": "2 tbsp", "item": "olive oil" },
+      { "quantity": "1", "item": "onion" },
+      { "quantity": "1", "item": "red pepper" },
+      { "quantity": "3 cloves", "item": "garlic" },
+      { "quantity": "1 tsp", "item": "cumin" },
+      { "quantity": "1 tsp", "item": "paprika" },
+      { "quantity": "2 cans", "item": "chopped tomatoes" },
+      { "quantity": "4", "item": "eggs" }
+    ],
+    "steps": [
+      "Soften the sliced onion and pepper in olive oil over medium heat.",
+      "Stir in the garlic, cumin, and paprika and cook for a minute until fragrant.",
+      "Pour in the tomatoes and simmer for 10 minutes until thickened.",
+      "Make four wells in the sauce and crack an egg into each one.",
+      "Cover and cook gently until the whites set but the yolks stay soft, then serve with bread."
+    ],
+    "prepMinutes": 10,
+    "cookMinutes": 20,
+    "servings": 4,
+    "dietary": ["vegetarian", "gluten-free", "dairy-free"]
+  },
+  {
+    "id": "pad-thai",
+    "name": "Chicken Pad Thai",
+    "cuisine": "Thai",
+    "tags": ["noodles", "stir-fry", "quick", "dinner"],
+    "ingredients": [
+      { "quantity": "200g", "item": "rice noodles" },
+      { "quantity": "300g", "item": "chicken breast" },
+      { "quantity": "2", "item": "eggs" },
+      { "quantity": "3 tbsp", "item": "fish sauce" },
+      { "quantity": "2 tbsp", "item": "tamarind paste" },
+      { "quantity": "2 tbsp", "item": "brown sugar" },
+      { "quantity": "100g", "item": "bean sprouts" },
+      { "quantity": "3 tbsp", "item": "crushed peanuts" }
+    ],
+    "steps": [
+      "Soak the rice noodles in warm water until pliable, then drain.",
+      "Stir-fry the sliced chicken in a hot wok until cooked through.",
+      "Push the chicken aside, scramble the eggs, then combine.",
+      "Add the noodles with fish sauce, tamarind, and sugar, tossing over high heat.",
+      "Fold through the bean sprouts and finish with crushed peanuts."
+    ],
+    "prepMinutes": 20,
+    "cookMinutes": 10,
+    "servings": 3,
+    "dietary": ["dairy-free"]
+  },
+  {
+    "id": "miso-soup",
+    "name": "Simple Miso Soup",
+    "cuisine": "Japanese",
+    "tags": ["soup", "quick", "light", "starter"],
+    "ingredients": [
+      { "quantity": "1L", "item": "dashi stock" },
+      { "quantity": "3 tbsp", "item": "miso paste" },
+      { "quantity": "150g", "item": "silken tofu" },
+      { "quantity": "2", "item": "spring onions" },
+      { "quantity": "1 sheet", "item": "nori" }
+    ],
+    "steps": [
+      "Warm the dashi stock in a pot without letting it boil.",
+      "Whisk the miso paste with a ladle of warm stock until smooth, then stir it back in.",
+      "Add the cubed tofu and heat through gently.",
+      "Slice the spring onions and nori into thin strips.",
+      "Ladle into bowls and top with the onions and nori."
+    ],
+    "prepMinutes": 5,
+    "cookMinutes": 10,
+    "servings": 4,
+    "dietary": ["vegetarian", "vegan", "gluten-free", "dairy-free"]
+  },
+  {
+    "id": "beef-bulgogi",
+    "name": "Beef Bulgogi",
+    "cuisine": "Korean",
+    "tags": ["beef", "grill", "dinner", "marinated"],
+    "ingredients": [
+      { "quantity": "500g", "item": "thinly sliced beef" },
+      { "quantity": "4 tbsp", "item": "soy sauce" },
+      { "quantity": "2 tbsp", "item": "brown sugar" },
+      { "quantity": "1 tbsp", "item": "sesame oil" },
+      { "quantity": "3 cloves", "item": "garlic" },
+      { "quantity": "1", "item": "pear" },
+      { "quantity": "2", "item": "spring onions" }
+    ],
+    "steps": [
+      "Grate the pear and garlic, then mix with soy sauce, sugar, and sesame oil.",
+      "Marinate the sliced beef in the mixture for at least 30 minutes.",
+      "Heat a griddle or heavy pan until very hot.",
+      "Sear the beef in batches so it caramelises rather than steams.",
+      "Scatter with sliced spring onions and serve with rice."
+    ],
+    "prepMinutes": 40,
+    "cookMinutes": 10,
+    "servings": 4,
+    "dietary": ["dairy-free"]
+  },
+  {
+    "id": "falafel-wrap",
+    "name": "Baked Falafel Wrap",
+    "cuisine": "Middle Eastern",
+    "tags": ["lunch", "baked", "wrap", "meal-prep"],
+    "ingredients": [
+      { "quantity": "2 cans", "item": "chickpeas" },
+      { "quantity": "1", "item": "onion" },
+      { "quantity": "3 cloves", "item": "garlic" },
+      { "quantity": "1 handful", "item": "parsley" },
+      { "quantity": "1 tsp", "item": "cumin" },
+      { "quantity": "2 tbsp", "item": "flour" },
+      { "quantity": "4", "item": "flatbreads" }
+    ],
+    "steps": [
+      "Blitz the chickpeas, onion, garlic, parsley, and cumin into a coarse paste.",
+      "Stir in the flour and shape the mixture into small patties.",
+      "Arrange on a lined tray and bake at 200C for 25 minutes, turning once.",
+      "Warm the flatbreads while the falafel finishes baking.",
+      "Fill each wrap with falafel, salad, and a spoonful of tahini."
+    ],
+    "prepMinutes": 20,
+    "cookMinutes": 25,
+    "servings": 4,
+    "dietary": ["vegetarian", "vegan", "dairy-free"]
+  },
+  {
+    "id": "ratatouille",
+    "name": "Provencal Ratatouille",
+    "cuisine": "French",
+    "tags": ["vegetable", "one-pot", "comfort", "summer"],
+    "ingredients": [
+      { "quantity": "1", "item": "aubergine" },
+      { "quantity": "2", "item": "courgettes" },
+      { "quantity": "1", "item": "red pepper" },
+      { "quantity": "1", "item": "onion" },
+      { "quantity": "2 cans", "item": "chopped tomatoes" },
+      { "quantity": "3 tbsp", "item": "olive oil" },
+      { "quantity": "1 tsp", "item": "herbes de provence" }
+    ],
+    "steps": [
+      "Chop the aubergine, courgettes, and pepper into bite-sized pieces.",
+      "Soften the onion in olive oil, then brown the vegetables in batches.",
+      "Return everything to the pot with the tomatoes and herbs.",
+      "Simmer gently for 30 minutes until the vegetables are tender.",
+      "Season well and serve warm or at room temperature."
+    ],
+    "prepMinutes": 20,
+    "cookMinutes": 35,
+    "servings": 4,
+    "dietary": ["vegetarian", "vegan", "gluten-free", "dairy-free"]
+  },
+  {
+    "id": "chicken-katsu-curry",
+    "name": "Chicken Katsu Curry",
+    "cuisine": "Japanese",
+    "tags": ["dinner", "comfort", "fried", "rice"],
+    "ingredients": [
+      { "quantity": "2", "item": "chicken breasts" },
+      { "quantity": "100g", "item": "panko breadcrumbs" },
+      { "quantity": "1", "item": "egg" },
+      { "quantity": "50g", "item": "flour" },
+      { "quantity": "1", "item": "onion" },
+      { "quantity": "1 tbsp", "item": "curry powder" },
+      { "quantity": "300ml", "item": "chicken stock" }
+    ],
+    "steps": [
+      "Coat the chicken in flour, then egg, then panko breadcrumbs.",
+      "Shallow-fry the chicken until golden and cooked through, then rest.",
+      "Soften the diced onion, stir in the curry powder, and cook briefly.",
+      "Add the stock and simmer into a smooth, glossy sauce.",
+      "Slice the chicken, pour over the sauce, and serve with rice."
+    ],
+    "prepMinutes": 15,
+    "cookMinutes": 25,
+    "servings": 2,
+    "dietary": ["dairy-free"]
+  },
+  {
+    "id": "black-bean-quesadilla",
+    "name": "Black Bean Quesadilla",
+    "cuisine": "Mexican",
+    "tags": ["quick", "lunch", "vegetarian", "kid-friendly"],
+    "ingredients": [
+      { "quantity": "1 can", "item": "black beans" },
+      { "quantity": "4", "item": "flour tortillas" },
+      { "quantity": "150g", "item": "grated cheese" },
+      { "quantity": "1", "item": "red pepper" },
+      { "quantity": "1 tsp", "item": "cumin" },
+      { "quantity": "1 tbsp", "item": "olive oil" }
+    ],
+    "steps": [
+      "Mash the drained beans lightly with the cumin and a pinch of salt.",
+      "Spread the beans over half of each tortilla and add pepper and cheese.",
+      "Fold the tortillas over into half-moons.",
+      "Cook in a dry pan over medium heat until golden on both sides.",
+      "Cut into wedges and serve with salsa."
+    ],
+    "prepMinutes": 10,
+    "cookMinutes": 10,
+    "servings": 2,
+    "dietary": ["vegetarian"]
+  },
+  {
+    "id": "tom-kha-gai",
+    "name": "Tom Kha Gai",
+    "cuisine": "Thai",
+    "tags": ["soup", "coconut", "comfort", "dinner"],
+    "ingredients": [
+      { "quantity": "1 can", "item": "coconut milk" },
+      { "quantity": "500ml", "item": "chicken stock" },
+      { "quantity": "300g", "item": "chicken thighs" },
+      { "quantity": "200g", "item": "mushrooms" },
+      { "quantity": "3 slices", "item": "galangal" },
+      { "quantity": "2 stalks", "item": "lemongrass" },
+      { "quantity": "2 tbsp", "item": "lime juice" }
+    ],
+    "steps": [
+      "Simmer the stock with bruised lemongrass and galangal for 10 minutes.",
+      "Add the sliced chicken and cook until just done.",
+      "Stir in the mushrooms and coconut milk and heat through.",
+      "Finish with lime juice and a splash of fish sauce to taste.",
+      "Serve hot, discarding the lemongrass and galangal."
+    ],
+    "prepMinutes": 15,
+    "cookMinutes": 20,
+    "servings": 4,
+    "dietary": ["gluten-free", "dairy-free"]
+  },
+  {
+    "id": "caprese-salad",
+    "name": "Caprese Salad",
+    "cuisine": "Italian",
+    "tags": ["salad", "no-cook", "summer", "fresh", "quick"],
+    "ingredients": [
+      { "quantity": "4", "item": "tomatoes" },
+      { "quantity": "250g", "item": "mozzarella" },
+      { "quantity": "1 handful", "item": "basil" },
+      { "quantity": "3 tbsp", "item": "olive oil" },
+      { "quantity": "1 tbsp", "item": "balsamic vinegar" }
+    ],
+    "steps": [
+      "Slice the tomatoes and mozzarella into even rounds.",
+      "Arrange them alternately on a platter.",
+      "Tuck fresh basil leaves between the slices.",
+      "Drizzle with olive oil and balsamic vinegar.",
+      "Season with salt and pepper just before serving."
+    ],
+    "prepMinutes": 10,
+    "cookMinutes": 0,
+    "servings": 4,
+    "dietary": ["vegetarian", "gluten-free"]
+  },
+  {
+    "id": "vegetable-biryani",
+    "name": "Vegetable Biryani",
+    "cuisine": "Indian",
+    "tags": ["rice", "one-pot", "dinner", "spicy"],
+    "ingredients": [
+      { "quantity": "300g", "item": "basmati rice" },
+      { "quantity": "2 cups", "item": "mixed vegetables" },
+      { "quantity": "1", "item": "onion" },
+      { "quantity": "2 tbsp", "item": "biryani spice mix" },
+      { "quantity": "1 cup", "item": "yogurt" },
+      { "quantity": "600ml", "item": "vegetable stock" },
+      { "quantity": "2 tbsp", "item": "ghee" }
+    ],
+    "steps": [
+      "Fry the sliced onion in ghee until deep golden, then set aside half for garnish.",
+      "Stir the vegetables and spice mix into the remaining onion.",
+      "Add the yogurt and cook for a couple of minutes.",
+      "Rinse the rice, add it with the stock, and bring to a boil.",
+      "Cover and steam on low for 15 minutes, then fluff and top with the reserved onion."
+    ],
+    "prepMinutes": 20,
+    "cookMinutes": 30,
+    "servings": 4,
+    "dietary": ["vegetarian", "gluten-free"]
+  },
+  {
+    "id": "fish-tacos",
+    "name": "Crispy Fish Tacos",
+    "cuisine": "Mexican",
+    "tags": ["tacos", "fish", "dinner", "fresh"],
+    "ingredients": [
+      { "quantity": "400g", "item": "white fish fillets" },
+      { "quantity": "8", "item": "corn tortillas" },
+      { "quantity": "200g", "item": "shredded cabbage" },
+      { "quantity": "1", "item": "lime" },
+      { "quantity": "3 tbsp", "item": "mayonnaise" },
+      { "quantity": "1 tsp", "item": "chipotle paste" }
+    ],
+    "steps": [
+      "Season the fish and pan-fry until crisp and flaky.",
+      "Mix the mayonnaise with chipotle paste and a squeeze of lime.",
+      "Warm the tortillas in a dry pan.",
+      "Flake the fish and pile it onto the tortillas with cabbage.",
+      "Drizzle with the chipotle mayo and finish with lime."
+    ],
+    "prepMinutes": 15,
+    "cookMinutes": 10,
+    "servings": 4,
+    "dietary": ["dairy-free"]
+  },
+  {
+    "id": "minestrone-soup",
+    "name": "Minestrone Soup",
+    "cuisine": "Italian",
+    "tags": ["soup", "one-pot", "budget", "meal-prep", "comfort"],
+    "ingredients": [
+      { "quantity": "1", "item": "onion" },
+      { "quantity": "2", "item": "carrots" },
+      { "quantity": "2 stalks", "item": "celery" },
+      { "quantity": "1 can", "item": "cannellini beans" },
+      { "quantity": "1 can", "item": "chopped tomatoes" },
+      { "quantity": "100g", "item": "small pasta" },
+      { "quantity": "1.5L", "item": "vegetable stock" }
+    ],
+    "steps": [
+      "Dice the onion, carrots, and celery and soften them in olive oil.",
+      "Add the tomatoes and stock and bring to a simmer.",
+      "Stir in the beans and cook for 15 minutes.",
+      "Add the pasta and cook until tender.",
+      "Season well and serve with grated cheese if you like."
+    ],
+    "prepMinutes": 15,
+    "cookMinutes": 30,
+    "servings": 6,
+    "dietary": ["vegetarian", "vegan", "dairy-free"]
+  },
+  {
+    "id": "teriyaki-salmon",
+    "name": "Teriyaki Salmon",
+    "cuisine": "Japanese",
+    "tags": ["fish", "quick", "dinner", "protein"],
+    "ingredients": [
+      { "quantity": "2", "item": "salmon fillets" },
+      { "quantity": "3 tbsp", "item": "soy sauce" },
+      { "quantity": "2 tbsp", "item": "mirin" },
+      { "quantity": "1 tbsp", "item": "honey" },
+      { "quantity": "1 tsp", "item": "grated ginger" }
+    ],
+    "steps": [
+      "Whisk the soy sauce, mirin, honey, and ginger into a glaze.",
+      "Sear the salmon skin-side down in a hot pan.",
+      "Flip the fillets and pour in the glaze.",
+      "Spoon the bubbling sauce over the fish until it thickens.",
+      "Serve over rice with the pan sauce drizzled on top."
+    ],
+    "prepMinutes": 5,
+    "cookMinutes": 12,
+    "servings": 2,
+    "dietary": ["dairy-free"]
+  },
+  {
+    "id": "stuffed-bell-peppers",
+    "name": "Stuffed Bell Peppers",
+    "cuisine": "Mediterranean",
+    "tags": ["dinner", "baked", "vegetarian", "meal-prep"],
+    "ingredients": [
+      { "quantity": "4", "item": "bell peppers" },
+      { "quantity": "1 cup", "item": "cooked rice" },
+      { "quantity": "1 can", "item": "chopped tomatoes" },
+      { "quantity": "1", "item": "onion" },
+      { "quantity": "100g", "item": "feta" },
+      { "quantity": "2 tbsp", "item": "olive oil" }
+    ],
+    "steps": [
+      "Halve the peppers and remove the seeds.",
+      "Soften the diced onion in olive oil, then stir in the rice and tomatoes.",
+      "Spoon the filling into the pepper halves.",
+      "Crumble feta over the top and drizzle with olive oil.",
+      "Bake at 190C for 30 minutes until the peppers are tender."
+    ],
+    "prepMinutes": 15,
+    "cookMinutes": 30,
+    "servings": 4,
+    "dietary": ["vegetarian", "gluten-free"]
+  },
+  {
+    "id": "beef-pho",
+    "name": "Beef Pho",
+    "cuisine": "Vietnamese",
+    "tags": ["soup", "noodles", "comfort", "dinner"],
+    "ingredients": [
+      { "quantity": "1.5L", "item": "beef broth" },
+      { "quantity": "200g", "item": "rice noodles" },
+      { "quantity": "250g", "item": "thinly sliced beef" },
+      { "quantity": "3 slices", "item": "ginger" },
+      { "quantity": "2", "item": "star anise" },
+      { "quantity": "1 handful", "item": "basil" },
+      { "quantity": "1", "item": "lime" }
+    ],
+    "steps": [
+      "Simmer the broth with ginger and star anise for 20 minutes.",
+      "Soak the rice noodles until soft and divide between bowls.",
+      "Lay the raw beef slices over the noodles.",
+      "Strain the hot broth and ladle it over to cook the beef.",
+      "Top with basil and serve with lime wedges."
+    ],
+    "prepMinutes": 15,
+    "cookMinutes": 25,
+    "servings": 4,
+    "dietary": ["dairy-free"]
+  },
+  {
+    "id": "eggplant-parmesan",
+    "name": "Eggplant Parmesan",
+    "cuisine": "Italian",
+    "tags": ["baked", "comfort", "vegetarian", "dinner"],
+    "ingredients": [
+      { "quantity": "2", "item": "aubergines" },
+      { "quantity": "500ml", "item": "tomato sauce" },
+      { "quantity": "200g", "item": "mozzarella" },
+      { "quantity": "50g", "item": "parmesan" },
+      { "quantity": "100g", "item": "breadcrumbs" },
+      { "quantity": "3 tbsp", "item": "olive oil" }
+    ],
+    "steps": [
+      "Slice the aubergines, coat in breadcrumbs, and bake until golden.",
+      "Spread a layer of tomato sauce in a baking dish.",
+      "Layer the aubergine, sauce, and cheeses, repeating to fill the dish.",
+      "Finish with mozzarella and parmesan on top.",
+      "Bake at 190C for 25 minutes until bubbling and golden."
+    ],
+    "prepMinutes": 25,
+    "cookMinutes": 40,
+    "servings": 4,
+    "dietary": ["vegetarian"]
+  },
+  {
+    "id": "chicken-fajitas",
+    "name": "Sizzling Chicken Fajitas",
+    "cuisine": "Mexican",
+    "tags": ["dinner", "quick", "family", "one-pan"],
+    "ingredients": [
+      { "quantity": "500g", "item": "chicken breast" },
+      { "quantity": "2", "item": "bell peppers" },
+      { "quantity": "1", "item": "onion" },
+      { "quantity": "1 tbsp", "item": "fajita seasoning" },
+      { "quantity": "8", "item": "flour tortillas" },
+      { "quantity": "2 tbsp", "item": "olive oil" }
+    ],
+    "steps": [
+      "Slice the chicken, peppers, and onion into strips.",
+      "Toss the chicken with the fajita seasoning.",
+      "Sear the chicken in a hot pan until browned, then set aside.",
+      "Stir-fry the peppers and onion until charred at the edges.",
+      "Return the chicken, combine, and serve with warm tortillas."
+    ],
+    "prepMinutes": 15,
+    "cookMinutes": 15,
+    "servings": 4,
+    "dietary": ["dairy-free"]
+  },
+  {
+    "id": "hummus-bowl",
+    "name": "Loaded Hummus Bowl",
+    "cuisine": "Middle Eastern",
+    "tags": ["lunch", "no-cook", "healthy", "quick"],
+    "ingredients": [
+      { "quantity": "1 can", "item": "chickpeas" },
+      { "quantity": "3 tbsp", "item": "tahini" },
+      { "quantity": "1", "item": "lemon" },
+      { "quantity": "2 cloves", "item": "garlic" },
+      { "quantity": "3 tbsp", "item": "olive oil" },
+      { "quantity": "1", "item": "cucumber" }
+    ],
+    "steps": [
+      "Blend the chickpeas, tahini, lemon juice, garlic, and olive oil until smooth.",
+      "Loosen the hummus with a little cold water for a creamy texture.",
+      "Spread the hummus across a shallow bowl.",
+      "Top with diced cucumber and a drizzle of olive oil.",
+      "Serve with warm flatbread for scooping."
+    ],
+    "prepMinutes": 10,
+    "cookMinutes": 0,
+    "servings": 3,
+    "dietary": ["vegetarian", "vegan", "gluten-free", "dairy-free"]
+  },
+  {
+    "id": "beef-stir-fry",
+    "name": "Ginger Beef Stir-Fry",
+    "cuisine": "Chinese",
+    "tags": ["quick", "stir-fry", "weeknight", "one-pan"],
+    "ingredients": [
+      { "quantity": "400g", "item": "beef strips" },
+      { "quantity": "1 head", "item": "broccoli" },
+      { "quantity": "1", "item": "red pepper" },
+      { "quantity": "3 tbsp", "item": "soy sauce" },
+      { "quantity": "1 tbsp", "item": "grated ginger" },
+      { "quantity": "2 tbsp", "item": "vegetable oil" }
+    ],
+    "steps": [
+      "Sear the beef strips in a very hot wok, then remove.",
+      "Stir-fry the broccoli and pepper until bright and crisp-tender.",
+      "Add the ginger and cook for thirty seconds.",
+      "Return the beef with the soy sauce and toss to coat.",
+      "Serve immediately over steamed rice."
+    ],
+    "prepMinutes": 15,
+    "cookMinutes": 10,
+    "servings": 4,
+    "dietary": ["dairy-free"]
+  },
+  {
+    "id": "caprese-pasta-salad",
+    "name": "Caprese Pasta Salad",
+    "cuisine": "Italian",
+    "tags": ["pasta", "salad", "summer", "make-ahead"],
+    "ingredients": [
+      { "quantity": "400g", "item": "pasta" },
+      { "quantity": "250g", "item": "cherry tomatoes" },
+      { "quantity": "200g", "item": "mozzarella pearls" },
+      { "quantity": "1 handful", "item": "basil" },
+      { "quantity": "3 tbsp", "item": "olive oil" }
+    ],
+    "steps": [
+      "Cook the pasta until al dente, then rinse under cold water.",
+      "Halve the cherry tomatoes and mozzarella pearls.",
+      "Toss the pasta with the tomatoes, mozzarella, and basil.",
+      "Drizzle with olive oil and season generously.",
+      "Chill for 30 minutes before serving."
+    ],
+    "prepMinutes": 15,
+    "cookMinutes": 12,
+    "servings": 6,
+    "dietary": ["vegetarian"]
+  },
+  {
+    "id": "thai-green-curry",
+    "name": "Thai Green Curry",
+    "cuisine": "Thai",
+    "tags": ["curry", "one-pot", "spicy", "dinner"],
+    "ingredients": [
+      { "quantity": "2 tbsp", "item": "green curry paste" },
+      { "quantity": "1 can", "item": "coconut milk" },
+      { "quantity": "400g", "item": "chicken thighs" },
+      { "quantity": "1", "item": "aubergine" },
+      { "quantity": "1 handful", "item": "basil" },
+      { "quantity": "1 tbsp", "item": "fish sauce" }
+    ],
+    "steps": [
+      "Fry the curry paste in a little coconut milk until fragrant.",
+      "Add the sliced chicken and cook until sealed.",
+      "Pour in the rest of the coconut milk and the chopped aubergine.",
+      "Simmer for 15 minutes until the chicken is tender.",
+      "Season with fish sauce, stir in basil, and serve with rice."
+    ],
+    "prepMinutes": 15,
+    "cookMinutes": 20,
+    "servings": 4,
+    "dietary": ["gluten-free", "dairy-free"]
+  },
+  {
+    "id": "sweet-potato-chili",
+    "name": "Sweet Potato Chili",
+    "cuisine": "American",
+    "tags": ["one-pot", "comfort", "meal-prep", "budget"],
+    "ingredients": [
+      { "quantity": "2", "item": "sweet potatoes" },
+      { "quantity": "1 can", "item": "black beans" },
+      { "quantity": "1 can", "item": "kidney beans" },
+      { "quantity": "1 can", "item": "chopped tomatoes" },
+      { "quantity": "1", "item": "onion" },
+      { "quantity": "2 tbsp", "item": "chili powder" }
+    ],
+    "steps": [
+      "Soften the diced onion in oil, then stir in the chili powder.",
+      "Add the cubed sweet potato and coat in the spices.",
+      "Tip in the tomatoes and beans with a splash of water.",
+      "Simmer for 25 minutes until the sweet potato is tender.",
+      "Season and serve with rice or crusty bread."
+    ],
+    "prepMinutes": 15,
+    "cookMinutes": 30,
+    "servings": 6,
+    "dietary": ["vegetarian", "vegan", "gluten-free", "dairy-free"]
+  },
+  {
+    "id": "french-omelette",
+    "name": "Classic French Omelette",
+    "cuisine": "French",
+    "tags": ["breakfast", "quick", "eggs", "protein"],
+    "ingredients": [
+      { "quantity": "3", "item": "eggs" },
+      { "quantity": "1 tbsp", "item": "butter" },
+      { "quantity": "1 handful", "item": "chives" },
+      { "quantity": "to taste", "item": "salt" }
+    ],
+    "steps": [
+      "Beat the eggs with a pinch of salt until fully combined.",
+      "Melt the butter in a non-stick pan over medium heat.",
+      "Pour in the eggs and stir gently with a spatula.",
+      "When just set but still soft, fold the omelette into thirds.",
+      "Slide onto a plate and scatter with chives."
+    ],
+    "prepMinutes": 5,
+    "cookMinutes": 5,
+    "servings": 1,
+    "dietary": ["vegetarian", "gluten-free"]
+  },
+  {
+    "id": "quinoa-salad",
+    "name": "Lemon Quinoa Salad",
+    "cuisine": "Mediterranean",
+    "tags": ["salad", "healthy", "make-ahead", "lunch"],
+    "ingredients": [
+      { "quantity": "200g", "item": "quinoa" },
+      { "quantity": "1", "item": "cucumber" },
+      { "quantity": "200g", "item": "cherry tomatoes" },
+      { "quantity": "1 handful", "item": "parsley" },
+      { "quantity": "1", "item": "lemon" },
+      { "quantity": "3 tbsp", "item": "olive oil" }
+    ],
+    "steps": [
+      "Rinse the quinoa and cook in salted water until fluffy, then cool.",
+      "Dice the cucumber and halve the cherry tomatoes.",
+      "Chop the parsley finely.",
+      "Toss everything with lemon juice and olive oil.",
+      "Season to taste and serve chilled."
+    ],
+    "prepMinutes": 15,
+    "cookMinutes": 15,
+    "servings": 4,
+    "dietary": ["vegetarian", "vegan", "gluten-free", "dairy-free"]
+  },
+  {
+    "id": "chicken-noodle-soup",
+    "name": "Chicken Noodle Soup",
+    "cuisine": "American",
+    "tags": ["soup", "comfort", "one-pot", "cold-remedy"],
+    "ingredients": [
+      { "quantity": "300g", "item": "chicken breast" },
+      { "quantity": "2", "item": "carrots" },
+      { "quantity": "2 stalks", "item": "celery" },
+      { "quantity": "150g", "item": "egg noodles" },
+      { "quantity": "1.5L", "item": "chicken stock" },
+      { "quantity": "1", "item": "onion" }
+    ],
+    "steps": [
+      "Soften the diced onion, carrots, and celery in a large pot.",
+      "Add the chicken and stock and bring to a gentle boil.",
+      "Simmer until the chicken is cooked, then shred it and return it.",
+      "Add the noodles and cook until tender.",
+      "Season well and serve piping hot."
+    ],
+    "prepMinutes": 15,
+    "cookMinutes": 30,
+    "servings": 4,
+    "dietary": ["dairy-free"]
+  },
+  {
+    "id": "vegan-buddha-bowl",
+    "name": "Roasted Veg Buddha Bowl",
+    "cuisine": "Fusion",
+    "tags": ["healthy", "lunch", "meal-prep", "vegan"],
+    "ingredients": [
+      { "quantity": "1", "item": "sweet potato" },
+      { "quantity": "1 can", "item": "chickpeas" },
+      { "quantity": "200g", "item": "kale" },
+      { "quantity": "150g", "item": "quinoa" },
+      { "quantity": "3 tbsp", "item": "tahini" },
+      { "quantity": "2 tbsp", "item": "olive oil" }
+    ],
+    "steps": [
+      "Roast the cubed sweet potato and chickpeas with olive oil at 200C for 25 minutes.",
+      "Cook the quinoa until fluffy.",
+      "Massage the kale with a little oil until softened.",
+      "Loosen the tahini with water and lemon into a dressing.",
+      "Assemble the bowls and drizzle with tahini dressing."
+    ],
+    "prepMinutes": 15,
+    "cookMinutes": 25,
+    "servings": 2,
+    "dietary": ["vegetarian", "vegan", "gluten-free", "dairy-free"]
+  },
+  {
+    "id": "beef-lasagna",
+    "name": "Beef Lasagna",
+    "cuisine": "Italian",
+    "tags": ["baked", "comfort", "family", "dinner"],
+    "ingredients": [
+      { "quantity": "500g", "item": "ground beef" },
+      { "quantity": "12", "item": "lasagna sheets" },
+      { "quantity": "700ml", "item": "tomato sauce" },
+      { "quantity": "500ml", "item": "bechamel sauce" },
+      { "quantity": "150g", "item": "grated cheese" },
+      { "quantity": "1", "item": "onion" }
+    ],
+    "steps": [
+      "Brown the beef with the diced onion, then stir in the tomato sauce.",
+      "Simmer the ragu for 20 minutes to deepen the flavour.",
+      "Layer ragu, pasta sheets, and bechamel in a baking dish.",
+      "Repeat the layers and finish with bechamel and cheese.",
+      "Bake at 190C for 35 minutes until golden and bubbling."
+    ],
+    "prepMinutes": 25,
+    "cookMinutes": 55,
+    "servings": 6,
+    "dietary": []
+  },
+  {
+    "id": "shrimp-scampi",
+    "name": "Garlic Shrimp Scampi",
+    "cuisine": "Italian",
+    "tags": ["pasta", "quick", "seafood", "dinner"],
+    "ingredients": [
+      { "quantity": "400g", "item": "linguine" },
+      { "quantity": "400g", "item": "shrimp" },
+      { "quantity": "5 cloves", "item": "garlic" },
+      { "quantity": "100ml", "item": "white wine" },
+      { "quantity": "3 tbsp", "item": "butter" },
+      { "quantity": "1", "item": "lemon" }
+    ],
+    "steps": [
+      "Cook the linguine until al dente and reserve some pasta water.",
+      "Sizzle the garlic in butter until fragrant.",
+      "Add the shrimp and cook until pink.",
+      "Pour in the wine and lemon juice and simmer briefly.",
+      "Toss the pasta through with a splash of pasta water and serve."
+    ],
+    "prepMinutes": 10,
+    "cookMinutes": 15,
+    "servings": 4,
+    "dietary": []
+  },
+  {
+    "id": "korean-bibimbap",
+    "name": "Vegetable Bibimbap",
+    "cuisine": "Korean",
+    "tags": ["rice", "bowl", "dinner", "vegetarian"],
+    "ingredients": [
+      { "quantity": "2 cups", "item": "cooked rice" },
+      { "quantity": "1", "item": "carrot" },
+      { "quantity": "150g", "item": "spinach" },
+      { "quantity": "150g", "item": "mushrooms" },
+      { "quantity": "2", "item": "eggs" },
+      { "quantity": "2 tbsp", "item": "gochujang" }
+    ],
+    "steps": [
+      "Saute the julienned carrot, spinach, and mushrooms separately.",
+      "Fry the eggs so the yolks stay runny.",
+      "Divide the warm rice between two bowls.",
+      "Arrange the vegetables in sections over the rice.",
+      "Top with a fried egg and a spoonful of gochujang."
+    ],
+    "prepMinutes": 20,
+    "cookMinutes": 15,
+    "servings": 2,
+    "dietary": ["vegetarian", "dairy-free"]
+  },
+  {
+    "id": "caesar-salad",
+    "name": "Chicken Caesar Salad",
+    "cuisine": "American",
+    "tags": ["salad", "lunch", "protein", "quick"],
+    "ingredients": [
+      { "quantity": "2", "item": "romaine hearts" },
+      { "quantity": "2", "item": "chicken breasts" },
+      { "quantity": "50g", "item": "parmesan" },
+      { "quantity": "1 cup", "item": "croutons" },
+      { "quantity": "4 tbsp", "item": "caesar dressing" }
+    ],
+    "steps": [
+      "Season and grill the chicken until cooked, then slice.",
+      "Chop the romaine and place in a large bowl.",
+      "Toss the leaves with the caesar dressing.",
+      "Add the croutons and shaved parmesan.",
+      "Top with the sliced chicken and serve."
+    ],
+    "prepMinutes": 15,
+    "cookMinutes": 15,
+    "servings": 2,
+    "dietary": []
+  },
+  {
+    "id": "dal-tadka",
+    "name": "Dal Tadka",
+    "cuisine": "Indian",
+    "tags": ["one-pot", "budget", "comfort", "meal-prep"],
+    "ingredients": [
+      { "quantity": "250g", "item": "red lentils" },
+      { "quantity": "1", "item": "onion" },
+      { "quantity": "2", "item": "tomatoes" },
+      { "quantity": "1 tsp", "item": "turmeric" },
+      { "quantity": "1 tsp", "item": "cumin seeds" },
+      { "quantity": "2 tbsp", "item": "ghee" }
+    ],
+    "steps": [
+      "Simmer the rinsed lentils with turmeric until soft and creamy.",
+      "Heat the ghee and fry the cumin seeds until they pop.",
+      "Add the onion and cook until golden, then stir in the tomatoes.",
+      "Pour the tempered spices into the lentils.",
+      "Simmer briefly, season, and serve with rice or flatbread."
+    ],
+    "prepMinutes": 10,
+    "cookMinutes": 30,
+    "servings": 4,
+    "dietary": ["vegetarian", "gluten-free"]
+  },
+  {
+    "id": "avocado-toast",
+    "name": "Smashed Avocado Toast",
+    "cuisine": "American",
+    "tags": ["breakfast", "quick", "no-cook", "healthy"],
+    "ingredients": [
+      { "quantity": "2 slices", "item": "sourdough bread" },
+      { "quantity": "1 ripe", "item": "avocado" },
+      { "quantity": "0.5", "item": "lemon" },
+      { "quantity": "1 pinch", "item": "chili flakes" },
+      { "quantity": "to taste", "item": "salt" }
+    ],
+    "steps": [
+      "Toast the sourdough until golden and crisp.",
+      "Mash the avocado with lemon juice and a pinch of salt.",
+      "Spread the avocado generously over the toast.",
+      "Sprinkle with chili flakes.",
+      "Serve straight away while the toast is warm."
+    ],
+    "prepMinutes": 5,
+    "cookMinutes": 3,
+    "servings": 1,
+    "dietary": ["vegetarian", "vegan", "dairy-free"]
+  },
+  {
+    "id": "chicken-shawarma",
+    "name": "Chicken Shawarma",
+    "cuisine": "Middle Eastern",
+    "tags": ["dinner", "marinated", "wrap", "protein"],
+    "ingredients": [
+      { "quantity": "600g", "item": "chicken thighs" },
+      { "quantity": "2 tbsp", "item": "yogurt" },
+      { "quantity": "2 tsp", "item": "shawarma spice" },
+      { "quantity": "2 cloves", "item": "garlic" },
+      { "quantity": "1", "item": "lemon" },
+      { "quantity": "4", "item": "flatbreads" }
+    ],
+    "steps": [
+      "Mix the yogurt, spice, garlic, and lemon into a marinade.",
+      "Coat the chicken and marinate for at least an hour.",
+      "Roast or pan-fry the chicken until charred and cooked.",
+      "Rest, then slice the chicken thinly.",
+      "Serve in warm flatbreads with salad and sauce."
+    ],
+    "prepMinutes": 70,
+    "cookMinutes": 20,
+    "servings": 4,
+    "dietary": ["gluten-free"]
+  },
+  {
+    "id": "gnocchi-tomato-bake",
+    "name": "Gnocchi Tomato Bake",
+    "cuisine": "Italian",
+    "tags": ["baked", "comfort", "quick", "vegetarian"],
+    "ingredients": [
+      { "quantity": "500g", "item": "potato gnocchi" },
+      { "quantity": "400ml", "item": "tomato sauce" },
+      { "quantity": "150g", "item": "mozzarella" },
+      { "quantity": "1 handful", "item": "basil" },
+      { "quantity": "2 tbsp", "item": "olive oil" }
+    ],
+    "steps": [
+      "Toss the gnocchi with the tomato sauce in a baking dish.",
+      "Scatter torn mozzarella over the top.",
+      "Drizzle with olive oil.",
+      "Bake at 200C for 20 minutes until bubbling.",
+      "Finish with fresh basil before serving."
+    ],
+    "prepMinutes": 10,
+    "cookMinutes": 20,
+    "servings": 4,
+    "dietary": ["vegetarian"]
+  },
+  {
+    "id": "egg-fried-cauliflower-rice",
+    "name": "Egg Fried Cauliflower Rice",
+    "cuisine": "Chinese",
+    "tags": ["quick", "low-carb", "one-pan", "healthy"],
+    "ingredients": [
+      { "quantity": "1 head", "item": "cauliflower" },
+      { "quantity": "2", "item": "eggs" },
+      { "quantity": "1 cup", "item": "peas" },
+      { "quantity": "2 tbsp", "item": "soy sauce" },
+      { "quantity": "2", "item": "spring onions" },
+      { "quantity": "2 tbsp", "item": "vegetable oil" }
+    ],
+    "steps": [
+      "Blitz the cauliflower into rice-sized pieces.",
+      "Scramble the eggs in a hot pan, then set aside.",
+      "Stir-fry the cauliflower and peas until tender.",
+      "Return the eggs and add the soy sauce.",
+      "Toss with sliced spring onions and serve."
+    ],
+    "prepMinutes": 10,
+    "cookMinutes": 10,
+    "servings": 3,
+    "dietary": ["vegetarian", "gluten-free", "dairy-free"]
+  },
+  {
+    "id": "moroccan-tagine",
+    "name": "Vegetable Tagine",
+    "cuisine": "Moroccan",
+    "tags": ["one-pot", "comfort", "spicy", "meal-prep"],
+    "ingredients": [
+      { "quantity": "1", "item": "butternut squash" },
+      { "quantity": "1 can", "item": "chickpeas" },
+      { "quantity": "1", "item": "onion" },
+      { "quantity": "1 tsp", "item": "ras el hanout" },
+      { "quantity": "100g", "item": "dried apricots" },
+      { "quantity": "400ml", "item": "vegetable stock" }
+    ],
+    "steps": [
+      "Soften the diced onion, then stir in the ras el hanout.",
+      "Add the cubed squash and coat in the spices.",
+      "Tip in the chickpeas, apricots, and stock.",
+      "Simmer for 30 minutes until the squash is tender.",
+      "Season and serve with couscous."
+    ],
+    "prepMinutes": 15,
+    "cookMinutes": 35,
+    "servings": 4,
+    "dietary": ["vegetarian", "vegan", "gluten-free", "dairy-free"]
+  },
+  {
+    "id": "pancakes-fluffy",
+    "name": "Fluffy Buttermilk Pancakes",
+    "cuisine": "American",
+    "tags": ["breakfast", "sweet", "weekend", "kid-friendly"],
+    "ingredients": [
+      { "quantity": "200g", "item": "flour" },
+      { "quantity": "300ml", "item": "buttermilk" },
+      { "quantity": "1", "item": "egg" },
+      { "quantity": "2 tbsp", "item": "sugar" },
+      { "quantity": "1 tsp", "item": "baking powder" },
+      { "quantity": "2 tbsp", "item": "melted butter" }
+    ],
+    "steps": [
+      "Whisk the flour, sugar, and baking powder together.",
+      "Beat in the buttermilk, egg, and melted butter until just combined.",
+      "Rest the batter for 5 minutes.",
+      "Cook spoonfuls in a buttered pan until bubbles form, then flip.",
+      "Stack and serve with maple syrup."
+    ],
+    "prepMinutes": 10,
+    "cookMinutes": 15,
+    "servings": 4,
+    "dietary": ["vegetarian"]
+  },
+  {
+    "id": "chocolate-mug-cake",
+    "name": "Chocolate Mug Cake",
+    "cuisine": "American",
+    "tags": ["dessert", "quick", "sweet", "single-serve"],
+    "ingredients": [
+      { "quantity": "4 tbsp", "item": "flour" },
+      { "quantity": "2 tbsp", "item": "cocoa powder" },
+      { "quantity": "3 tbsp", "item": "sugar" },
+      { "quantity": "3 tbsp", "item": "milk" },
+      { "quantity": "2 tbsp", "item": "vegetable oil" }
+    ],
+    "steps": [
+      "Stir the flour, cocoa, and sugar together in a large mug.",
+      "Mix in the milk and oil until smooth.",
+      "Microwave on high for about 90 seconds until risen.",
+      "Let it cool for a minute so it sets.",
+      "Eat straight from the mug with a spoon."
+    ],
+    "prepMinutes": 3,
+    "cookMinutes": 2,
+    "servings": 1,
+    "dietary": ["vegetarian"]
+  },
+  {
+    "id": "spanish-tortilla",
+    "name": "Spanish Tortilla",
+    "cuisine": "Spanish",
+    "tags": ["eggs", "brunch", "comfort", "vegetarian"],
+    "ingredients": [
+      { "quantity": "4", "item": "potatoes" },
+      { "quantity": "6", "item": "eggs" },
+      { "quantity": "1", "item": "onion" },
+      { "quantity": "150ml", "item": "olive oil" },
+      { "quantity": "to taste", "item": "salt" }
+    ],
+    "steps": [
+      "Slice the potatoes and onion thinly and cook slowly in the oil until soft.",
+      "Drain, reserving the oil, and mix the potatoes into the beaten eggs.",
+      "Pour into a hot oiled pan and cook over low heat until nearly set.",
+      "Flip using a plate and cook the other side.",
+      "Slide out and rest before slicing into wedges."
+    ],
+    "prepMinutes": 15,
+    "cookMinutes": 30,
+    "servings": 4,
+    "dietary": ["vegetarian", "gluten-free", "dairy-free"]
+  },
+  {
+    "id": "peanut-noodles",
+    "name": "Cold Peanut Noodles",
+    "cuisine": "Fusion",
+    "tags": ["noodles", "no-cook", "quick", "lunch"],
+    "ingredients": [
+      { "quantity": "300g", "item": "noodles" },
+      { "quantity": "3 tbsp", "item": "peanut butter" },
+      { "quantity": "2 tbsp", "item": "soy sauce" },
+      { "quantity": "1 tbsp", "item": "rice vinegar" },
+      { "quantity": "1 tsp", "item": "chili oil" },
+      { "quantity": "2", "item": "spring onions" }
+    ],
+    "steps": [
+      "Cook the noodles, then rinse under cold water.",
+      "Whisk the peanut butter, soy sauce, vinegar, and chili oil into a sauce.",
+      "Loosen the sauce with a splash of warm water.",
+      "Toss the noodles through the sauce.",
+      "Top with sliced spring onions and serve cold."
+    ],
+    "prepMinutes": 10,
+    "cookMinutes": 8,
+    "servings": 3,
+    "dietary": ["vegetarian", "vegan", "dairy-free"]
+  },
+  {
+    "id": "baked-cod",
+    "name": "Herb Baked Cod",
+    "cuisine": "Mediterranean",
+    "tags": ["fish", "healthy", "quick", "dinner"],
+    "ingredients": [
+      { "quantity": "2", "item": "cod fillets" },
+      { "quantity": "2 tbsp", "item": "olive oil" },
+      { "quantity": "1", "item": "lemon" },
+      { "quantity": "2 cloves", "item": "garlic" },
+      { "quantity": "1 handful", "item": "parsley" }
+    ],
+    "steps": [
+      "Place the cod fillets in an oiled baking dish.",
+      "Drizzle with olive oil and scatter over the minced garlic.",
+      "Squeeze lemon juice over the top.",
+      "Bake at 200C for 15 minutes until the fish flakes.",
+      "Finish with chopped parsley and serve."
+    ],
+    "prepMinutes": 5,
+    "cookMinutes": 15,
+    "servings": 2,
+    "dietary": ["gluten-free", "dairy-free"]
+  },
+  {
+    "id": "vegan-chili",
+    "name": "Three Bean Vegan Chili",
+    "cuisine": "Mexican",
+    "tags": ["one-pot", "meal-prep", "budget", "vegan"],
+    "ingredients": [
+      { "quantity": "1 can", "item": "black beans" },
+      { "quantity": "1 can", "item": "kidney beans" },
+      { "quantity": "1 can", "item": "pinto beans" },
+      { "quantity": "1 can", "item": "chopped tomatoes" },
+      { "quantity": "1", "item": "onion" },
+      { "quantity": "2 tbsp", "item": "chili powder" }
+    ],
+    "steps": [
+      "Soften the diced onion in oil, then stir in the chili powder.",
+      "Add the tomatoes and simmer for 5 minutes.",
+      "Tip in all the drained beans.",
+      "Simmer for 20 minutes to thicken.",
+      "Season and serve with rice or tortilla chips."
+    ],
+    "prepMinutes": 10,
+    "cookMinutes": 25,
+    "servings": 6,
+    "dietary": ["vegetarian", "vegan", "gluten-free", "dairy-free"]
+  },
+  {
+    "id": "chicken-tikka-masala",
+    "name": "Chicken Tikka Masala",
+    "cuisine": "Indian",
+    "tags": ["curry", "comfort", "dinner", "spicy"],
+    "ingredients": [
+      { "quantity": "600g", "item": "chicken thighs" },
+      { "quantity": "1 cup", "item": "yogurt" },
+      { "quantity": "2 tbsp", "item": "tikka spice mix" },
+      { "quantity": "1 can", "item": "chopped tomatoes" },
+      { "quantity": "150ml", "item": "cream" },
+      { "quantity": "1", "item": "onion" }
+    ],
+    "steps": [
+      "Marinate the chicken in yogurt and half the spice mix.",
+      "Grill or pan-fry the chicken until charred at the edges.",
+      "Soften the onion, add the rest of the spice, then the tomatoes.",
+      "Simmer the sauce, then stir in the cream.",
+      "Add the chicken and warm through before serving with rice."
+    ],
+    "prepMinutes": 30,
+    "cookMinutes": 30,
+    "servings": 4,
+    "dietary": ["gluten-free"]
+  },
+  {
+    "id": "zucchini-fritters",
+    "name": "Zucchini Fritters",
+    "cuisine": "Mediterranean",
+    "tags": ["snack", "vegetarian", "quick", "lunch"],
+    "ingredients": [
+      { "quantity": "3", "item": "courgettes" },
+      { "quantity": "1", "item": "egg" },
+      { "quantity": "80g", "item": "flour" },
+      { "quantity": "50g", "item": "feta" },
+      { "quantity": "2 tbsp", "item": "olive oil" }
+    ],
+    "steps": [
+      "Grate the courgettes and squeeze out the excess moisture.",
+      "Mix with the egg, flour, and crumbled feta.",
+      "Heat the oil in a wide pan.",
+      "Fry spoonfuls of the batter until golden on both sides.",
+      "Drain on paper towel and serve with a yogurt dip."
+    ],
+    "prepMinutes": 15,
+    "cookMinutes": 12,
+    "servings": 3,
+    "dietary": ["vegetarian"]
+  },
+  {
+    "id": "beef-burger",
+    "name": "Classic Beef Burger",
+    "cuisine": "American",
+    "tags": ["grill", "family", "comfort", "dinner"],
+    "ingredients": [
+      { "quantity": "500g", "item": "ground beef" },
+      { "quantity": "4", "item": "burger buns" },
+      { "quantity": "4 slices", "item": "cheddar" },
+      { "quantity": "1", "item": "tomato" },
+      { "quantity": "4 leaves", "item": "lettuce" },
+      { "quantity": "to taste", "item": "salt" }
+    ],
+    "steps": [
+      "Shape the beef into four patties and season well.",
+      "Cook on a hot griddle for a few minutes each side.",
+      "Add a slice of cheddar to melt over each patty.",
+      "Toast the buns lightly.",
+      "Build the burgers with tomato and lettuce, then serve."
+    ],
+    "prepMinutes": 10,
+    "cookMinutes": 10,
+    "servings": 4,
+    "dietary": []
+  },
+  {
+    "id": "coconut-rice-pudding",
+    "name": "Coconut Rice Pudding",
+    "cuisine": "Fusion",
+    "tags": ["dessert", "comfort", "sweet", "make-ahead"],
+    "ingredients": [
+      { "quantity": "150g", "item": "pudding rice" },
+      { "quantity": "1 can", "item": "coconut milk" },
+      { "quantity": "300ml", "item": "plant milk" },
+      { "quantity": "3 tbsp", "item": "sugar" },
+      { "quantity": "1 tsp", "item": "vanilla extract" }
+    ],
+    "steps": [
+      "Combine the rice, coconut milk, and plant milk in a pot.",
+      "Simmer gently, stirring often, until the rice is creamy.",
+      "Stir in the sugar and vanilla.",
+      "Cook for a few more minutes until thick.",
+      "Serve warm or chilled with fruit."
+    ],
+    "prepMinutes": 5,
+    "cookMinutes": 30,
+    "servings": 4,
+    "dietary": ["vegetarian", "vegan", "gluten-free", "dairy-free"]
+  },
+  {
+    "id": "caprese-stuffed-chicken",
+    "name": "Caprese Stuffed Chicken",
+    "cuisine": "Italian",
+    "tags": ["dinner", "protein", "baked", "low-carb"],
+    "ingredients": [
+      { "quantity": "2", "item": "chicken breasts" },
+      { "quantity": "100g", "item": "mozzarella" },
+      { "quantity": "2", "item": "tomatoes" },
+      { "quantity": "1 handful", "item": "basil" },
+      { "quantity": "2 tbsp", "item": "olive oil" }
+    ],
+    "steps": [
+      "Cut a pocket into each chicken breast.",
+      "Stuff with sliced mozzarella, tomato, and basil.",
+      "Secure with a toothpick and season the outside.",
+      "Sear in olive oil, then finish in a 190C oven for 15 minutes.",
+      "Rest briefly before serving."
+    ],
+    "prepMinutes": 15,
+    "cookMinutes": 25,
+    "servings": 2,
+    "dietary": ["gluten-free"]
+  },
+  {
+    "id": "veggie-spring-rolls",
+    "name": "Fresh Veggie Spring Rolls",
+    "cuisine": "Vietnamese",
+    "tags": ["no-cook", "snack", "fresh", "vegan"],
+    "ingredients": [
+      { "quantity": "8", "item": "rice paper wrappers" },
+      { "quantity": "1", "item": "carrot" },
+      { "quantity": "1", "item": "cucumber" },
+      { "quantity": "100g", "item": "vermicelli noodles" },
+      { "quantity": "1 handful", "item": "mint" },
+      { "quantity": "1 handful", "item": "coriander" }
+    ],
+    "steps": [
+      "Soak the vermicelli noodles until soft, then drain.",
+      "Julienne the carrot and cucumber into thin strips.",
+      "Dip a rice paper wrapper in warm water until pliable.",
+      "Lay noodles, vegetables, and herbs across the centre and roll tightly.",
+      "Repeat and serve with a dipping sauce."
+    ],
+    "prepMinutes": 25,
+    "cookMinutes": 0,
+    "servings": 4,
+    "dietary": ["vegetarian", "vegan", "gluten-free", "dairy-free"]
+  },
+  {
+    "id": "mac-and-cheese",
+    "name": "Baked Mac and Cheese",
+    "cuisine": "American",
+    "tags": ["baked", "comfort", "family", "cheesy"],
+    "ingredients": [
+      { "quantity": "400g", "item": "macaroni" },
+      { "quantity": "50g", "item": "butter" },
+      { "quantity": "50g", "item": "flour" },
+      { "quantity": "600ml", "item": "milk" },
+      { "quantity": "250g", "item": "cheddar" },
+      { "quantity": "50g", "item": "breadcrumbs" }
+    ],
+    "steps": [
+      "Cook the macaroni until just shy of al dente.",
+      "Make a roux with the butter and flour, then whisk in the milk.",
+      "Stir in most of the cheddar until smooth.",
+      "Fold the pasta through the sauce and tip into a baking dish.",
+      "Top with breadcrumbs and remaining cheese and bake at 200C for 20 minutes."
+    ],
+    "prepMinutes": 15,
+    "cookMinutes": 30,
+    "servings": 4,
+    "dietary": ["vegetarian"]
+  },
+  {
+    "id": "poke-bowl",
+    "name": "Salmon Poke Bowl",
+    "cuisine": "Hawaiian",
+    "tags": ["bowl", "no-cook", "fresh", "healthy"],
+    "ingredients": [
+      { "quantity": "300g", "item": "sushi-grade salmon" },
+      { "quantity": "2 cups", "item": "cooked rice" },
+      { "quantity": "1", "item": "avocado" },
+      { "quantity": "3 tbsp", "item": "soy sauce" },
+      { "quantity": "1 tbsp", "item": "sesame oil" },
+      { "quantity": "1", "item": "cucumber" }
+    ],
+    "steps": [
+      "Cube the salmon and toss with soy sauce and sesame oil.",
+      "Divide the warm rice between two bowls.",
+      "Slice the avocado and cucumber.",
+      "Arrange the salmon and vegetables over the rice.",
+      "Sprinkle with sesame seeds and serve."
+    ],
+    "prepMinutes": 15,
+    "cookMinutes": 0,
+    "servings": 2,
+    "dietary": ["dairy-free"]
+  },
+  {
+    "id": "potato-leek-soup",
+    "name": "Potato Leek Soup",
+    "cuisine": "French",
+    "tags": ["soup", "comfort", "budget", "one-pot"],
+    "ingredients": [
+      { "quantity": "4", "item": "potatoes" },
+      { "quantity": "2", "item": "leeks" },
+      { "quantity": "1L", "item": "vegetable stock" },
+      { "quantity": "2 tbsp", "item": "butter" },
+      { "quantity": "100ml", "item": "cream" }
+    ],
+    "steps": [
+      "Soften the sliced leeks in butter without colouring.",
+      "Add the diced potatoes and stock.",
+      "Simmer for 20 minutes until the potatoes are tender.",
+      "Blend until smooth and stir in the cream.",
+      "Season to taste and serve warm."
+    ],
+    "prepMinutes": 15,
+    "cookMinutes": 25,
+    "servings": 4,
+    "dietary": ["vegetarian", "gluten-free"]
+  },
+  {
+    "id": "tofu-stir-fry",
+    "name": "Crispy Tofu Stir-Fry",
+    "cuisine": "Chinese",
+    "tags": ["quick", "stir-fry", "vegan", "weeknight"],
+    "ingredients": [
+      { "quantity": "400g", "item": "firm tofu" },
+      { "quantity": "1", "item": "red pepper" },
+      { "quantity": "1 head", "item": "pak choi" },
+      { "quantity": "3 tbsp", "item": "soy sauce" },
+      { "quantity": "1 tbsp", "item": "cornflour" },
+      { "quantity": "2 tbsp", "item": "vegetable oil" }
+    ],
+    "steps": [
+      "Press the tofu, cube it, and toss in cornflour.",
+      "Fry the tofu until crisp and golden, then set aside.",
+      "Stir-fry the pepper and pak choi until crisp-tender.",
+      "Return the tofu with the soy sauce and toss to coat.",
+      "Serve over rice or noodles."
+    ],
+    "prepMinutes": 15,
+    "cookMinutes": 15,
+    "servings": 3,
+    "dietary": ["vegetarian", "vegan", "dairy-free"]
+  },
+  {
+    "id": "banana-bread",
+    "name": "Classic Banana Bread",
+    "cuisine": "American",
+    "tags": ["baking", "sweet", "make-ahead", "snack"],
+    "ingredients": [
+      { "quantity": "3 ripe", "item": "bananas" },
+      { "quantity": "200g", "item": "flour" },
+      { "quantity": "100g", "item": "sugar" },
+      { "quantity": "2", "item": "eggs" },
+      { "quantity": "80g", "item": "melted butter" },
+      { "quantity": "1 tsp", "item": "baking soda" }
+    ],
+    "steps": [
+      "Mash the bananas in a large bowl.",
+      "Beat in the eggs, sugar, and melted butter.",
+      "Fold in the flour and baking soda until just combined.",
+      "Pour into a lined loaf tin.",
+      "Bake at 175C for 50 minutes until a skewer comes out clean."
+    ],
+    "prepMinutes": 15,
+    "cookMinutes": 50,
+    "servings": 8,
+    "dietary": ["vegetarian"]
+  },
+  {
+    "id": "prawn-laksa",
+    "name": "Prawn Laksa",
+    "cuisine": "Malaysian",
+    "tags": ["soup", "noodles", "spicy", "coconut"],
+    "ingredients": [
+      { "quantity": "3 tbsp", "item": "laksa paste" },
+      { "quantity": "1 can", "item": "coconut milk" },
+      { "quantity": "500ml", "item": "chicken stock" },
+      { "quantity": "300g", "item": "prawns" },
+      { "quantity": "200g", "item": "rice noodles" },
+      { "quantity": "100g", "item": "bean sprouts" }
+    ],
+    "steps": [
+      "Fry the laksa paste in a little oil until fragrant.",
+      "Add the coconut milk and stock and bring to a simmer.",
+      "Cook the prawns in the broth until pink.",
+      "Soak the noodles and divide between bowls.",
+      "Ladle over the broth and top with bean sprouts."
+    ],
+    "prepMinutes": 10,
+    "cookMinutes": 20,
+    "servings": 4,
+    "dietary": ["gluten-free", "dairy-free"]
+  },
+  {
+    "id": "roasted-vegetable-frittata",
+    "name": "Roasted Vegetable Frittata",
+    "cuisine": "Italian",
+    "tags": ["eggs", "brunch", "meal-prep", "vegetarian"],
+    "ingredients": [
+      { "quantity": "8", "item": "eggs" },
+      { "quantity": "1", "item": "courgette" },
+      { "quantity": "1", "item": "red pepper" },
+      { "quantity": "100g", "item": "cherry tomatoes" },
+      { "quantity": "50g", "item": "feta" },
+      { "quantity": "2 tbsp", "item": "olive oil" }
+    ],
+    "steps": [
+      "Roast the chopped vegetables in olive oil until soft.",
+      "Beat the eggs and season well.",
+      "Pour the eggs over the vegetables in an ovenproof pan.",
+      "Crumble feta on top and cook on the hob until the edges set.",
+      "Finish under the grill until puffed and golden."
+    ],
+    "prepMinutes": 15,
+    "cookMinutes": 25,
+    "servings": 4,
+    "dietary": ["vegetarian", "gluten-free"]
+  },
+  {
+    "id": "apple-crumble",
+    "name": "Apple Crumble",
+    "cuisine": "British",
+    "tags": ["dessert", "comfort", "baked", "sweet"],
+    "ingredients": [
+      { "quantity": "6", "item": "apples" },
+      { "quantity": "150g", "item": "flour" },
+      { "quantity": "100g", "item": "butter" },
+      { "quantity": "80g", "item": "sugar" },
+      { "quantity": "50g", "item": "rolled oats" }
+    ],
+    "steps": [
+      "Peel and slice the apples and toss with a little sugar.",
+      "Tip the apples into a baking dish.",
+      "Rub the butter into the flour, then stir in the oats and sugar.",
+      "Scatter the crumble over the apples.",
+      "Bake at 180C for 35 minutes until golden and bubbling."
+    ],
+    "prepMinutes": 20,
+    "cookMinutes": 35,
+    "servings": 6,
+    "dietary": ["vegetarian"]
+  },
+  {
+    "id": "chana-masala",
+    "name": "Chana Masala",
+    "cuisine": "Indian",
+    "tags": ["curry", "one-pot", "budget", "vegan"],
+    "ingredients": [
+      { "quantity": "2 cans", "item": "chickpeas" },
+      { "quantity": "1", "item": "onion" },
+      { "quantity": "1 can", "item": "chopped tomatoes" },
+      { "quantity": "1 tbsp", "item": "garam masala" },
+      { "quantity": "1 tsp", "item": "ground cumin" },
+      { "quantity": "2 tbsp", "item": "vegetable oil" }
+    ],
+    "steps": [
+      "Fry the diced onion until soft and golden.",
+      "Stir in the garam masala and cumin until fragrant.",
+      "Add the tomatoes and cook down for 5 minutes.",
+      "Tip in the chickpeas and simmer for 15 minutes.",
+      "Season and serve with rice or flatbread."
+    ],
+    "prepMinutes": 10,
+    "cookMinutes": 25,
+    "servings": 4,
+    "dietary": ["vegetarian", "vegan", "gluten-free", "dairy-free"]
+  },
+  {
+    "id": "turkey-meatballs",
+    "name": "Baked Turkey Meatballs",
+    "cuisine": "Italian",
+    "tags": ["dinner", "protein", "baked", "meal-prep"],
+    "ingredients": [
+      { "quantity": "500g", "item": "ground turkey" },
+      { "quantity": "50g", "item": "breadcrumbs" },
+      { "quantity": "1", "item": "egg" },
+      { "quantity": "2 cloves", "item": "garlic" },
+      { "quantity": "500ml", "item": "tomato sauce" }
+    ],
+    "steps": [
+      "Mix the turkey, breadcrumbs, egg, and garlic with seasoning.",
+      "Roll into evenly sized meatballs.",
+      "Bake at 200C for 15 minutes until browned.",
+      "Warm the tomato sauce in a pan.",
+      "Add the meatballs to the sauce and simmer briefly before serving."
+    ],
+    "prepMinutes": 15,
+    "cookMinutes": 25,
+    "servings": 4,
+    "dietary": ["dairy-free"]
+  },
+  {
+    "id": "roasted-tomato-bruschetta",
+    "name": "Tomato Bruschetta",
+    "cuisine": "Italian",
+    "tags": ["starter", "no-cook", "fresh", "quick"],
+    "ingredients": [
+      { "quantity": "4", "item": "tomatoes" },
+      { "quantity": "1 baguette", "item": "bread" },
+      { "quantity": "2 cloves", "item": "garlic" },
+      { "quantity": "1 handful", "item": "basil" },
+      { "quantity": "3 tbsp", "item": "olive oil" }
+    ],
+    "steps": [
+      "Dice the tomatoes and mix with chopped basil and olive oil.",
+      "Slice the baguette and toast the pieces.",
+      "Rub each toast with a cut clove of garlic.",
+      "Spoon the tomato mixture on top.",
+      "Drizzle with a little more olive oil and serve."
+    ],
+    "prepMinutes": 15,
+    "cookMinutes": 5,
+    "servings": 4,
+    "dietary": ["vegetarian", "vegan", "dairy-free"]
+  },
+  {
+    "id": "lemon-garlic-shrimp",
+    "name": "Lemon Garlic Shrimp",
+    "cuisine": "Mediterranean",
+    "tags": ["quick", "seafood", "low-carb", "dinner"],
+    "ingredients": [
+      { "quantity": "500g", "item": "shrimp" },
+      { "quantity": "4 cloves", "item": "garlic" },
+      { "quantity": "1", "item": "lemon" },
+      { "quantity": "3 tbsp", "item": "olive oil" },
+      { "quantity": "1 handful", "item": "parsley" }
+    ],
+    "steps": [
+      "Heat the olive oil and sizzle the sliced garlic.",
+      "Add the shrimp and cook until pink and curled.",
+      "Squeeze in the lemon juice.",
+      "Toss through chopped parsley.",
+      "Serve with crusty bread or over rice."
+    ],
+    "prepMinutes": 10,
+    "cookMinutes": 8,
+    "servings": 4,
+    "dietary": ["gluten-free", "dairy-free"]
+  }
+]

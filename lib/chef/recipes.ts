@@ -341,3 +341,26 @@ export const recipes: Recipe[] = [
     dietary: ["vegetarian", "gluten-free"],
   },
 ];
+
+// Additional self-authored recipes live in data/recipes.json so the corpus can
+// grow without bloating this module. The JSON is imported directly (tsconfig
+// enables resolveJsonModule) and given a Recipe[] type via a narrow assertion;
+// its shape is validated by a throwaway script during development. No `any` is
+// introduced and the static export stays server-free and offline.
+import recipesJson from "@/data/recipes.json";
+
+const bundledRecipes = recipesJson as Recipe[];
+
+/**
+ * The full recipe corpus: the curated recipes above merged with the bundled
+ * JSON recipes, de-duplicated by id. Entries defined in this module win on an
+ * id collision as a safety net. This is the single source the chatbot should
+ * read from so it can offer every available option.
+ */
+export const allRecipes: Recipe[] = (() => {
+  const byId = new Map<string, Recipe>();
+  for (const recipe of [...recipes, ...bundledRecipes]) {
+    if (!byId.has(recipe.id)) byId.set(recipe.id, recipe);
+  }
+  return Array.from(byId.values());
+})();

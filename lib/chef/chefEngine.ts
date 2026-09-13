@@ -11,7 +11,7 @@
 // enhancement may dynamically import a browser LLM on explicit user action and
 // degrade to this engine, but this module must remain fully functional alone.
 
-import { recipes, type Recipe, type DietaryFlag } from "./recipes";
+import { allRecipes as recipes, type Recipe, type DietaryFlag } from "./recipes";
 
 export type { Recipe, Ingredient, DietaryFlag } from "./recipes";
 
