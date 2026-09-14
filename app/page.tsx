@@ -348,22 +348,16 @@ export default function Home() {
               >
                 <span className="absolute top-0 left-0 right-0 h-[2px] bg-gradient-to-r from-cloud-blue to-cloud-violet" />
                 <div
-                  className="flex-none w-[82px] relative grid place-items-center p-[1.5px]"
-                  style={{
-                    aspectRatio: "1/1.08",
-                    clipPath: "polygon(50% 0%,100% 25%,100% 75%,50% 100%,0% 75%,0% 25%)",
-                    background: "linear-gradient(150deg,#3fa9ff,#9b6bff)",
-                    filter: "drop-shadow(0 0 16px rgba(63,169,255,0.35))",
-                  }}
+                  className="flex-none w-[88px] h-[88px] relative grid place-items-center rounded-md bg-white/[0.04] p-2 transition-transform group-hover:scale-105"
+                  style={{ filter: "drop-shadow(0 0 16px rgba(63,169,255,0.25))" }}
                 >
-                  <div
-                    className="w-full h-full grid place-items-center bg-[#0a0c12]"
-                    style={{ clipPath: "polygon(50% 0%,100% 25%,100% 75%,50% 100%,0% 75%,0% 25%)" }}
-                  >
-                    <span className="font-display font-bold text-[22px] bg-gradient-to-br from-cloud-mist to-cloud-violet bg-clip-text text-transparent">
-                      {b.abbr}
-                    </span>
-                  </div>
+                  <Image
+                    src={asset(b.image)}
+                    alt={`${b.title} certification badge`}
+                    width={88}
+                    height={88}
+                    className="w-full h-full object-contain"
+                  />
                 </div>
                 <div>
                   <div className="font-mono text-[11px] tracking-widest uppercase text-cloud-blue mb-[6px]">{b.issuer}</div>

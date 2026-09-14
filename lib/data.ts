@@ -27,6 +27,7 @@ export const badges = [
     issuer: "Amazon Web Services",
     title: "AWS Solutions Architect",
     meta: "Verified Credential · Credly",
+    image: "/images/certs/aws-solutions-architect.png",
     href: "https://www.credly.com/badges/321c2213-2b96-4493-9555-ff4a8c2a5fc4",
   },
   {
@@ -34,6 +35,7 @@ export const badges = [
     issuer: "Amazon Web Services",
     title: "AWS Machine Learning",
     meta: "Verified Credential · Credly",
+    image: "/images/certs/aws-machine-learning.png",
     href: "https://www.credly.com/badges/e3e6b48b-7d91-4a84-9f26-014d79627aa3",
   },
   {
@@ -41,6 +43,7 @@ export const badges = [
     issuer: "Adobe",
     title: "AEM Sites Architect",
     meta: "Adobe Certified · Verified",
+    image: "/images/certs/aem-sites-architect.png",
     href: "https://certification.adobe.com/credential/verify/b73fab75-a6dd-11f1-bdd6-42010a400002/linkedin",
   },
 ];
