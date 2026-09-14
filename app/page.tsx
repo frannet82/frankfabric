@@ -339,9 +339,12 @@ export default function Home() {
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 max-w-[820px] mx-auto">
             {badges.map((b) => (
-              <div
+              <a
                 key={b.abbr}
-                className="relative flex items-center gap-6 p-7 rounded border border-white/[0.09] bg-gradient-to-br from-[#141824]/85 to-[#0c0e16]/85 backdrop-blur-sm overflow-hidden transition-all hover:border-cloud-blue/55 hover:shadow-[0_0_0_1px_rgba(63,169,255,0.25),0_24px_70px_rgba(155,107,255,0.20)] hover:-translate-y-1"
+                href={b.href}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="group relative flex items-center gap-6 p-7 rounded border border-white/[0.09] bg-gradient-to-br from-[#141824]/85 to-[#0c0e16]/85 backdrop-blur-sm overflow-hidden transition-all hover:border-cloud-blue/55 hover:shadow-[0_0_0_1px_rgba(63,169,255,0.25),0_24px_70px_rgba(155,107,255,0.20)] hover:-translate-y-1"
               >
                 <span className="absolute top-0 left-0 right-0 h-[2px] bg-gradient-to-r from-cloud-blue to-cloud-violet" />
                 <div
@@ -367,7 +370,10 @@ export default function Home() {
                   <div className="font-display font-semibold text-lg text-[#f4f6fb] leading-snug">{b.title}</div>
                   <div className="text-[13px] text-[#8b93a7] mt-[6px] font-light">{b.meta}</div>
                 </div>
-              </div>
+                <span className="ml-auto self-start font-mono text-[10px] tracking-widest uppercase text-[#8b93a7] transition-colors group-hover:text-cloud-blue whitespace-nowrap">
+                  Verify ↗
+                </span>
+              </a>
             ))}
           </div>
         </div>
