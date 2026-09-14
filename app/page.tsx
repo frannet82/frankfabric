@@ -357,7 +357,7 @@ export default function Home() {
               >
                 <span className="absolute top-0 left-0 right-0 h-[2px] bg-gradient-to-r from-cloud-blue to-cloud-violet" />
                 <div
-                  className="flex-none w-[88px] h-[88px] relative grid place-items-center rounded-md bg-white/[0.04] p-2 transition-transform group-hover:scale-105"
+                  className="flex-none w-[88px] h-[88px] relative grid place-items-center transition-transform group-hover:scale-105"
                   style={{ filter: "drop-shadow(0 0 16px rgba(63,169,255,0.25))" }}
                 >
                   <Image
