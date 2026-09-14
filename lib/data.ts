@@ -22,10 +22,27 @@ export const cases = [
 ];
 
 export const badges = [
-  { abbr: "SA", issuer: "Amazon Web Services", title: "AWS Solutions Architect", meta: "Professional · Verified Credential" },
-  { abbr: "ML", issuer: "Amazon Web Services", title: "AWS Machine Learning Engineer", meta: "Associate · Verified Credential" },
-  { abbr: "DE", issuer: "Amazon Web Services", title: "AWS Data Engineer", meta: "Associate · Verified Credential" },
-  { abbr: "AEM", issuer: "Adobe", title: "Master AEM Architect", meta: "Adobe Certified Expert · Verified" },
+  {
+    abbr: "SA",
+    issuer: "Amazon Web Services",
+    title: "AWS Solutions Architect",
+    meta: "Verified Credential · Credly",
+    href: "https://www.credly.com/badges/321c2213-2b96-4493-9555-ff4a8c2a5fc4",
+  },
+  {
+    abbr: "ML",
+    issuer: "Amazon Web Services",
+    title: "AWS Machine Learning",
+    meta: "Verified Credential · Credly",
+    href: "https://www.credly.com/badges/e3e6b48b-7d91-4a84-9f26-014d79627aa3",
+  },
+  {
+    abbr: "AEM",
+    issuer: "Adobe",
+    title: "AEM Sites Architect",
+    meta: "Adobe Certified · Verified",
+    href: "https://certification.adobe.com/credential/verify/b73fab75-a6dd-11f1-bdd6-42010a400002/linkedin",
+  },
 ];
 
 export const caps = [
