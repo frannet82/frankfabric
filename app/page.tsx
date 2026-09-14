@@ -51,7 +51,7 @@ export default function Home() {
       {/* HERO */}
       <section className="max-w-[1360px] mx-auto mt-5 mb-14 px-6">
         <div
-          className="relative rounded-3xl overflow-hidden min-h-[660px]"
+          className="relative rounded-3xl overflow-hidden min-h-[560px] md:min-h-[660px]"
           style={{
             background:
               "radial-gradient(58% 55% at 64% 26%, rgba(60,60,150,0.45), transparent 62%), linear-gradient(120deg, #0a0e26 0%, #10184a 40%, #1a2a6c 70%, #0f1030 100%)",
@@ -64,29 +64,38 @@ export default function Home() {
             }}
           />
 
-          <div className="absolute right-0 bottom-0 top-0 w-[56%]">
+          <div className="absolute right-0 bottom-0 top-0 w-full md:w-[56%]">
             <Image
               src={asset("/images/final_futuristic_avatar.jpg")}
               alt="Frank portrait"
               fill
-              className="object-cover"
-              style={{ objectPosition: "56% 6%" }}
+              className="object-cover object-right"
+              style={{ objectPosition: "72% 6%" }}
               priority
             />
+            {/* Desktop: horizontal fade from the left edge of the portrait */}
             <div
-              className="absolute inset-0"
+              className="absolute inset-0 hidden md:block"
               style={{
                 background: "linear-gradient(90deg, #10184a 0%, rgba(16,24,74,0.75) 16%, transparent 42%)",
+              }}
+            />
+            {/* Mobile: darken the whole portrait so the text stays readable on top */}
+            <div
+              className="absolute inset-0 md:hidden"
+              style={{
+                background:
+                  "linear-gradient(180deg, rgba(10,14,38,0.72) 0%, rgba(10,14,38,0.55) 45%, rgba(10,14,38,0.9) 100%)",
               }}
             />
           </div>
 
           {/* nav */}
           <div className="relative z-10 px-6 pt-5">
-            <nav className="flex items-center justify-between gap-6 py-3 pl-6 pr-3 rounded-full border border-white/20 bg-white/[0.06] backdrop-blur-md">
-              <div className="flex items-center gap-3">
+            <nav className="flex items-center justify-between gap-3 sm:gap-6 py-2.5 sm:py-3 pl-4 sm:pl-6 pr-2.5 sm:pr-3 rounded-full border border-white/20 bg-white/[0.06] backdrop-blur-md">
+              <div className="flex items-center gap-3 min-w-0">
                 <BrandMark />
-                <span className="font-display font-semibold text-[17px] text-white tracking-tight">
+                <span className="font-display font-semibold text-[15px] sm:text-[17px] text-white tracking-tight truncate">
                   Frank<span className="text-cloud-mist">.</span>CloudFabric
                 </span>
               </div>
@@ -98,7 +107,7 @@ export default function Home() {
               </div>
               <a
                 href="#contact"
-                className="text-[#0d1030] bg-white px-6 py-[11px] rounded-full font-semibold text-[14.5px] hover:-translate-y-0.5 transition-transform"
+                className="flex-none text-[#0d1030] bg-white px-4 sm:px-6 py-[9px] sm:py-[11px] rounded-full font-semibold text-[13px] sm:text-[14.5px] whitespace-nowrap hover:-translate-y-0.5 transition-transform"
               >
                 Start a Project
               </a>
@@ -106,7 +115,7 @@ export default function Home() {
           </div>
 
           {/* content */}
-          <div className="relative z-10 max-w-[600px] px-8 sm:px-14 pt-10 pb-12">
+          <div className="relative z-10 max-w-[600px] px-6 sm:px-14 pt-8 sm:pt-10 pb-12">
             <div className="flex items-center gap-3 mb-6 font-mono text-[12.5px] tracking-[2px] uppercase text-white/90">
               <span className="w-[13px] h-[13px] bg-gradient-to-br from-cloud-mist to-white rotate-45 shadow-[0_0_12px_rgba(95,242,223,0.7)]" />
               Woven for the Enterprise
@@ -130,9 +139,9 @@ export default function Home() {
                 Get started →
               </a>
             </div>
-            <div className="flex items-center gap-9">
+            <div className="flex flex-wrap items-center gap-x-9 gap-y-5">
               <div className="flex items-baseline gap-2">
-                <span className="font-display font-bold text-3xl text-white">4×</span>
+                <span className="font-display font-bold text-3xl text-white">3×</span>
                 <span className="text-[13px] leading-tight text-white/75">
                   AWS &amp; Adobe
                   <br />
