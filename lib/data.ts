@@ -45,6 +45,10 @@ export const badges = [
     meta: "Adobe Certified · Verified",
     image: "/images/certs/aem-sites-architect.png",
     href: "https://certification.adobe.com/credential/verify/b73fab75-a6dd-11f1-bdd6-42010a400002/linkedin",
+    // The Adobe badge artwork has a solid white background, so this card is
+    // rendered as a light/white card to match it (see `variant` handling in
+    // app/page.tsx and the `.cert-card--light` styles in globals.css).
+    variant: "light" as const,
   },
 ];
 

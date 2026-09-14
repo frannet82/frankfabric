@@ -322,23 +322,8 @@ export default function Home() {
       </section>
 
       {/* CREDENTIALS */}
-      <section
-        id="credentials"
-        className="relative py-24 border-t border-white/[0.06] z-10"
-        style={{
-          backgroundImage:
-            "linear-gradient(rgba(255,255,255,0.035) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.035) 1px, transparent 1px)",
-          backgroundSize: "44px 44px",
-          backgroundPosition: "center",
-        }}
-      >
-        <div
-          className="absolute inset-0 pointer-events-none"
-          style={{
-            background:
-              "radial-gradient(600px 400px at 30% 20%, rgba(63,169,255,0.14), transparent 62%), radial-gradient(600px 400px at 75% 60%, rgba(155,107,255,0.14), transparent 62%)",
-          }}
-        />
+      <section id="credentials" className="cert-section relative py-24 border-t border-white/[0.06] z-10">
+        <div className="cert-section__glow absolute inset-0 pointer-events-none" />
         <div className="relative max-w-[1280px] mx-auto px-10">
           <div className="text-center max-w-[600px] mx-auto mb-14">
             <span className="font-mono text-xs tracking-[2px] uppercase text-cloud-blue">{"// Verified"}</span>
@@ -347,37 +332,41 @@ export default function Home() {
             </h2>
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 max-w-[820px] mx-auto">
-            {badges.map((b) => (
-              <a
-                key={b.abbr}
-                href={b.href}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="group relative flex items-center gap-6 p-7 rounded border border-white/[0.08] bg-white/[0.02] backdrop-blur-[2px] overflow-hidden transition-all hover:bg-white/[0.04] hover:border-cloud-blue/55 hover:shadow-[0_0_0_1px_rgba(63,169,255,0.25),0_24px_70px_rgba(155,107,255,0.20)] hover:-translate-y-1"
-              >
-                <span className="absolute top-0 left-0 right-0 h-[2px] bg-gradient-to-r from-cloud-blue to-cloud-violet" />
-                <div
-                  className="flex-none w-[88px] h-[88px] relative grid place-items-center transition-transform group-hover:scale-105"
-                  style={{ filter: "drop-shadow(0 0 16px rgba(63,169,255,0.25))" }}
+            {badges.map((b) => {
+              const isLight = b.variant === "light";
+              return (
+                <a
+                  key={b.abbr}
+                  href={b.href}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className={`cert-card${isLight ? " cert-card--light" : ""} group relative flex items-center gap-6 p-7 rounded overflow-hidden transition-all hover:-translate-y-1`}
                 >
-                  <Image
-                    src={asset(b.image)}
-                    alt={`${b.title} certification badge`}
-                    width={88}
-                    height={88}
-                    className="w-full h-full object-contain"
-                  />
-                </div>
-                <div>
-                  <div className="font-mono text-[11px] tracking-widest uppercase text-cloud-blue mb-[6px]">{b.issuer}</div>
-                  <div className="font-display font-semibold text-lg text-[#f4f6fb] leading-snug">{b.title}</div>
-                  <div className="text-[13px] text-[#8b93a7] mt-[6px] font-light">{b.meta}</div>
-                </div>
-                <span className="ml-auto self-start font-mono text-[10px] tracking-widest uppercase text-[#8b93a7] transition-colors group-hover:text-cloud-blue whitespace-nowrap">
-                  Verify ↗
-                </span>
-              </a>
-            ))}
+                  <span className="absolute top-0 left-0 right-0 h-[2px] bg-gradient-to-r from-cloud-blue to-cloud-violet" />
+                  <div className="cert-badge-glow flex-none w-[88px] h-[88px] relative grid place-items-center transition-transform group-hover:scale-105">
+                    <Image
+                      src={asset(b.image)}
+                      alt={`${b.title} certification badge`}
+                      width={88}
+                      height={88}
+                      className="w-full h-full object-contain"
+                    />
+                  </div>
+                  <div>
+                    <div className="cert-card__issuer font-mono text-[11px] tracking-widest uppercase text-cloud-blue mb-[6px]">
+                      {b.issuer}
+                    </div>
+                    <div className="cert-card__title font-display font-semibold text-lg text-[#f4f6fb] leading-snug">
+                      {b.title}
+                    </div>
+                    <div className="cert-card__meta text-[13px] text-[#8b93a7] mt-[6px] font-light">{b.meta}</div>
+                  </div>
+                  <span className="cert-card__verify ml-auto self-start font-mono text-[10px] tracking-widest uppercase text-[#8b93a7] transition-colors group-hover:text-cloud-blue whitespace-nowrap">
+                    Verify ↗
+                  </span>
+                </a>
+              );
+            })}
           </div>
         </div>
       </section>
