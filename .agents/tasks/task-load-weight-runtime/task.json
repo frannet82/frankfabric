@@ -1,7 +1,14 @@
 {
   "task_id": "task-load-weight-runtime",
   "task_description": "Workstream 1 of 4 (Load Weight and Runtime Perf) for frankfabric: adapt the tireshop perf playbook to the whole frankfabric site. Establish a recorded baseline; add a repeatable WebP asset-compression script that cuts model bytes on disk (VRMs + schnauzer glb); shrink the largest JS chunk via code-splitting (extract shared runtime values out of the three-heavy scene module so the wardrobe page stops statically preloading the ~913KB three chunk); load only what the initial view needs and defer the rest to interaction; and replace blank Suspense fallbacks with a real drei useProgress indicator. Prove every 3D scene renders identically (fixed-camera before/after screenshot diffs) and that lint + static-export build stay green. One branch (perf/load-weight-runtime), not pushed.",
-  "status": "in_progress",
+  "status": "completed",
   "feature_order": ["FEAT-001", "FEAT-002", "FEAT-003"],
-  "blocked_reason": null
+  "blocked_reason": null,
+  "verification": {
+    "build": "pass",
+    "tests": "pass",
+    "test_quality": "pass",
+    "docker_build": "skipped",
+    "summary": "npm run lint clean except the single pre-existing @next/next/no-page-custom-font warning; npm run build static export succeeds with all 5 pages prerendered. Independently re-verified: wardrobe cold-load now 8,248,182 B (matches after number, -55.8% vs 18.67MB baseline; the v1-review follow-up deferred the non-default idle-only vs walking/waving FBX clips so only idle.fbx loads on cold start, a further -993KB on top of FEAT-002+FEAT-003's -50.5%); the old 913KB three chunk is no longer referenced by any prerendered index.html (largest chunk referenced by wardrobe HTML is 203,384 B raw / 63,950 B gzip); compress-assets.mjs re-runs idempotently from assets-src/ (51.54MB->16.37MB, -68%) and sharp 0.34.5 is now a declared devDependency. No build output, node_modules, or assets-src staged. Evidence 'tests' = the measurement harness (scripts/measure-load.mjs) + before/after cold-load JSON + per-scene screenshot diffs (docs/perf/BASELINE.md, AFTER.md, DIFF.md); test_quality: the harness measures real cold-load transferred bytes in a headless browser and the diffs use both per-pixel and motion-invariant color-histogram metrics via sharp, exercising the actual changed behavior (byte totals drop, chunk not preloaded, scenes render identically) rather than static assertions. Docker not applicable (no Dockerfile; static export)."
+  }
 }

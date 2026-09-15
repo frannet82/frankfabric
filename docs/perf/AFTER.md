@@ -2,9 +2,27 @@
 
 This file records the **post-optimization** numbers after the full workstream-1
 work: **FEAT-002** (WebP asset compression) + **FEAT-003** (JS code-splitting /
-on-demand loading / `useProgress` progress UI). It is measured the same way, on
-the same machine/browser, as `BASELINE.md`, so the before/after is apples to
-apples.
+on-demand loading / `useProgress` progress UI) + the **v1-review follow-up**
+(deferring the wardrobe's non-default animation clips). It is measured the same
+way, on the same machine/browser, as `BASELINE.md`, so the before/after is
+apples to apples.
+
+> **Follow-up update (v1 review, issue 1 — animation-clip deferral).** The
+> wardrobe scene used to eagerly `useLoader(FBXLoader, …)` all three Mixamo
+> clips (idle 1.58 MB + walking 0.37 MB + waving 0.62 MB ≈ 2.57 MB) at scene
+> mount, even though the builder opens on its default `"idle"` animation and
+> never plays walking/waving until the user picks them. They are now loaded
+> **on demand** — the same pattern the garment VRMs already use — so cold load
+> fetches **only `idle.fbx`**; `walking.fbx` + `waving.fbx` (~0.99 MB) stream in
+> only when their control is first selected. This drops the wardrobe cold load a
+> further **993,397 B** (9,241,579 → **8,248,182 B**, an added **−10.7 %** on
+> top of the earlier −50.5 %, for **−55.8 %** vs the 18.671 MB baseline). The
+> mixer / retarget / crossfade wiring is unchanged in behavior: switching among
+> Rest / Idle / Walking / Waving still crossfades, and a clip selected before
+> its FBX finishes simply crossfades in the moment it loads. Verified on-demand:
+> a headless run confirms only `idle.fbx` is fetched on load, then `walking.fbx`
+> / `waving.fbx` are fetched on their first selection and not refetched
+> afterward.
 
 Re-run any route with:
 
@@ -66,7 +84,7 @@ All routes: `ready=true`, `unresolvedFailures=[]`.
 | Route | Path | Baseline | After | Change |
 |-------|------|---------:|------:|-------:|
 | Landing | `/` | 1,157,888 B (1.158 MB) | **1,158,117 B (1.158 MB)** | ~flat (no 3D bytes either way) |
-| Digital Wardrobe | `/projects/digital-wardrobe/` | 18,671,336 B (18.671 MB) | **9,241,579 B (9.242 MB)** | **−50.5 %** |
+| Digital Wardrobe | `/projects/digital-wardrobe/` | 18,671,336 B (18.671 MB) | **8,248,182 B (8.248 MB)** | **−55.8 %** |
 | Chef Chatbot | `/projects/chef-chatbot/` | 2,571,811 B (2.572 MB) | **2,581,387 B (2.581 MB)** | ~flat* |
 | Coach Trainer | `/projects/coach-trainer/` | 2,431,115 B (2.431 MB) | **2,440,696 B (2.441 MB)** | ~flat* |
 | Virtual Pet | `/projects/virtual-pet/` | 14,327,684 B (14.328 MB) | **9,854,000 B (9.854 MB)** | **−31.2 %** |
@@ -98,6 +116,12 @@ chest/shirt.vrm (162,364) · legs/cargopants.vrm (247,200) · feet/sneakers.vrm 
 The other garment VRMs still load **only when their option is selected** (via
 `<Garment url=…>` in `lib/vrm/transplant.tsx`) — FEAT-003 confirmed this and did
 **not** add any eager `useGLTF.preload` of the full garment set.
+
+The **animation clips follow the same on-demand rule** after the v1-review
+follow-up: the cold load fetches only `idle.fbx` (the builder default); the
+`.fbx` line in `after-wardrobe.json` `byType` is `1,576,448` (idle only, down
+from the previous ~2.57 MB of all three clips). `walking.fbx` and `waving.fbx`
+stream in only when the user first selects those animations.
 
 ## Per-scene screenshot diff vs baseline
 
