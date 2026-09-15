@@ -53,8 +53,15 @@ export type QualitySettings = {
   // Shadow-map resolution (per axis) for the key light. High goes above today's
   // 1024; Fast is unused (shadows off) but kept low for safety.
   shadowMapSize: number;
-  // Whether to render the heavier soft-shadow / extra-fill-light / backdrop
-  // depth effects. Gated to High so Fast stays lean.
+  // Whether the tier is allowed the heavier "soft" effects. NOTE: drei
+  // <SoftShadows> is deliberately NOT wired to this — it rewrites the global
+  // shadow shader chunk and collides with the VRM MToon Face ShaderMaterial
+  // (a fatal "vogelDiskSample already has a body" fragment-shader compile
+  // error). Soft edges are instead achieved consistently across all four
+  // scenes via the higher (2048) shadow-map resolution on High + tuned
+  // ContactShadows blur. This flag is retained as the High/Fast "heavier
+  // effects allowed" signal (and to keep the settings shape stable); do NOT
+  // reconnect it to <SoftShadows> without solving the MToon collision first.
   softShadows: boolean;
 };
 
