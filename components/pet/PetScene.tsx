@@ -13,12 +13,18 @@
 // Because the mesh has NO skeleton (a dog scanned on all fours), ALL pet
 // reactions are whole-group transforms in useFrame, similar to
 // components/coach/CoachScene.tsx. The animated group's rest is identity, so
-// each frame writes ABSOLUTE bob / sway / lean offsets to group.position /
+// each frame writes ABSOLUTE bob / sway / lean / yaw offsets to group.position /
 // group.rotation (nothing accumulates); the recenter offset lives on the inner
 // <primitive>, not the animated group. Offsets are scaled by a
 // framerate-independent smoothed energy (1 - Math.exp(-delta*k)). Mood drives
-// the always-on ambience; a transient `action` (re-armed via `actionNonce` so
-// repeats still fire) triggers a ~1s one-shot reaction.
+// the always-on ambience — a clearly perceptible breathing bob, a livelier
+// bounce/tail-end wiggle that NEVER fully stops, and a slow, bounded ambient
+// look-around (eased sinusoidal yaw on group.rotation.y) that reads as the dog
+// glancing about. Happier moods bob/turn more; tired/sad/hungry/dirty visibly
+// slow, droop, and look around less. A transient `action` (re-armed via
+// `actionNonce` so repeats still fire) triggers a ~1s one-shot reaction: an
+// obvious hop + wiggle on feed/play, a side-to-side shimmy on clean, and a
+// settle/sink + nod on sleep. Every reaction is enveloped so it eases out.
 //
 // A dog is WIDE and LOW (not tall like the coach), so we scale off the model's
 // LARGEST bound and aim the camera at roughly its mid-body height so it reads
@@ -86,6 +92,10 @@ function Pet({ mood, action, actionNonce, wellbeing }: SceneProps) {
   // so the one-shot has its own phase independent of the global clock.
   const activeActionRef = useRef<SceneProps["action"]>(null);
   const actionTimeRef = useRef(0);
+  // Smoothed ambient heading (yaw) so the look-around eases toward a slow,
+  // bounded sinusoidal target rather than snapping — keeps the dog gently
+  // turning without ever spinning away from the fixed camera.
+  const yawRef = useRef(0);
 
   // Clone the loaded scene so we never mutate the loader-cached object across
   // React strict-mode remounts, and clone each material + its color map so the
@@ -230,46 +240,67 @@ function Pet({ mood, action, actionNonce, wellbeing }: SceneProps) {
     const activeAction = activeActionRef.current;
 
     // --- Always-on ambience ------------------------------------------------
-    // Gentle breathing bob so the pet is never perfectly static.
-    const breathe = 0.008 * Math.sin(t * 1.5);
-    // Livelier bob scaled by energy (a happy dog bounces a bit more).
-    const liveBob = energy * 0.03 * (0.5 + 0.5 * Math.sin(t * 3.4));
-    // Small side-to-side wiggle / sway (reads as a tail-end wiggle).
-    const wiggleX = energy * 0.02 * Math.sin(t * 2.6);
-    const wiggleRotY = energy * 0.05 * Math.sin(t * 2.1);
+    // Breathing bob that NEVER stops, even at the energy floor, so the pet is
+    // never a perfectly static window. A small energy-scaled term adds extra
+    // rise/fall when lively.
+    const breathe = (0.022 + energy * 0.018) * Math.sin(t * 1.6);
+    // Livelier vertical bounce scaled by energy (a happy dog bounces clearly
+    // more). Always slightly positive-biased so it reads as an eager hop-idle.
+    const liveBob = energy * 0.075 * (0.5 + 0.5 * Math.sin(t * 3.4));
+    // Side-to-side wiggle / sway (reads as a tail-end wiggle) plus a faster
+    // shimmy overtone so the back end keeps flicking even at rest.
+    const wiggleX =
+      energy * 0.05 * Math.sin(t * 2.6) + energy * 0.02 * Math.sin(t * 5.1);
+    const wiggleRotY = energy * 0.11 * Math.sin(t * 2.1);
 
-    // Tired/sad/hungry/dirty moods droop: a slight downward offset and a small
-    // forward lean, scaled by how LOW the energy is.
+    // Slow ambient look-around: a bounded sinusoidal heading target that the
+    // dog eases toward, so it visibly glances left/right without ever spinning
+    // away from the fixed camera. Amplitude scales with energy (a lively pet
+    // looks around a lot more; a slumped one barely turns) but keeps a small
+    // floor so it is never frozen. Bounded to ~0.4rad (~23deg) each way.
+    const yawTarget =
+      (0.12 + energy * 0.32) *
+      (Math.sin(t * 0.55) * 0.7 + Math.sin(t * 0.23) * 0.3);
+    const kYaw = 1 - Math.exp(-dt * 2.2);
+    yawRef.current += (yawTarget - yawRef.current) * kYaw;
+    const ambientYaw = Math.max(-0.4, Math.min(0.4, yawRef.current));
+
+    // Tired/sad/hungry/dirty moods droop: a downward offset and a forward lean,
+    // scaled by how LOW the energy is (also visibly reducing the look-around).
     const droop = 1 - energy; // ~0 when lively, ~0.9 when slumped.
-    const droopY = -0.03 * droop;
-    const droopLean = 0.06 * droop;
+    const droopY = -0.045 * droop;
+    const droopLean = 0.09 * droop;
 
     // --- One-shot action reaction -----------------------------------------
     // feed/play => an excited hop + quick wiggle. clean => a shimmy. sleep =>
     // a settle-down (sink + gentle nod), no hop. Enveloped so it eases out.
     let hopY = 0;
+    let actionX = 0;
     let actionRotY = 0;
     let actionRotX = 0;
     if (env > 0.001 && activeAction) {
       if (activeAction === "sleep") {
-        // Settle: sink slightly and give a slow nod down.
-        hopY = -0.05 * env;
-        actionRotX = 0.05 * env * (0.5 + 0.5 * Math.sin(at * 4));
+        // Settle: sink noticeably and give a slow, sleepy nod down.
+        hopY = -0.11 * env;
+        actionRotX = 0.12 * env * (0.5 + 0.5 * Math.sin(at * 3.5));
       } else if (activeAction === "clean") {
-        // Shimmy: quick side-to-side shake.
-        actionRotY = 0.12 * env * Math.sin(at * 22);
-        hopY = 0.02 * env * Math.abs(Math.sin(at * 11));
+        // Shimmy: a clear side-to-side shake of the whole body.
+        actionRotY = 0.26 * env * Math.sin(at * 22);
+        actionX = 0.05 * env * Math.sin(at * 22);
+        hopY = 0.03 * env * Math.abs(Math.sin(at * 11));
       } else {
-        // feed / play: an excited little hop + happy wiggle.
-        hopY = 0.12 * env * Math.abs(Math.sin(at * 8));
-        actionRotY = 0.1 * env * Math.sin(at * 14);
+        // feed / play: an obvious excited hop + happy wiggle.
+        hopY = 0.24 * env * Math.abs(Math.sin(at * 8));
+        actionRotY = 0.22 * env * Math.sin(at * 14);
       }
     }
 
-    // Compose. Keep all offsets subtle so it reads lively, never glitchy.
+    // Compose. All contributions are ABSOLUTE writes onto the identity-rest
+    // group each frame (nothing accumulates), and stay bounded so it reads
+    // lively, never glitchy.
     group.position.y = breathe + liveBob + droopY + hopY;
-    group.position.x = wiggleX;
-    group.rotation.y = wiggleRotY + actionRotY;
+    group.position.x = wiggleX + actionX;
+    group.rotation.y = ambientYaw + wiggleRotY + actionRotY;
     group.rotation.x = droopLean + actionRotX;
   });
 
