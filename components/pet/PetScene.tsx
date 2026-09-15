@@ -11,11 +11,14 @@
 // RETOPO_COL_2k_0.png. We only ensure any color map is sampled in sRGB.
 //
 // Because the mesh has NO skeleton (a dog scanned on all fours), ALL pet
-// reactions are whole-group transforms in useFrame, exactly like
-// components/coach/CoachScene.tsx: we capture the model's rest transform once
-// and apply subtle bob / sway / lean deltas ON TOP of it, scaled by a
+// reactions are whole-group transforms in useFrame, similar to
+// components/coach/CoachScene.tsx. The animated group's rest is identity, so
+// each frame writes ABSOLUTE bob / sway / lean offsets to group.position /
+// group.rotation (nothing accumulates); the recenter offset lives on the inner
+// <primitive>, not the animated group. Offsets are scaled by a
 // framerate-independent smoothed energy (1 - Math.exp(-delta*k)). Mood drives
-// the always-on ambience; a transient `action` fires a ~1s one-shot reaction.
+// the always-on ambience; a transient `action` (re-armed via `actionNonce` so
+// repeats still fire) triggers a ~1s one-shot reaction.
 //
 // A dog is WIDE and LOW (not tall like the coach), so we scale off the model's
 // LARGEST bound and aim the camera at roughly its mid-body height so it reads
@@ -58,6 +61,9 @@ type SceneProps = {
   mood: string;
   // Transient one-shot trigger set for ~1s when the visitor takes an action.
   action?: "feed" | "play" | "sleep" | "clean" | null;
+  // Monotonic counter bumped on every action click. The one-shot re-arms on
+  // this value (not just `action`), so repeating the SAME action still fires.
+  actionNonce?: number;
   // Overall wellbeing 0..100; gently scales liveliness.
   wellbeing: number;
 };
@@ -65,11 +71,11 @@ type SceneProps = {
 // Loads the schnauzer and drives the whole-group mood/action motion. The model
 // is unrigged, so ALL motion is applied to the group transform in useFrame —
 // never to bones.
-function Pet({ mood, action, wellbeing }: SceneProps) {
+function Pet({ mood, action, actionNonce, wellbeing }: SceneProps) {
   const { scene } = useGLTF(MODEL_URL);
 
-  // The group we animate. We capture its rest transform once so every frame's
-  // motion is applied ON TOP of rest (never accumulating).
+  // The group we animate. Its rest is identity (position 0 / rotation 0); every
+  // frame writes ABSOLUTE offsets to it (see useFrame), so nothing accumulates.
   const groupRef = useRef<THREE.Group | null>(null);
 
   // Smoothed 0..1 "energy" for the always-on liveliness (eased toward a mood
@@ -163,21 +169,23 @@ function Pet({ mood, action, wellbeing }: SceneProps) {
     };
   }, [model]);
 
-  // Latch a new action into the one-shot envelope. Re-arming whenever `action`
-  // changes to a non-null value resets the envelope + phase so the reaction
-  // fires cleanly once (VirtualPet clears the prop after ~1s).
+  // Latch a new action into the one-shot envelope. Re-arming is keyed on
+  // `actionNonce` (bumped by VirtualPet on every click) as well as `action`, so
+  // clicking the SAME action twice inside the ~1s hold window still resets the
+  // envelope + phase and re-fires the reaction cleanly.
   useEffect(() => {
     if (action) {
       activeActionRef.current = action;
       actionEnvRef.current = 1; // impulse; useFrame decays it over ~1s.
       actionTimeRef.current = 0;
     }
-  }, [action]);
+  }, [action, actionNonce]);
 
   // Drive the whole-group mood/action motion each frame. Unrigged model, so NO
-  // bone lookups — we transform the group itself. Everything is applied ON TOP
-  // of the group's rest (position 0 / rotation 0); the inner model already
-  // carries the recenter offset.
+  // bone lookups — we transform the group itself. Each frame writes ABSOLUTE
+  // values to group.position / group.rotation (the group's rest is identity),
+  // so nothing accumulates frame-to-frame; the inner <primitive> alone carries
+  // the recenter offset.
   useFrame((state, delta) => {
     const group = groupRef.current;
     if (!group) return;
@@ -274,7 +282,12 @@ function Pet({ mood, action, wellbeing }: SceneProps) {
 
 // Mood + transient action + wellbeing drive the whole-group motion in <Pet />.
 // The mesh is unrigged, so there is no bone-animation prop.
-export default function PetScene({ mood, action, wellbeing }: SceneProps) {
+export default function PetScene({
+  mood,
+  action,
+  actionNonce,
+  wellbeing,
+}: SceneProps) {
   return (
     <Canvas
       shadows
@@ -310,7 +323,12 @@ export default function PetScene({ mood, action, wellbeing }: SceneProps) {
 
       <Suspense fallback={null}>
         <group position={[0, 0, 0]}>
-          <Pet mood={mood} action={action} wellbeing={wellbeing} />
+          <Pet
+            mood={mood}
+            action={action}
+            actionNonce={actionNonce}
+            wellbeing={wellbeing}
+          />
         </group>
       </Suspense>
 

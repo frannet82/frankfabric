@@ -14,8 +14,10 @@
 // localStorage). On mount we load the saved state (or a fresh one), apply
 // decay for the real time elapsed since it was last written, then tick a small
 // incremental decay on an interval. Feed / Play / Sleep / Clean call
-// applyAction, set a transient `action` prop that PetScene turns into a ~1s
-// one-shot reaction (cleared afterwards so it fires once), and persist.
+// applyAction, set a transient `action` prop (plus a monotonic `actionNonce`)
+// that PetScene turns into a ~1s one-shot reaction (cleared afterwards so it
+// fires once), and persist. The nonce guarantees a repeat of the same action
+// still re-arms the reaction.
 //
 // Accessibility: stat bars are role='progressbar' with aria-valuenow/min/max
 // and labels; controls are real <button>s with hover/disabled/focus-visible
@@ -104,6 +106,11 @@ export default function VirtualPet() {
   const [state, setState] = useState<PetState | null>(null);
   // Transient one-shot action passed to the 3D scene (null when idle).
   const [pendingAction, setPendingAction] = useState<PetAction | null>(null);
+  // Monotonic counter bumped on every doAction call. PetScene re-arms its
+  // one-shot reaction on this nonce, so clicking the SAME action twice inside
+  // the ACTION_HOLD_MS window still re-fires the animation (the action string
+  // alone would compare equal and silently skip the second reaction).
+  const [actionNonce, setActionNonce] = useState(0);
   const [nameDraft, setNameDraft] = useState("");
 
   // Keep a ref to the latest state so the interval/action callbacks always read
@@ -165,7 +172,10 @@ export default function VirtualPet() {
     savePetState(next);
 
     // Fire the transient one-shot reaction, then clear it so it plays once.
+    // Bump the nonce so PetScene re-arms even when `action` is unchanged (same
+    // action clicked twice inside the hold window).
     setPendingAction(action);
+    setActionNonce((n) => n + 1);
     if (actionTimerRef.current) clearTimeout(actionTimerRef.current);
     actionTimerRef.current = setTimeout(() => {
       setPendingAction(null);
@@ -196,7 +206,12 @@ export default function VirtualPet() {
     <div className="absolute inset-0 z-[5] flex flex-col md:flex-row bg-pet-cream">
       {/* 3D pet stage */}
       <div className="relative md:w-[48%] w-full h-[42%] md:h-full min-h-[140px] bg-gradient-to-b from-pet-paper to-pet-mist border-b md:border-b-0 md:border-r border-pet-accentSoft">
-        <PetScene mood={mood} action={pendingAction} wellbeing={wellbeing} />
+        <PetScene
+          mood={mood}
+          action={pendingAction}
+          actionNonce={actionNonce}
+          wellbeing={wellbeing}
+        />
         <span className="absolute bottom-2 left-0 right-0 text-center font-mono text-[10px] tracking-widest uppercase text-pet-inkSoft pointer-events-none">
           {petName}
         </span>
