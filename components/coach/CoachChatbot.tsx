@@ -27,7 +27,11 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import dynamic from "next/dynamic";
-import { respondToMessage, type ChatMessage } from "@/lib/coach/coachEngine";
+import {
+  respondToMessage,
+  type ChatMessage,
+  type CoachFocus,
+} from "@/lib/coach/coachEngine";
 import { CoachVoice } from "@/lib/coach/coachVoice";
 import {
   QualityProvider,
@@ -79,6 +83,12 @@ function CoachChatbotInner() {
   // `speaking` opens the talking-motion window; `muted` gates all audio.
   const [speaking, setSpeaking] = useState(false);
   const [muted, setMuted] = useState(false);
+  // The engine's `focus` read-out for the most recent reply, plus a monotonic
+  // nonce bumped on every send so the SAME focus re-triggers the scene's camera
+  // nudge (mirrors how VirtualPet pairs action + actionNonce). We do NOT compute
+  // focus here — we read it straight off the engine response in send().
+  const [focus, setFocus] = useState<CoachFocus | null>(null);
+  const [focusNonce, setFocusNonce] = useState(0);
 
   const listRef = useRef<HTMLDivElement>(null);
   // Lazily-created in-browser voice (Web Speech API SpeechSynthesis). Created on
@@ -125,6 +135,11 @@ function CoachChatbotInner() {
         const response = respondToMessage(history, trimmed);
         reply = response.reply;
         setSuggestions(response.suggestions ?? []);
+        // Read the engine's branch classification straight off the response and
+        // hand it to the scene (with a fresh nonce so an identical focus still
+        // re-fires the camera nudge). No intent is derived in this component.
+        setFocus(response.focus ?? null);
+        setFocusNonce((n) => n + 1);
         return [...withUser, { role: "assistant", content: response.reply }];
       });
 
@@ -156,7 +171,14 @@ function CoachChatbotInner() {
     <div className="absolute inset-0 z-[5] flex flex-col md:flex-row bg-sf-black/90 backdrop-blur-[1px]">
       {/* 3D coach stage */}
       <div className="relative md:w-[42%] w-full h-[38%] md:h-full min-h-[120px] bg-gradient-to-b from-sf-ink to-sf-gray border-b md:border-b-0 md:border-r border-sf-yellow/40">
-        <CoachScene speaking={speaking} getLoudness={getLoudness} quality={quality} />
+        <CoachScene
+          speaking={speaking}
+          getLoudness={getLoudness}
+          quality={quality}
+          focus={focus}
+          focusNonce={focusNonce}
+          onKettlebellClick={() => send("Suggest a workout")}
+        />
         {/* Shared High/Fast render-quality control, placed unobtrusively in the
             stage's top-left so it never overlaps the mute toggle (top-right) or
             the label (bottom). Same control across all four scenes. */}
