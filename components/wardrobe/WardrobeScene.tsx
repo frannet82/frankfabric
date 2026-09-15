@@ -33,6 +33,7 @@ import { Suspense, useEffect, useMemo, useRef } from "react";
 import { Canvas, useFrame, useLoader } from "@react-three/fiber";
 import { OrbitControls, ContactShadows } from "@react-three/drei";
 import * as THREE from "three";
+import SceneLoader from "@/components/three/SceneLoader";
 import { GLTFLoader } from "three/examples/jsm/loaders/GLTFLoader.js";
 import { FBXLoader } from "three/examples/jsm/loaders/FBXLoader.js";
 import {
@@ -43,13 +44,26 @@ import {
 import { asset } from "@/lib/asset";
 import { retargetMixamoClip } from "@/lib/vrm/retarget";
 import { Garment } from "@/lib/vrm/transplant";
+import {
+  OPTIONS,
+  type Category,
+  type WardrobeAnimation,
+  type WardrobeSelection,
+  type WardrobeColors,
+} from "@/components/wardrobe/wardrobeOptions";
 
-export type Category = "outfit" | "bottom" | "shoes" | "hat";
-
-// Which humanoid animation the avatar plays. "rest" means no clip is playing
-// (the avatar stays in its idle rest pose while the scene auto-rotates); the
-// others map to the retargeted FBX clips bundled in public/animations/.
-export type WardrobeAnimation = "rest" | "idle" | "walking" | "waving";
+// OPTIONS and the shared wardrobe types now live in the lightweight
+// components/wardrobe/wardrobeOptions.ts module (NO three.js imports), so the
+// control UI (WardrobeBuilder) can import them WITHOUT dragging this
+// three.js-heavy scene module into the static page bundle. Re-export OPTIONS +
+// the types here so any existing importer of this module keeps working.
+export {
+  OPTIONS,
+  type Category,
+  type WardrobeAnimation,
+  type WardrobeSelection,
+  type WardrobeColors,
+};
 
 // FBX animation clips (Mixamo-style humanoid rigs). Loaded client-side only via
 // FBXLoader and retargeted onto the VRM humanoid — see retargetMixamoClip
@@ -59,57 +73,6 @@ const ANIMATION_URLS: Record<Exclude<WardrobeAnimation, "rest">, string> = {
   idle: asset("/animations/idle.fbx"),
   walking: asset("/animations/walking.fbx"),
   waving: asset("/animations/waving.fbx"),
-};
-
-export type WardrobeSelection = Record<Category, number>;
-export type WardrobeColors = Record<Category, string>;
-
-// Option labels shown in the UI. Index 0 is always the "Base"/"None" option:
-// selecting it mounts no garment for that category, so the base body shows
-// through unclothed for that slot.
-export const OPTIONS: Record<Category, string[]> = {
-  outfit: [
-    "Base",
-    "Tank Top",
-    "Shirt",
-    "Hoodie",
-    "Crop Top",
-    "Light Shirt",
-    "Full Jacket",
-    "Tucked Shirt",
-    "Sweater",
-  ],
-  bottom: [
-    "Base",
-    "Cargo Pants",
-    "Casual Shorts",
-    "Skirt",
-    "Sport Shorts",
-    "Above-Knee Shorts",
-    "Waist Shorts",
-    "Double-Belt Pants",
-  ],
-  shoes: [
-    "None",
-    "Sneakers",
-    "Short Boots",
-    "Thin Shoe",
-    "Dress Boots",
-    "Tall Boots",
-    "Tennis Shoes",
-    "High Top",
-  ],
-  hat: [
-    "None",
-    "Short",
-    "Ponytail",
-    "Curled Bangs",
-    "Buns",
-    "Straight",
-    "Swept",
-    "Long Spike",
-    "Dreds",
-  ],
 };
 
 // The minimally-clothed modular base body. Base-path-prefixed so it resolves to
@@ -374,7 +337,7 @@ export default function WardrobeScene({
       <directionalLight position={[-5, 3, -4]} intensity={0.35} />
       <hemisphereLight args={["#ffffff", "#cbc7bd", 0.5]} />
 
-      <Suspense fallback={null}>
+      <Suspense fallback={<SceneLoader />}>
         <group position={[0, 0, 0]}>
           <Avatar selection={selection} colors={colors} animation={animation} />
         </group>

@@ -62,6 +62,7 @@ import * as THREE from "three";
 import { FBXLoader } from "three/examples/jsm/loaders/FBXLoader.js";
 import { clone as cloneSkeleton } from "three/examples/jsm/utils/SkeletonUtils.js";
 import { asset } from "@/lib/asset";
+import SceneLoader from "@/components/three/SceneLoader";
 
 type SceneProps = {
   // True while the chef's reply is "playing"; opens the mouth-motion window.
@@ -425,7 +426,7 @@ export default function ChefScene({ speaking = false, getLoudness }: SceneProps)
       {/* Very gentle sky-to-ground bounce, near-neutral so it never tints. */}
       <hemisphereLight args={["#eef4ff", "#f3efe6", 0.45]} />
 
-      <Suspense fallback={null}>
+      <Suspense fallback={<SceneLoader />}>
         <group position={[0, 0, 0]}>
           <Avatar speaking={speaking} getLoudness={getLoudness} />
         </group>
