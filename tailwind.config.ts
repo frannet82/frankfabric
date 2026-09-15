@@ -47,6 +47,27 @@ const config: Config = {
           gray: "#2a2a2a",
           mist: "#f4f4f4",
         },
+        // Warm, cozy Tamagotchi virtual-pet palette. Soft cream/paper
+        // backgrounds, a friendly teal-ish primary accent, an amber "feed"
+        // affordance, and semantic good/warn/crit colors for the stat bars.
+        // Kept separate from `cloud`, `ac`, and `sf`, which the rest of the
+        // site uses.
+        pet: {
+          cream: "#fbf3e4", // page/stage background (soft cream)
+          paper: "#fffaf0", // card/panel surface (warm paper white)
+          ink: "#5a4632", // primary text (muted warm brown)
+          inkSoft: "#8a745a", // secondary/label text
+          accent: "#e08a4c", // friendly primary accent (warm terracotta)
+          accentSoft: "#f4c99a", // soft accent tint (chips, borders)
+          feed: "#f0a63c", // "feed" action (warm amber/orange)
+          play: "#e07a9a", // "play" action (playful rose)
+          rest: "#7c9bd6", // "sleep/rest" action (calm blue)
+          clean: "#5fc2c7", // "clean" action (fresh teal)
+          good: "#7cc47a", // stat is healthy (soft green)
+          warn: "#f0b429", // stat is getting low (warm amber)
+          crit: "#e5674e", // stat is low/critical (warm coral red)
+          mist: "#efe2c9", // subtle borders / bar track
+        },
       },
       fontFamily: {
         display: ["var(--font-display)", "sans-serif"],
