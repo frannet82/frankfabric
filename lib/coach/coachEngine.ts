@@ -9,6 +9,13 @@
 //
 // Everything here is 100% client-side, offline, and DETERMINISTIC: the same
 // inputs always produce the same output (no randomness, no I/O, no network).
+//
+// FOCUS FIELD (additive, FEAT-002): CoachResponse carries an OPTIONAL `focus`
+// field — a read-out of the branch respondToMessage ALREADY chose (greeting /
+// exercises / walkthrough / suggest / chat). It is NOT a new parser and never
+// changes the reply text or suggestions; it simply names the decision so the 3D
+// scene can nudge its (pinned) camera in RESPONSE to what the engine did,
+// mirroring tireshop's reply.intent. Consumers may ignore it entirely.
 
 import {
   allWorkouts as workouts,
@@ -29,10 +36,24 @@ export interface ChatMessage {
   content: string;
 }
 
+/**
+ * A read-out of the branch respondToMessage took, for consumers (e.g. the 3D
+ * scene) that want to react to the engine's decision without re-parsing input.
+ *   greeting    — opening / hello / help / thanks small-talk
+ *   exercises   — listed the exercises for a named routine
+ *   walkthrough — walked through a named routine step by step
+ *   suggest     — returned a ranked list of routines (filter / suggest / describe)
+ *   chat        — fallback / nothing understood
+ */
+export type CoachFocus = "greeting" | "exercises" | "walkthrough" | "suggest" | "chat";
+
 /** The engine's reply plus optional quick-reply suggestion chips. */
 export interface CoachResponse {
   reply: string;
   suggestions?: string[];
+  // ADDITIVE (FEAT-002): names the branch already chosen above. Optional so
+  // this stays fully backward compatible; it never affects reply/suggestions.
+  focus?: CoachFocus;
 }
 
 const DEFAULT_SUGGESTIONS = [
@@ -396,6 +417,7 @@ export function respondToMessage(
       reply:
         "I'm fired up and ready, champ! Tell me your goal, or ask me to suggest a workout.",
       suggestions: DEFAULT_SUGGESTIONS,
+      focus: "greeting",
     };
   }
 
@@ -412,6 +434,7 @@ export function respondToMessage(
     return {
       reply: `${opener} I can suggest a workout, match one to your goal or level, list the exercises, or walk you through a routine. What are we training today?`,
       suggestions: DEFAULT_SUGGESTIONS,
+      focus: "greeting",
     };
   }
 
@@ -420,6 +443,7 @@ export function respondToMessage(
     return {
       reply: "That's what I'm here for, champ! Stay consistent and come back stronger. 💪",
       suggestions: ["Suggest another workout", "A quick core routine"],
+      focus: "greeting",
     };
   }
 
@@ -429,6 +453,7 @@ export function respondToMessage(
       reply:
         "I can suggest a workout, match one to your goal (lose weight, build muscle, endurance, or mobility), filter by your level or the equipment you have, list the exercises for a routine, and walk you through it step by step. Just tell me what you're after!",
       suggestions: DEFAULT_SUGGESTIONS,
+      focus: "greeting",
     };
   }
 
@@ -455,6 +480,7 @@ export function respondToMessage(
     return {
       reply: walkthroughReply(namedWorkout),
       suggestions: [`Show exercises for ${namedWorkout.name}`, "Suggest another workout"],
+      focus: "walkthrough",
     };
   }
 
@@ -463,6 +489,7 @@ export function respondToMessage(
     return {
       reply: exercisesReply(namedWorkout),
       suggestions: [`Walk me through ${namedWorkout.name}`, "Suggest something else"],
+      focus: "exercises",
     };
   }
 
@@ -483,6 +510,7 @@ export function respondToMessage(
       return {
         reply: listReply(opener, list),
         suggestions: suggestionChipsFor(list),
+        focus: "suggest",
       };
     }
   }
@@ -495,6 +523,7 @@ export function respondToMessage(
         `Show exercises for ${namedWorkout.name}`,
         `Walk me through ${namedWorkout.name}`,
       ],
+      focus: "suggest",
     };
   }
 
@@ -514,6 +543,7 @@ export function respondToMessage(
     return {
       reply: listReply("Here are a few workouts to get you moving:", spread),
       suggestions: suggestionChipsFor(spread),
+      focus: "suggest",
     };
   }
 
@@ -525,6 +555,7 @@ export function respondToMessage(
         `Show exercises for ${namedWorkout.name}`,
         `Walk me through ${namedWorkout.name}`,
       ],
+      focus: "suggest",
     };
   }
 
@@ -533,5 +564,6 @@ export function respondToMessage(
     reply:
       "I didn't quite catch that, but I'm ready to train! Tell me a goal like losing weight or building muscle, ask me to suggest a workout, or name a routine and I'll break it down for you.",
     suggestions: DEFAULT_SUGGESTIONS,
+    focus: "chat",
   };
 }

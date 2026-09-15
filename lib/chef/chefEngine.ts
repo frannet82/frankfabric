@@ -10,6 +10,13 @@
 // rule-based engine below is the required, always-available default. A future
 // enhancement may dynamically import a browser LLM on explicit user action and
 // degrade to this engine, but this module must remain fully functional alone.
+//
+// FOCUS FIELD (additive, FEAT-002): ChefResponse carries an OPTIONAL `focus`
+// field — a read-out of the branch respondToMessage ALREADY chose (greeting /
+// ingredients / steps / suggest / chat). It is NOT a new parser and it never
+// changes the reply text or suggestions; it simply names the decision so the 3D
+// scene can nudge its (pinned) camera in RESPONSE to what the engine did,
+// mirroring tireshop's reply.intent. Consumers may ignore it entirely.
 
 import { allRecipes as recipes, type Recipe, type DietaryFlag } from "./recipes";
 import {
@@ -30,10 +37,24 @@ export interface ChatMessage {
   content: string;
 }
 
+/**
+ * A read-out of the branch respondToMessage took, for consumers (e.g. the 3D
+ * scene) that want to react to the engine's decision without re-parsing input.
+ *   greeting     — opening / hello / help / thanks small-talk
+ *   ingredients  — listed the ingredients for a named dish
+ *   recipe       — walked through the cooking steps for a named dish
+ *   suggest      — returned ranked options (suggest / find / diet / describe)
+ *   chat         — fallback / nothing understood
+ */
+export type ChefFocus = "greeting" | "ingredients" | "recipe" | "suggest" | "chat";
+
 /** The engine's reply plus optional quick-reply suggestion chips. */
 export interface ChefResponse {
   reply: string;
   suggestions?: string[];
+  // ADDITIVE (FEAT-002): names the branch already chosen above. Optional so
+  // this stays fully backward compatible; it never affects reply/suggestions.
+  focus?: ChefFocus;
 }
 
 const DEFAULT_SUGGESTIONS = [
@@ -243,6 +264,7 @@ export function respondToMessage(
       reply:
         "I'm all ears, chef. Tell me what you're in the mood for, or ask me to suggest a recipe.",
       suggestions: DEFAULT_SUGGESTIONS,
+      focus: "greeting",
     };
   }
 
@@ -260,6 +282,7 @@ export function respondToMessage(
     return {
       reply: `${opener} I can suggest recipes, list ingredients, or walk you through cooking a dish. What sounds good today?`,
       suggestions: DEFAULT_SUGGESTIONS,
+      focus: "greeting",
     };
   }
 
@@ -268,6 +291,7 @@ export function respondToMessage(
     return {
       reply: "My pleasure, chef! Happy cooking, and come back hungry.",
       suggestions: ["Suggest another recipe", "Find recipes with rice"],
+      focus: "greeting",
     };
   }
 
@@ -277,6 +301,7 @@ export function respondToMessage(
       reply:
         "I can suggest a recipe, find dishes that use an ingredient you have, list the ingredients for a dish, walk you through the steps, or filter by a diet like vegan or gluten-free. Just ask!",
       suggestions: DEFAULT_SUGGESTIONS,
+      focus: "greeting",
     };
   }
 
@@ -297,6 +322,7 @@ export function respondToMessage(
     return {
       reply: ingredientsReply(namedRecipe),
       suggestions: [`How do I make ${namedRecipe.name}?`, "Suggest something else"],
+      focus: "ingredients",
     };
   }
 
@@ -305,6 +331,7 @@ export function respondToMessage(
     return {
       reply: stepsReply(namedRecipe),
       suggestions: [`Show ingredients for ${namedRecipe.name}`, "Suggest another recipe"],
+      focus: "recipe",
     };
   }
 
@@ -339,6 +366,7 @@ export function respondToMessage(
         `Show ingredients for ${namedRecipe.name}`,
         `How do I make ${namedRecipe.name}?`,
       ],
+      focus: "suggest",
     };
   }
 
@@ -353,7 +381,7 @@ export function respondToMessage(
     } else {
       opener = "Here are a few options that fit:";
     }
-    return replyFromLlm(llmResult, opener);
+    return { ...replyFromLlm(llmResult, opener), focus: "suggest" };
   }
 
   // Named a dish that we recognised in some other phrasing.
@@ -364,12 +392,16 @@ export function respondToMessage(
         `Show ingredients for ${namedRecipe.name}`,
         `How do I make ${namedRecipe.name}?`,
       ],
+      focus: "suggest",
     };
   }
 
   // Nothing named and no constraint parsed: offer a spread of ranked ideas.
   if (llmResult.options.length > 0) {
-    return replyFromLlm(llmResult, "Here are a few ideas you might like:");
+    return {
+      ...replyFromLlm(llmResult, "Here are a few ideas you might like:"),
+      focus: "suggest",
+    };
   }
 
   // Graceful fallback.
@@ -377,5 +409,6 @@ export function respondToMessage(
     reply:
       "I'm not sure I caught that, but I'd love to help you cook. You can ask me to suggest a recipe, find dishes with an ingredient you have, or show you how to make a specific dish.",
     suggestions: DEFAULT_SUGGESTIONS,
+    focus: "chat",
   };
 }

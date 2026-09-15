@@ -25,6 +25,7 @@ import { useMemo, useState } from "react";
 import dynamic from "next/dynamic";
 import {
   OPTIONS,
+  nextIndex,
   type Category,
   type WardrobeSelection,
   type WardrobeColors,
@@ -189,14 +190,38 @@ function WardrobeBuilderInner() {
     hat: "#2f2b28", // Espresso
   });
 
-  const setOption = (cat: Category, idx: number) =>
+  // The single garment-change signal the scene keys its camera nudge off. It
+  // records the category whose selection last changed plus a monotonic nonce so
+  // repeatedly cycling the SAME category still re-fires the nudge (mirrors the
+  // pet's action + actionNonce). It is derived from the SAME selection change
+  // the option menus and the 3D click both go through — never from click
+  // coordinates.
+  const [lastChange, setLastChange] = useState<{
+    category: Category;
+    nonce: number;
+  } | null>(null);
+
+  const setOption = (cat: Category, idx: number) => {
     setSelection((s) => ({ ...s, [cat]: idx }));
+    setLastChange((c) => ({ category: cat, nonce: (c?.nonce ?? 0) + 1 }));
+  };
   const setColor = (cat: Category, color: string) =>
     setColors((c) => ({ ...c, [cat]: color }));
 
+  // Cycle a category to its NEXT valid option using the pure nextIndex helper
+  // over OPTIONS (the content source of truth). This routes through the SAME
+  // selection setter the option menus use, so a 3D garment click and a menu
+  // click are indistinguishable to the rest of the app. The 3D scene calls this
+  // — it holds no garment list of its own.
+  const cycleCategory = (cat: Category) =>
+    setOption(cat, nextIndex(cat, selection[cat]));
+
   const sceneProps = useMemo(
-    () => ({ selection, colors, animation, quality }),
-    [selection, colors, animation, quality]
+    () => ({ selection, colors, animation, quality, lastChange, cycleCategory }),
+    // cycleCategory closes over the latest selection via setOption/setSelection
+    // updater; selection is already a dep, so the memo stays fresh.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [selection, colors, animation, quality, lastChange]
   );
 
   // A single category's vertical menu section: heading, scrollable stack of

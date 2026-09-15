@@ -30,8 +30,9 @@
 // ---------------------------------------------------------------------------
 
 import { Suspense, useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { Canvas, useFrame, useLoader } from "@react-three/fiber";
-import { OrbitControls, ContactShadows } from "@react-three/drei";
+import { Canvas, useFrame, useLoader, type ThreeEvent } from "@react-three/fiber";
+import { OrbitControls, ContactShadows, useCursor } from "@react-three/drei";
+import { damp3 } from "maath/easing";
 import * as THREE from "three";
 import SceneLoader from "@/components/three/SceneLoader";
 import {
@@ -160,6 +161,11 @@ type SceneProps = {
   selection: WardrobeSelection;
   colors: WardrobeColors;
   animation: WardrobeAnimation;
+  // Cycle a garment category to its next option. WardrobeBuilder wires this to
+  // its EXISTING selection setter over OPTIONS (via nextIndex) so a 3D click
+  // changes the SAME selection the menus do. The scene holds no garment list
+  // and invents no options — it only dispatches this callback.
+  cycleCategory?: (category: Category) => void;
 };
 
 // Full scene props including the shared High/Fast render-quality tier
@@ -167,9 +173,13 @@ type SceneProps = {
 // resolution, soft shadows and the heavier fill/bounce lights + backdrop depth.
 type WardrobeSceneProps = SceneProps & {
   quality?: Quality;
+  // The garment-change signal from WardrobeBuilder (which category's selection
+  // last changed + a monotonic nonce). The camera nudge keys off this
+  // content-layer output, easing back to the turntable framing afterwards.
+  lastChange?: { category: Category; nonce: number } | null;
 };
 
-function Avatar({ selection, colors, animation }: SceneProps) {
+function Avatar({ selection, colors, animation, cycleCategory }: SceneProps) {
   const gltf = useLoader(GLTFLoader, MODEL_URL, (loader) => {
     loader.register(
       (parser) => new VRMLoaderPlugin(parser, { autoUpdateHumanBones: true })
@@ -325,6 +335,24 @@ function Avatar({ selection, colors, animation }: SceneProps) {
     <group>
       <primitive object={vrm.scene} />
 
+      {/* Clickable garment regions. These are INVISIBLE hit-boxes placed over
+          the avatar's torso and legs; a click cycles that category to its next
+          option through cycleCategory (WardrobeBuilder's EXISTING selection
+          setter over OPTIONS). The scene holds no garment list — it only maps a
+          body region to a category name and dispatches the change. */}
+      {cycleCategory ? (
+        <>
+          <GarmentHitbox
+            region="torso"
+            onClick={() => cycleCategory("outfit")}
+          />
+          <GarmentHitbox
+            region="legs"
+            onClick={() => cycleCategory("bottom")}
+          />
+        </>
+      ) : null}
+
       {/* On-demand animation clip loaders. One mounts per requested clip; each
           suspends on its own FBX fetch, retargets it against this VRM, and
           registers the resulting clip into the shared mixer. Unrequested clips
@@ -471,11 +499,222 @@ function GroundBackdrop() {
   );
 }
 
+// An invisible clickable hit-box over a body region. On pointer-down it calls
+// the callback WardrobeBuilder wired to its EXISTING selection setter, so the
+// click cycles a garment category exactly as if a menu card were pressed. drei
+// useCursor gives a pointer affordance on hover. The mesh is fully transparent
+// (visible=false material would not receive pointer events, so we use a
+// transparent, non-writing material instead) and casts/receives nothing.
+function GarmentHitbox({
+  region,
+  onClick,
+}: {
+  region: "torso" | "legs";
+  onClick: () => void;
+}) {
+  const [hovered, setHovered] = useState(false);
+  useCursor(hovered);
+
+  // Approximate box over the drophunter avatar (~1.6m, standing, feet near y=0).
+  // Torso covers the chest/waist; legs cover hips-to-ankles. These are only
+  // pointer targets — they never render anything visible.
+  const box: { position: [number, number, number]; args: [number, number, number] } =
+    region === "torso"
+      ? { position: [0, 1.15, 0.02], args: [0.55, 0.6, 0.4] }
+      : { position: [0, 0.5, 0.02], args: [0.5, 0.85, 0.38] };
+
+  const handleDown = (e: ThreeEvent<PointerEvent>) => {
+    e.stopPropagation();
+    onClick();
+  };
+
+  return (
+    <mesh
+      position={box.position}
+      onPointerDown={handleDown}
+      onPointerOver={(e) => {
+        e.stopPropagation();
+        setHovered(true);
+      }}
+      onPointerOut={() => setHovered(false)}
+    >
+      <boxGeometry args={box.args} />
+      {/* Transparent + non-depth-writing so it is invisible but still a pointer
+          target; colorWrite off so it never tints the avatar. */}
+      <meshBasicMaterial
+        transparent
+        opacity={0}
+        depthWrite={false}
+        colorWrite={false}
+      />
+    </mesh>
+  );
+}
+
+// INTERACTION-RESPONSIVE CAMERA NUDGE. LAYERED on top of the turntable/orbit:
+// on a garment change it eases a small ADDITIVE offset that momentarily
+// emphasizes the changed region (a subtle push-in toward the torso when the
+// outfit changes, toward the legs when the bottom changes) then eases back to
+// zero, so the OrbitControls turntable framing is untouched. It writes the
+// offset by translating the camera along its CURRENT view direction and
+// nudging its position, WITHOUT touching the OrbitControls target, min/max
+// distance, autoRotate, or the pinned camera constants — OrbitControls re-reads
+// the camera each frame, so this reads as a brief dolly that relaxes back.
+//
+// It keys off `lastChange` (the content-layer output: which category changed +
+// a nonce), never off click coordinates.
+function CameraRig({
+  lastChange,
+}: {
+  lastChange?: { category: Category; nonce: number } | null;
+}) {
+  // Current additive dolly amount (metres along the view direction) and a small
+  // vertical look bias, both eased toward a pulse-scaled target and back to 0.
+  const offset = useRef(new THREE.Vector3()); // x: unused, y: vertical, z: dolly
+  const pulse = useRef(0);
+  const lastNonce = useRef<number | null>(null);
+  const region = useRef<Category | null>(null);
+
+  useEffect(() => {
+    if (lastChange && lastChange.nonce !== lastNonce.current) {
+      lastNonce.current = lastChange.nonce;
+      region.current = lastChange.category;
+      pulse.current = 1;
+    }
+  }, [lastChange]);
+
+  useFrame((state, delta) => {
+    pulse.current = Math.max(0, pulse.current - delta / 1.2);
+    const scale = pulse.current;
+
+    // Emphasis target: a small push-in (negative dolly) plus a gentle vertical
+    // bias toward the changed region. Only outfit/bottom clicks are dispatched
+    // from the scene, but any category change reads as a subtle push-in.
+    const changed = region.current;
+    const vBias =
+      changed === "outfit" ? 0.05 : changed === "bottom" ? -0.06 : 0;
+    const dolly = -0.16; // metres closer at full pulse.
+
+    damp3(
+      offset.current,
+      [0, vBias * scale, dolly * scale],
+      0.5,
+      delta
+    );
+
+    // Apply as a brief additive move along the camera's own axes, layered over
+    // whatever OrbitControls set this frame. Forward = -Z in view space.
+    const cam = state.camera;
+    const forward = new THREE.Vector3();
+    cam.getWorldDirection(forward); // unit vector camera is looking along.
+    cam.position.addScaledVector(forward, -offset.current.z);
+    cam.position.y += offset.current.y;
+  });
+
+  return null;
+}
+
+// AMBIENT LIFE: slow floating motes drifting around the pedestal so the atelier
+// isn't dead while the turntable spins. All procedural (no external asset). The
+// heavier version (more, larger motes with more drift) is gated to High; on
+// Fast a tiny always-on shimmer keeps the scene alive without regressing the
+// Fast frame budget.
+function AtelierMotes({ high }: { high: boolean }) {
+  const count = high ? 22 : 8;
+
+  const seeds = useMemo(() => {
+    const arr: { x: number; z: number; base: number; phase: number; freq: number }[] = [];
+    for (let i = 0; i < count; i++) {
+      const a = (i / count) * Math.PI * 2;
+      const r = 0.6 + 0.7 * (((i * 7) % 5) / 5);
+      arr.push({
+        x: Math.cos(a) * r,
+        z: Math.sin(a) * r,
+        base: 0.3 + 1.2 * (((i * 3) % 5) / 5),
+        phase: (i * 1.31) % (Math.PI * 2),
+        freq: 0.3 + ((i * 3) % 5) / 7,
+      });
+    }
+    return arr;
+  }, [count]);
+
+  const geometry = useMemo(() => {
+    const g = new THREE.BufferGeometry();
+    g.setAttribute(
+      "position",
+      new THREE.BufferAttribute(new Float32Array(count * 3), 3)
+    );
+    return g;
+  }, [count]);
+
+  const sprite = useMemo(() => {
+    const size = 64;
+    const canvas = document.createElement("canvas");
+    canvas.width = size;
+    canvas.height = size;
+    const ctx = canvas.getContext("2d");
+    if (ctx) {
+      const grad = ctx.createRadialGradient(
+        size / 2,
+        size / 2,
+        0,
+        size / 2,
+        size / 2,
+        size / 2
+      );
+      // Soft warm-neutral mote matching the atelier background.
+      grad.addColorStop(0, "rgba(245,241,232,0.55)");
+      grad.addColorStop(1, "rgba(245,241,232,0)");
+      ctx.fillStyle = grad;
+      ctx.fillRect(0, 0, size, size);
+    }
+    const tex = new THREE.CanvasTexture(canvas);
+    return tex;
+  }, []);
+
+  useEffect(() => {
+    return () => {
+      geometry.dispose();
+      sprite.dispose();
+    };
+  }, [geometry, sprite]);
+
+  useFrame((state) => {
+    const t = state.clock.elapsedTime;
+    const pos = geometry.getAttribute("position") as THREE.BufferAttribute;
+    const driftY = high ? 0.25 : 0.1;
+    const driftX = high ? 0.08 : 0.03;
+    for (let i = 0; i < count; i++) {
+      const s = seeds[i];
+      const y = s.base + driftY * (0.5 + 0.5 * Math.sin(t * s.freq + s.phase));
+      const x = s.x + Math.sin(t * s.freq * 0.5 + s.phase) * driftX;
+      pos.setXYZ(i, x, y, s.z);
+    }
+    pos.needsUpdate = true;
+  });
+
+  return (
+    <points geometry={geometry} frustumCulled={false}>
+      <pointsMaterial
+        map={sprite}
+        size={high ? 0.08 : 0.055}
+        sizeAttenuation
+        transparent
+        depthWrite={false}
+        opacity={high ? 0.35 : 0.22}
+        color="#ffffff"
+      />
+    </points>
+  );
+}
+
 export default function WardrobeScene({
   selection,
   colors,
   animation,
   quality = DEFAULT_QUALITY,
+  lastChange = null,
+  cycleCategory,
 }: WardrobeSceneProps) {
   // Keep the showroom turntable spinning at rest; hold still while a clip
   // plays so the motion reads clearly.
@@ -536,10 +775,24 @@ export default function WardrobeScene({
         />
       ) : null}
 
+      {/* Interaction-responsive camera nudge, layered on the turntable/orbit.
+          Reacts ONLY to the garment-change signal (content-layer output) and
+          eases back to the turntable framing; the OrbitControls props below are
+          untouched. */}
+      <CameraRig lastChange={lastChange} />
+
       <Suspense fallback={<SceneLoader />}>
         <group position={[0, 0, 0]}>
-          <Avatar selection={selection} colors={colors} animation={animation} />
+          <Avatar
+            selection={selection}
+            colors={colors}
+            animation={animation}
+            cycleCategory={cycleCategory}
+          />
         </group>
+        {/* Ambient life: cheap floating motes, always on (tiny on Fast, heavier
+            only on High so the Fast frame budget never regresses). */}
+        <AtelierMotes high={isHigh} />
         {/* Floor/backdrop for depth — High only. */}
         {isHigh ? <GroundBackdrop /> : null}
       </Suspense>

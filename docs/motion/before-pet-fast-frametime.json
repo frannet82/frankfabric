@@ -1,0 +1,41 @@
+{
+  "label": "before-pet-fast-frametime",
+  "dir": "/projects/sandbox/frankfabric/out",
+  "route": "/projects/virtual-pet/",
+  "basePath": "/frankfabric",
+  "url": "http://localhost:5198/frankfabric/projects/virtual-pet/",
+  "note": "Pre-change (today) reading. Today has no quality selector, so this IS the Fast-path-equivalent baseline. GPU is a software rasterizer (SwiftShader) in headless Chrome; absolute FPS is not hardware-representative — only the relative before/after comparison on this machine is meaningful.",
+  "browser": "151.0.7922.10",
+  "chromePath": "/usr/local/bin/chrome",
+  "glArgs": [
+    "--use-gl=angle",
+    "--use-angle=swiftshader",
+    "--ignore-gpu-blocklist",
+    "--no-sandbox"
+  ],
+  "viewport": {
+    "width": 1280,
+    "height": 900,
+    "deviceScaleFactor": 1
+  },
+  "settleMs": 4000,
+  "durationMs": 5000,
+  "quality": "fast",
+  "frames": 26,
+  "frameTimeMs": {
+    "median": 183.3,
+    "mean": 190.377,
+    "p95": 383.3,
+    "min": 16.7,
+    "max": 516.7
+  },
+  "fps": {
+    "median": 5.456,
+    "mean": 5.253,
+    "p95": 2.609
+  },
+  "errors": [
+    "Failed to load resource: the server responded with a status of 404 (Not Found)"
+  ],
+  "measuredAt": "2026-09-15T20:01:06.569Z"
+}

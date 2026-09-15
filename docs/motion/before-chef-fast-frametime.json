@@ -1,0 +1,41 @@
+{
+  "label": "before-chef-fast-frametime",
+  "dir": "/projects/sandbox/frankfabric/out",
+  "route": "/projects/chef-chatbot/",
+  "basePath": "/frankfabric",
+  "url": "http://localhost:5198/frankfabric/projects/chef-chatbot/",
+  "note": "Pre-change (today) reading. Today has no quality selector, so this IS the Fast-path-equivalent baseline. GPU is a software rasterizer (SwiftShader) in headless Chrome; absolute FPS is not hardware-representative — only the relative before/after comparison on this machine is meaningful.",
+  "browser": "151.0.7922.10",
+  "chromePath": "/usr/local/bin/chrome",
+  "glArgs": [
+    "--use-gl=angle",
+    "--use-angle=swiftshader",
+    "--ignore-gpu-blocklist",
+    "--no-sandbox"
+  ],
+  "viewport": {
+    "width": 1280,
+    "height": 900,
+    "deviceScaleFactor": 1
+  },
+  "settleMs": 4000,
+  "durationMs": 5000,
+  "quality": "fast",
+  "frames": 67,
+  "frameTimeMs": {
+    "median": 66.7,
+    "mean": 74.875,
+    "p95": 150,
+    "min": 33.3,
+    "max": 183.3
+  },
+  "fps": {
+    "median": 14.993,
+    "mean": 13.356,
+    "p95": 6.667
+  },
+  "errors": [
+    "Failed to load resource: the server responded with a status of 404 (Not Found)"
+  ],
+  "measuredAt": "2026-09-15T20:00:22.172Z"
+}
