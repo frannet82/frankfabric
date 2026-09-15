@@ -1,7 +1,14 @@
 {
   "task_id": "task-motion-interactivity",
   "task_description": "Workstream 3 (Motion and Interactivity) for the whole frankfabric site: add conversation/interaction-responsive camera framing, clickable 3D objects that dispatch REAL queries/actions through the existing engine/state/content layer (chef/coach engines, pet state engine, wardrobe options), and small ambient life gated so the WS2 Fast path does not regress. No parallel state machine; no answers/content invented in a component. Preserve WS1 load wins and WS2 shared High/Fast quality + lighting. Commit on branch motion/interactivity off merged main; do not push. Verification is npm run lint + a clean static-export build, plus before/after evidence under docs/motion/.",
-  "status": "in_progress",
+  "status": "completed",
   "feature_order": ["FEAT-001", "FEAT-002", "FEAT-003", "FEAT-004"],
-  "blocked_reason": null
+  "blocked_reason": null,
+  "verification": {
+    "build": "pass",
+    "tests": "pass",
+    "test_quality": "pass",
+    "docker_build": "skipped",
+    "summary": "Orchestrator re-ran the gate on branch motion/interactivity: `npm run lint` clean except the single pre-existing @next/next/no-page-custom-font warning in app/layout.tsx (0 errors); `npm run build` (Next 16.2.11) static export succeeds and prerenders all five routes (/, /projects/chef-chatbot, /projects/coach-trainer, /projects/digital-wardrobe, /projects/virtual-pet). No unit-test suite exists in frankfabric (per context.json) — 'tests' maps to the lint+build gate, which passes. test_quality: verified the WS3 evidence is meaningful, not static asserts — AFTER frame-time JSON medians read directly (Fast before/after: chef 66.7/66.7, coach 83.3/83.3, pet 183.3/183.3, wardrobe 83.3/83.3 — no regression, gate met); engine diff is additive-only (reply text + suggestions preserved via object spread, only optional `focus` added; the two removed `return replyFromLlm(...)` lines are re-added wrapped with focus); scenes import the engines only via `import type` (ChefFocus/CoachFocus) or the OPTIONS content source (wardrobe) and contain no recipe/workout answer text or stat math; tone mapping stays ACESFilmic in all four scenes; wardrobe OrbitControls turntable props and pinned camera constants byte-unchanged; petState.ts untouched. No build output / node_modules / assets-src committed. Docker not applicable (pure npm static export)."
+  }
 }
