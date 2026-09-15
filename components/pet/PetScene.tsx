@@ -259,7 +259,7 @@ function Pet({ mood, action, actionNonce, wellbeing }: SceneProps) {
     // looks around a lot more; a slumped one barely turns) but keeps a small
     // floor so it is never frozen. Bounded to ~0.4rad (~23deg) each way.
     const yawTarget =
-      (0.12 + energy * 0.32) *
+      (0.12 + energy * 0.28) *
       (Math.sin(t * 0.55) * 0.7 + Math.sin(t * 0.23) * 0.3);
     const kYaw = 1 - Math.exp(-dt * 2.2);
     yawRef.current += (yawTarget - yawRef.current) * kYaw;
