@@ -471,6 +471,45 @@ export default function Home() {
                         </span>
                       </div>
                     </div>
+                  ) : p.href === "/projects/virtual-pet" ? (
+                    <div className="absolute inset-0 grid place-items-center px-6 text-center bg-gradient-to-b from-pet-accentSoft/60 to-pet-clean/25">
+                      {/* Stylized dog/paw mark — pure CSS/SVG poster, no 3D
+                          canvas. Warm cozy Tamagotchi palette so the preview
+                          matches the live virtual pet. The whole card links out
+                          to the live pet. */}
+                      <div className="flex flex-col items-center gap-3">
+                        <span className="grid place-items-center w-16 h-16 rounded-2xl border border-pet-accent/50 bg-pet-paper/90 shadow-[0_6px_20px_rgba(224,138,76,0.30)]">
+                          <svg
+                            viewBox="0 0 24 24"
+                            aria-hidden="true"
+                            className="w-9 h-9"
+                            fill="none"
+                            stroke="url(#pet-paw)"
+                            strokeWidth="1.5"
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                          >
+                            <defs>
+                              <linearGradient id="pet-paw" x1="0" y1="0" x2="1" y2="1">
+                                <stop offset="0" stopColor="#e08a4c" />
+                                <stop offset="1" stopColor="#5fc2c7" />
+                              </linearGradient>
+                            </defs>
+                            <path d="M12 13.5c-2.2 0-4 1.6-4 3.4 0 1.3 1.1 2.1 2.4 2.1.7 0 1.1-.3 1.6-.3s.9.3 1.6.3c1.3 0 2.4-.8 2.4-2.1 0-1.8-1.8-3.4-4-3.4Z" />
+                              <ellipse cx="7.3" cy="10.4" rx="1.15" ry="1.5" />
+                              <ellipse cx="16.7" cy="10.4" rx="1.15" ry="1.5" />
+                              <ellipse cx="10" cy="7.6" rx="1.05" ry="1.4" />
+                              <ellipse cx="14" cy="7.6" rx="1.05" ry="1.4" />
+                          </svg>
+                        </span>
+                        <span className="font-display font-semibold text-[20px] tracking-tight bg-gradient-to-r from-pet-accent to-pet-clean bg-clip-text text-transparent">
+                          Fabric Pet
+                        </span>
+                        <span className="font-mono text-[10.5px] tracking-widest uppercase text-pet-ink/80">
+                          Live virtual pet · click to care
+                        </span>
+                      </div>
+                    </div>
                   ) : p.video ? (
                     <video
                       src={asset(p.video)}
