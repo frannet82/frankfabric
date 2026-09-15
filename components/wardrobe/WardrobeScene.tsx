@@ -34,6 +34,11 @@ import { Canvas, useFrame, useLoader } from "@react-three/fiber";
 import { OrbitControls, ContactShadows } from "@react-three/drei";
 import * as THREE from "three";
 import SceneLoader from "@/components/three/SceneLoader";
+import {
+  DEFAULT_QUALITY,
+  qualitySettings,
+  type Quality,
+} from "@/components/three/quality";
 import { GLTFLoader } from "three/examples/jsm/loaders/GLTFLoader.js";
 import { FBXLoader } from "three/examples/jsm/loaders/FBXLoader.js";
 import {
@@ -155,6 +160,13 @@ type SceneProps = {
   selection: WardrobeSelection;
   colors: WardrobeColors;
   animation: WardrobeAnimation;
+};
+
+// Full scene props including the shared High/Fast render-quality tier
+// (components/three/quality.ts). The tier gates Canvas shadows, dpr, shadow-map
+// resolution, soft shadows and the heavier fill/bounce lights + backdrop depth.
+type WardrobeSceneProps = SceneProps & {
+  quality?: Quality;
 };
 
 function Avatar({ selection, colors, animation }: SceneProps) {
@@ -405,47 +417,139 @@ function ClipLoader({
   return null;
 }
 
+// A subtle floor + backdrop for depth. The wardrobe previously set only a flat
+// #efede8 background + ContactShadows, so the avatar read as floating on a flat
+// card. This adds a matte ground disc at y=0 (the ContactShadows plane) with a
+// soft radial vignette baked into a small in-memory canvas texture (no external
+// asset, nothing added to the cold-load budget), fading out at the rim so it
+// dissolves into the flat background instead of ending on a hard line. Gated to
+// High; on Fast the avatar keeps only its ContactShadows over the flat bg,
+// exactly like today.
+function GroundBackdrop() {
+  const texture = useMemo(() => {
+    const size = 256;
+    const canvas = document.createElement("canvas");
+    canvas.width = size;
+    canvas.height = size;
+    const ctx = canvas.getContext("2d");
+    if (ctx) {
+      const grad = ctx.createRadialGradient(
+        size / 2,
+        size / 2,
+        size * 0.06,
+        size / 2,
+        size / 2,
+        size / 2
+      );
+      // Warm atelier neutral, slightly darker than the #efede8 background at the
+      // center so the floor reads with depth, fading to transparent at the rim.
+      grad.addColorStop(0, "rgba(224,220,210,1)");
+      grad.addColorStop(0.6, "rgba(214,209,198,1)");
+      grad.addColorStop(1, "rgba(214,209,198,0)");
+      ctx.fillStyle = grad;
+      ctx.fillRect(0, 0, size, size);
+    }
+    const tex = new THREE.CanvasTexture(canvas);
+    tex.colorSpace = THREE.SRGBColorSpace;
+    return tex;
+  }, []);
+
+  useEffect(() => {
+    return () => texture.dispose();
+  }, [texture]);
+
+  return (
+    <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, -0.001, 0]} receiveShadow>
+      <circleGeometry args={[5, 64]} />
+      <meshStandardMaterial
+        map={texture}
+        transparent
+        roughness={0.96}
+        metalness={0}
+      />
+    </mesh>
+  );
+}
+
 export default function WardrobeScene({
   selection,
   colors,
   animation,
-}: SceneProps) {
+  quality = DEFAULT_QUALITY,
+}: WardrobeSceneProps) {
   // Keep the showroom turntable spinning at rest; hold still while a clip
   // plays so the motion reads clearly.
   const autoRotate = animation === "rest";
+  const q = qualitySettings(quality);
+  const isHigh = quality === "high";
   return (
     <Canvas
-      shadows
-      dpr={[1, 2]}
+      shadows={q.shadows}
+      dpr={q.dpr}
       camera={{ position: [0, 1.35, 2.6], fov: 40 }}
       gl={{ antialias: true }}
       onCreated={({ gl }) => {
+        // Tone mapping unchanged (ACESFilmic). The key intensity below is kept
+        // at today's ~1.4 and the whole rig stays near-neutral, so the VRM's
+        // skin/face does NOT clip to white under High — verified by spot-check
+        // (see FEAT-002 findings). Per CONSTRAINT #2, changing the operator
+        // would require a per-scene before/after screenshot proving it fixes a
+        // blow-out; there is no blow-out to fix, so ACESFilmic stays.
         gl.toneMapping = THREE.ACESFilmicToneMapping;
       }}
     >
       <color attach="background" args={["#efede8"]} />
+
+      {/* NOTE: drei <SoftShadows> is deliberately NOT used here. It rewrites the
+          global shadow-map shader chunk, which collides with the VRM's custom
+          MToon "Face" ShaderMaterial and throws a "vogelDiskSample function
+          already has a body" fragment-shader compile error, breaking the
+          avatar. We soften shadow edges the plan's alternative way instead: a
+          higher shadow-map resolution on High plus tuned ContactShadows blur. */}
+
+      {/* Proper key/fill/bounce rig, kept near-neutral so the VRM skin keeps
+          true color. Only the key casts shadows. */}
       <ambientLight intensity={0.6} />
+      {/* KEY: front-right, high; the only shadow caster. Intensity held at
+          today's 1.4 so skin does not blow out; shadow-map res scales with
+          quality (High above today's 1024). */}
       <directionalLight
         position={[4, 8, 5]}
         intensity={1.4}
-        castShadow
-        shadow-mapSize-width={1024}
-        shadow-mapSize-height={1024}
+        castShadow={q.shadows}
+        shadow-mapSize-width={q.shadowMapSize}
+        shadow-mapSize-height={q.shadowMapSize}
+        shadow-bias={-0.0009}
       />
+      {/* FILL: softer, from the opposite side, to open the shadow side. */}
       <directionalLight position={[-5, 3, -4]} intensity={0.35} />
+      {/* Sky-to-ground bounce. */}
       <hemisphereLight args={["#ffffff", "#cbc7bd", 0.5]} />
+      {/* RIM / back-bounce (High only): subtle separation from the backdrop. */}
+      {isHigh ? (
+        <pointLight
+          position={[-2, 3, -3]}
+          intensity={0.45}
+          color="#ffffff"
+          distance={10}
+          decay={1.6}
+        />
+      ) : null}
 
       <Suspense fallback={<SceneLoader />}>
         <group position={[0, 0, 0]}>
           <Avatar selection={selection} colors={colors} animation={animation} />
         </group>
+        {/* Floor/backdrop for depth — High only. */}
+        {isHigh ? <GroundBackdrop /> : null}
       </Suspense>
 
+      {/* Kept ContactShadows so the avatar never floats; softened blur on High. */}
       <ContactShadows
         position={[0, 0, 0]}
         opacity={0.4}
         scale={4}
-        blur={2.2}
+        blur={isHigh ? 2.8 : 2.2}
         far={2}
         color="#2c2a26"
       />

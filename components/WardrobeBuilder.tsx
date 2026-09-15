@@ -31,6 +31,11 @@ import {
   type WardrobeAnimation,
 } from "@/components/wardrobe/wardrobeOptions";
 import { asset } from "@/lib/asset";
+import {
+  QualityProvider,
+  useQuality,
+} from "@/components/three/quality";
+import QualityToggle from "@/components/three/QualityToggle";
 
 const WardrobeScene = dynamic(
   () => import("@/components/wardrobe/WardrobeScene"),
@@ -150,7 +155,18 @@ const ANIMATIONS: { value: WardrobeAnimation; label: string }[] = [
   { value: "waving", label: "Waving" },
 ];
 
+// Wraps the builder in the shared QualityProvider so its stage and the shared
+// QualityToggle read/write the SAME quality tier (components/three/quality.ts).
 export default function WardrobeBuilder() {
+  return (
+    <QualityProvider>
+      <WardrobeBuilderInner />
+    </QualityProvider>
+  );
+}
+
+function WardrobeBuilderInner() {
+  const { quality } = useQuality();
   const [animation, setAnimation] = useState<WardrobeAnimation>("idle");
   // Default first-load look: a cohesive fully-clothed outfit so the atelier
   // opens on a styled avatar rather than the near-nude base body. Each index
@@ -179,8 +195,8 @@ export default function WardrobeBuilder() {
     setColors((c) => ({ ...c, [cat]: color }));
 
   const sceneProps = useMemo(
-    () => ({ selection, colors, animation }),
-    [selection, colors, animation]
+    () => ({ selection, colors, animation, quality }),
+    [selection, colors, animation, quality]
   );
 
   // A single category's vertical menu section: heading, scrollable stack of
@@ -342,6 +358,10 @@ export default function WardrobeBuilder() {
             <div className="absolute inset-0">
               <WardrobeScene {...sceneProps} />
             </div>
+            {/* Shared High/Fast render-quality control, placed unobtrusively in
+                the stage's top-left corner. Same control across all four
+                scenes; does not disturb the surrounding menu/animation layout. */}
+            <QualityToggle className="absolute top-2 left-2 z-10" />
           </div>
 
           {/* animation selector — global; applies to the whole avatar. */}

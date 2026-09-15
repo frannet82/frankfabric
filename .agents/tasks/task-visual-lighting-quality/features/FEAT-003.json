@@ -1,0 +1,29 @@
+{
+  "id": "FEAT-003",
+  "type": "docs",
+  "description": "Capture the AFTER evidence and prove the WS2 acceptance criteria with numbers + images, not adjectives. Depends on FEAT-002. Re-run the fixed-camera screenshot harness and the frame-time harness (from FEAT-001) for all four scenes and record: BEFORE/AFTER fixed-camera screenshots per scene showing improved lighting/shadows/material depth; Fast-path frame time before vs after (must show NO regression) AND High-path frame time; per-scene confirmation of no avatar skin/face highlight blow-out (with the chef and wardrobe avatars visible in the AFTER shots); and, for any scene whose tone mapping changed, the per-scene justification screenshot. Also record cold-load byte deltas to prove the WS1 budget was not blown and note any asset added with its size.",
+  "status": "pending",
+  "steps": [
+    "With FEAT-002 built, run `npm run build`. Then capture AFTER fixed-camera screenshots for all four scene routes on BOTH quality paths (at least: High and Fast) via scripts/measure-load.mjs into docs/visual/ (e.g. --out docs/visual --label after-<scene>-high / after-<scene>-fast). The harness screenshots are animation-disabled and clipped to the canvas for deterministic comparison against BEFORE.",
+    "Capture AFTER frame-time readings for all four scenes on BOTH the Fast path and the High path using the FEAT-001 frame-time harness, into docs/visual/. Compare Fast AFTER vs the BEFORE (today) frame time per scene and confirm no regression (Fast >= as fast as today). Also report High-path frame time so the orchestrator can attach it.",
+    "For the wardrobe and chef scenes, ensure the AFTER (High) screenshots clearly show the avatar's face/skin so no blow-out can be verified visually. If FEAT-002 changed any scene's tone mapping, include the explicit per-scene before/after justification screenshot pair proving the change fixes (not causes) skin blow-out, referenced in the doc.",
+    "Re-run cold-load byte measurement (measure-load.mjs default byte report) for the four scene routes and compare totals to docs/perf/AFTER.md's WS1 numbers; record any delta and, if an environment map/texture asset was added in FEAT-002, its size. Confirm the WS1 cold-load byte budget is not blown.",
+    "Write docs/visual/AFTER.md: machine (Linux sandbox x86-64, software GL SwiftShader) + Node v22.23.2 + Chrome for Testing version + viewport 1280x900 dpr 1; a per-scene BEFORE->AFTER screenshot table (paths); a per-scene Fast-path frame-time before/after table + High-path frame time (median/mean/p95 ms + FPS) with the software-GL caveat; per-scene tone-mapping decision (unchanged ACESFilmic, or switched to Neutral@1.0 with the justification screenshot referenced); per-scene no-skin-blow-out confirmation; cold-load byte deltas + any asset added with size; and confirmation that exactly ONE shared High/Fast quality concept is used across all four scenes.",
+    "Do NOT commit out/, node_modules/, .next/, assets-src/. Commit the docs/visual/ AFTER artifacts + AFTER.md on branch visual/lighting-quality (e.g. `docs(visual): WS2 before/after screenshots + Fast/High frame-time evidence`)."
+  ],
+  "acceptance_criteria": [
+    "docs/visual/ contains AFTER fixed-camera screenshots for all four scenes (High and Fast), alongside the FEAT-001 BEFORE shots, showing improved lighting/shadows/material depth.",
+    "docs/visual/AFTER.md documents Fast-path frame time before vs after per scene showing NO regression, plus High-path frame time, with machine+browser+viewport stated and the software-GL caveat noted.",
+    "Per-scene no-skin-blow-out is confirmed with the chef and wardrobe avatars visible in the AFTER shots; any tone-mapping change is backed by a referenced per-scene justification screenshot.",
+    "Cold-load byte deltas are recorded and show the WS1 budget is not blown; any added asset is listed with its size (or 'none added' is stated).",
+    "AFTER.md confirms exactly ONE shared quality concept across all four scenes.",
+    "out/, node_modules/, .next/, assets-src/ are not committed; docs/perf/ is untouched."
+  ],
+  "verification": [
+    "Confirm docs/visual/ holds before-* and after-* PNG + frame-time JSON for all four scenes and an AFTER.md.",
+    "Open AFTER.md and confirm it contains the Fast before/after + High frame-time numbers, the per-scene tone-mapping decisions, and the no-blow-out confirmations.",
+    "Run `git status --short` and confirm no out/, node_modules/, .next/, assets-src/ paths are staged and docs/perf/ files are unmodified."
+  ],
+  "blocked_reason": null,
+  "findings": ""
+}

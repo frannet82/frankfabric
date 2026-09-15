@@ -29,6 +29,11 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import dynamic from "next/dynamic";
 import { respondToMessage, type ChatMessage } from "@/lib/coach/coachEngine";
 import { CoachVoice } from "@/lib/coach/coachVoice";
+import {
+  QualityProvider,
+  useQuality,
+} from "@/components/three/quality";
+import QualityToggle from "@/components/three/QualityToggle";
 
 const CoachScene = dynamic(() => import("@/components/coach/CoachScene"), {
   ssr: false,
@@ -54,7 +59,18 @@ const GREETING_SUGGESTIONS = [
   "A quick no-equipment routine",
 ];
 
+// Wraps the widget in the shared QualityProvider so its stage and the shared
+// QualityToggle read/write the SAME quality tier (components/three/quality.ts).
 export default function CoachChatbot() {
+  return (
+    <QualityProvider>
+      <CoachChatbotInner />
+    </QualityProvider>
+  );
+}
+
+function CoachChatbotInner() {
+  const { quality } = useQuality();
   const [messages, setMessages] = useState<ChatMessage[]>([
     { role: "assistant", content: GREETING },
   ]);
@@ -140,7 +156,11 @@ export default function CoachChatbot() {
     <div className="absolute inset-0 z-[5] flex flex-col md:flex-row bg-sf-black/90 backdrop-blur-[1px]">
       {/* 3D coach stage */}
       <div className="relative md:w-[42%] w-full h-[38%] md:h-full min-h-[120px] bg-gradient-to-b from-sf-ink to-sf-gray border-b md:border-b-0 md:border-r border-sf-yellow/40">
-        <CoachScene speaking={speaking} getLoudness={getLoudness} />
+        <CoachScene speaking={speaking} getLoudness={getLoudness} quality={quality} />
+        {/* Shared High/Fast render-quality control, placed unobtrusively in the
+            stage's top-left so it never overlaps the mute toggle (top-right) or
+            the label (bottom). Same control across all four scenes. */}
+        <QualityToggle className="absolute top-2 left-2 z-10" />
         {/* Accessible mute toggle. Focusable, labeled, and reflects state. */}
         <button
           type="button"

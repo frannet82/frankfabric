@@ -63,6 +63,11 @@ import { FBXLoader } from "three/examples/jsm/loaders/FBXLoader.js";
 import { clone as cloneSkeleton } from "three/examples/jsm/utils/SkeletonUtils.js";
 import { asset } from "@/lib/asset";
 import SceneLoader from "@/components/three/SceneLoader";
+import {
+  DEFAULT_QUALITY,
+  qualitySettings,
+  type Quality,
+} from "@/components/three/quality";
 
 type SceneProps = {
   // True while the chef's reply is "playing"; opens the mouth-motion window.
@@ -70,6 +75,10 @@ type SceneProps = {
   // Returns a live 0..1 audio loudness (Web Audio AnalyserNode RMS). When it
   // returns 0 while speaking (e.g. muted), the jaw falls back to a sine wobble.
   getLoudness?: () => number;
+  // Shared High/Fast render-quality tier (components/three/quality.ts). Gates
+  // Canvas shadows, dpr, shadow-map resolution, soft shadows and the heavier
+  // fill/bounce lights + ground backdrop. Defaults to High.
+  quality?: Quality;
 };
 
 // Name of the jaw bone in the Swedish Chef Biped rig. Verified in FEAT-001.
@@ -385,13 +394,70 @@ function Avatar({
   return <primitive object={model} />;
 }
 
+// A subtle procedural ground plane so the chef reads as standing ON something
+// rather than floating over only the ContactShadows. A matte disc at y=0 with a
+// soft radial vignette baked into a small in-memory canvas texture (no external
+// asset, nothing added to the cold-load budget), fading out at the rim. Gated
+// to High; on Fast the chef keeps only its ContactShadows, exactly like today.
+function GroundBackdrop() {
+  const texture = useMemo(() => {
+    const size = 256;
+    const canvas = document.createElement("canvas");
+    canvas.width = size;
+    canvas.height = size;
+    const ctx = canvas.getContext("2d");
+    if (ctx) {
+      const grad = ctx.createRadialGradient(
+        size / 2,
+        size / 2,
+        size * 0.08,
+        size / 2,
+        size / 2,
+        size / 2
+      );
+      // Warm cozy-kitchen wood/cream tone, fading to transparent at the edge so
+      // the disc dissolves into the scene background rather than ending hard.
+      grad.addColorStop(0, "rgba(226,210,186,1)");
+      grad.addColorStop(0.62, "rgba(210,190,160,1)");
+      grad.addColorStop(1, "rgba(210,190,160,0)");
+      ctx.fillStyle = grad;
+      ctx.fillRect(0, 0, size, size);
+    }
+    const tex = new THREE.CanvasTexture(canvas);
+    tex.colorSpace = THREE.SRGBColorSpace;
+    return tex;
+  }, []);
+
+  useEffect(() => {
+    return () => texture.dispose();
+  }, [texture]);
+
+  return (
+    <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, -0.001, 0]} receiveShadow>
+      <circleGeometry args={[4.2, 64]} />
+      <meshStandardMaterial
+        map={texture}
+        transparent
+        roughness={0.95}
+        metalness={0}
+      />
+    </mesh>
+  );
+}
+
 // `speaking` + `getLoudness` drive the bone-based mouth motion in <Avatar />.
 // The FBX ships no baked body clips, so there is no body-animation prop.
-export default function ChefScene({ speaking = false, getLoudness }: SceneProps) {
+export default function ChefScene({
+  speaking = false,
+  getLoudness,
+  quality = DEFAULT_QUALITY,
+}: SceneProps) {
+  const q = qualitySettings(quality);
+  const isHigh = quality === "high";
   return (
     <Canvas
-      shadows
-      dpr={[1, 2]}
+      shadows={q.shadows}
+      dpr={q.dpr}
       camera={{ position: [0, AIM_HEIGHT, CAMERA_DISTANCE], fov: 34 }}
       gl={{ antialias: true, alpha: true }}
       // react-three-fiber forwards unknown props to the underlying <canvas>, so
@@ -399,6 +465,9 @@ export default function ChefScene({ speaking = false, getLoudness }: SceneProps)
       role="img"
       aria-label="3D chef avatar"
       onCreated={({ gl, camera }) => {
+        // Tone mapping unchanged (ACESFilmic): the chef's matte
+        // MeshStandardMaterial renders its skin/face texture fine under the
+        // near-neutral rig below, so per CONSTRAINT #2 we leave it as-is.
         gl.toneMapping = THREE.ACESFilmicToneMapping;
         // Fixed, front-facing framing: aim the camera straight at the aim point
         // the model was recentered onto (its upper chest). No OrbitControls,
@@ -406,37 +475,57 @@ export default function ChefScene({ speaking = false, getLoudness }: SceneProps)
         camera.lookAt(0, AIM_HEIGHT, 0);
       }}
     >
+      {/* NOTE: drei <SoftShadows> is intentionally NOT used (see WardrobeScene):
+          it rewrites the global shadow shader chunk and can collide with the
+          VRM MToon shader; we keep ONE consistent soft approach across all four
+          scenes — higher shadow-map res on High + tuned ContactShadows blur. */}
+
       {/* Cozy Animal-Crossing lighting: soft and evenly lit, but kept NEAR
-          NEUTRAL so the chef's diffuse texture shows its true colors. The
-          previous strongly warm casts (#fff4dc / #fff1cf / #ffe3a8) pushed the
-          whole model yellow/orange and hid the texture; these are now white or
-          only very subtly warm (#fff6ec) at modest intensity so the vibe stays
-          cozy without recoloring the chef. */}
-      <ambientLight intensity={0.85} color="#ffffff" />
+          NEUTRAL so the chef's diffuse texture shows its true colors. Now a
+          proper key/fill/bounce rig (only the key casts shadows). Colors stay
+          white / only very subtly warm (#fff6ec) so the chef is never
+          recolored and skin never picks up a colored blow-out. */}
+      <ambientLight intensity={0.8} color="#ffffff" />
+      {/* KEY: front-right, high; the only shadow caster. Shadow-map res scales
+          with quality (High above today's 1024). */}
       <directionalLight
         position={[3, 6, 4]}
-        intensity={1.05}
+        intensity={1.1}
         color="#fff6ec"
-        castShadow
-        shadow-mapSize-width={1024}
-        shadow-mapSize-height={1024}
+        castShadow={q.shadows}
+        shadow-mapSize-width={q.shadowMapSize}
+        shadow-mapSize-height={q.shadowMapSize}
+        shadow-bias={-0.0009}
       />
-      {/* Soft neutral fill from the opposite side. */}
+      {/* FILL: softer, from the opposite side, to open up the shadow side. */}
       <directionalLight position={[-4, 3, -3]} intensity={0.45} color="#ffffff" />
-      {/* Very gentle sky-to-ground bounce, near-neutral so it never tints. */}
+      {/* Sky-to-ground bounce, near-neutral so it never tints. */}
       <hemisphereLight args={["#eef4ff", "#f3efe6", 0.45]} />
+      {/* RIM / back-bounce (High only): subtle separation from the backdrop. */}
+      {isHigh ? (
+        <pointLight
+          position={[-1.6, 3.0, -2.6]}
+          intensity={0.5}
+          color="#fff3e6"
+          distance={9}
+          decay={1.6}
+        />
+      ) : null}
 
       <Suspense fallback={<SceneLoader />}>
         <group position={[0, 0, 0]}>
           <Avatar speaking={speaking} getLoudness={getLoudness} />
         </group>
+        {/* Ground backdrop for depth — High only. */}
+        {isHigh ? <GroundBackdrop /> : null}
       </Suspense>
 
+      {/* Kept ContactShadows so the chef never floats; softened blur on High. */}
       <ContactShadows
         position={[0, 0, 0]}
         opacity={0.28}
         scale={4}
-        blur={2.6}
+        blur={isHigh ? 3.0 : 2.6}
         far={2}
         color="#6b4f2a"
       />
