@@ -1,0 +1,7 @@
+{
+  "task_id": "task-motion-interactivity",
+  "task_description": "Workstream 3 (Motion and Interactivity) for the whole frankfabric site: add conversation/interaction-responsive camera framing, clickable 3D objects that dispatch REAL queries/actions through the existing engine/state/content layer (chef/coach engines, pet state engine, wardrobe options), and small ambient life gated so the WS2 Fast path does not regress. No parallel state machine; no answers/content invented in a component. Preserve WS1 load wins and WS2 shared High/Fast quality + lighting. Commit on branch motion/interactivity off merged main; do not push. Verification is npm run lint + a clean static-export build, plus before/after evidence under docs/motion/.",
+  "status": "in_progress",
+  "feature_order": ["FEAT-001", "FEAT-002", "FEAT-003", "FEAT-004"],
+  "blocked_reason": null
+}
