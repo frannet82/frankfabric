@@ -1,0 +1,133 @@
+{
+  "label": "baseline-landing",
+  "dir": "/projects/sandbox/frankfabric/out",
+  "route": "/",
+  "basePath": "/frankfabric",
+  "url": "http://localhost:5199/frankfabric/",
+  "ready": true,
+  "hasCanvas": false,
+  "unresolvedFailures": [],
+  "errors": [
+    "Failed to load resource: the server responded with a status of 404 (Not Found)"
+  ],
+  "viewport": {
+    "width": 1280,
+    "height": 900
+  },
+  "totalBytes": 1157888,
+  "totalMB": 1.158,
+  "byType": {
+    ".css": 43005,
+    ".jpg": 270260,
+    "[document]": 99036,
+    "[stylesheet]": 26134,
+    ".mp4": 102114,
+    ".woff2": 82708,
+    ".js": 534631
+  },
+  "resources": [
+    {
+      "url": "/frankfabric/_next/static/chunks/3gzxhq9iq6efl.js",
+      "bytes": 227315,
+      "status": 200,
+      "type": "script"
+    },
+    {
+      "url": "/frankfabric/_next/static/chunks/3_i5wuurq3u3t.js",
+      "bytes": 150101,
+      "status": 200,
+      "type": "script"
+    },
+    {
+      "url": "/frankfabric/images/final_futuristic_avatar.jpg",
+      "bytes": 135130,
+      "status": 200,
+      "type": "image"
+    },
+    {
+      "url": "/frankfabric/images/final_futuristic_avatar.jpg",
+      "bytes": 135130,
+      "status": 200,
+      "type": "image"
+    },
+    {
+      "url": "/frankfabric/videos/digital-wardrobe-preview.mp4",
+      "bytes": 102114,
+      "status": 200,
+      "type": "media"
+    },
+    {
+      "url": "/frankfabric/",
+      "bytes": 99036,
+      "status": 200,
+      "type": "document"
+    },
+    {
+      "url": "/frankfabric/_next/static/chunks/14mrh2-p_w84d.js",
+      "bytes": 54646,
+      "status": 200,
+      "type": "script"
+    },
+    {
+      "url": "/frankfabric/_next/static/chunks/2kqrbujyxigm8.js",
+      "bytes": 50234,
+      "status": 200,
+      "type": "script"
+    },
+    {
+      "url": "https://fonts.gstatic.com/s/ibmplexsans/v23/zYXzKVElMYYaJe8bpLHnCwDKr932-G7dytD-Dmu1syxeKYY.woff2",
+      "bytes": 45712,
+      "status": 200,
+      "type": "font"
+    },
+    {
+      "url": "/frankfabric/_next/static/chunks/2_ux976xu8tx7.css",
+      "bytes": 43005,
+      "status": 200,
+      "type": "stylesheet"
+    },
+    {
+      "url": "https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=IBM+Plex+Sans:wght@300;400;500;600&family=IBM+Plex+Mono:wght@400;500&family=Cormorant+Garamond:wght@500;600&family=Jost:wght@300;400;500;600&display=swap",
+      "bytes": 26134,
+      "status": 200,
+      "type": "stylesheet"
+    },
+    {
+      "url": "https://fonts.gstatic.com/s/spacegrotesk/v22/V8mDoQDjQSkFtoMM3T6r8E7mPbF4Cw.woff2",
+      "bytes": 22288,
+      "status": 200,
+      "type": "font"
+    },
+    {
+      "url": "/frankfabric/_next/static/chunks/09pdu24jezzy8.js",
+      "bytes": 20201,
+      "status": 200,
+      "type": "script"
+    },
+    {
+      "url": "/frankfabric/_next/static/chunks/3phv9rg78pum-.js",
+      "bytes": 18165,
+      "status": 200,
+      "type": "script"
+    },
+    {
+      "url": "https://fonts.gstatic.com/s/ibmplexmono/v20/-F63fjptAgt5VM-kVkqdyU8n1i8q1w.woff2",
+      "bytes": 14708,
+      "status": 200,
+      "type": "font"
+    },
+    {
+      "url": "/frankfabric/_next/static/chunks/turbopack-1-1-58ua3bykw.js",
+      "bytes": 10592,
+      "status": 200,
+      "type": "script"
+    },
+    {
+      "url": "/frankfabric/_next/static/chunks/05-c3ty_6dwfk.js",
+      "bytes": 3377,
+      "status": 200,
+      "type": "script"
+    }
+  ],
+  "measuredAt": "2026-09-15T15:37:38.756Z"
+}

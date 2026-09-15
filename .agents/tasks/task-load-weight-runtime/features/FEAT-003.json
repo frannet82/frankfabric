@@ -1,0 +1,30 @@
+{
+  "id": "FEAT-003",
+  "type": "feat",
+  "description": "Runtime load-weight wins: shrink the largest JS chunk via better code-splitting, load only what the initial view needs (defer the rest to interaction), and replace blank Suspense fallbacks with a real drei useProgress loading indicator across all four 3D scenes. This is the Next.js/Turbopack analogue of tireshop's manualChunks + lazy-props + useProgress work (studied at /projects/sandbox/tireshop commit eb1c897 — do NOT modify tireshop). Depends on FEAT-001 (baseline) and FEAT-002 (compressed assets) so before/after numbers are comparable.",
+  "status": "pending",
+  "steps": [
+    "Fix the wardrobe route's JS chunk bloat: components/WardrobeBuilder.tsx statically imports the runtime value OPTIONS (and the Category/Selection/Colors/Animation types) from components/wardrobe/WardrobeScene.tsx. Because OPTIONS is a VALUE import, the bundler pulls WardrobeScene's three.js-heavy module graph into the wardrobe page's STATIC bundle, which is why the 913KB chunk is preloaded in projects/digital-wardrobe/index.html even though the scene is ssr:false dynamic. Extract OPTIONS + the shared types (Category, WardrobeSelection, WardrobeColors, WardrobeAnimation) into a NEW lightweight module with NO three.js imports (e.g. components/wardrobe/wardrobeOptions.ts). Re-point WardrobeBuilder.tsx and WardrobeScene.tsx to import from it. This lets the heavy three chunk load only when the dynamic WardrobeScene is actually mounted. Re-run the build and confirm projects/digital-wardrobe/index.html no longer statically preloads the 913KB three chunk (largest chunk referenced by the page HTML shrinks).",
+    "Audit the other three routes (chef/coach/pet) the same way: ensure their page/wrapper does not statically import three-heavy modules (they use next/dynamic { ssr:false } wrappers already — confirm no value import leaks the scene module into the static page bundle). Fix any leak found the same way (split shared runtime values out of the scene module).",
+    "Load only what the initial view needs. Wardrobe: the initial styled look (body + eyes + shirt + cargopants + sneakers + short-hair) loads at startup; the OTHER garment VRMs already load on selection via <Garment url=...> — CONFIRM this and do NOT eagerly preload the non-default garments. Do not add any useGLTF.preload of the full garment set. Pet: components/pet/PetScene.tsx calls useGLTF.preload(MODEL_URL) at MODULE scope — this fires as soon as the scene chunk is imported, which is fine (the pet route needs the model), but confirm it does not run on the landing page (landing must load NO 3D model bytes). Keep the pet preload scoped to the pet scene chunk only.",
+    "Replace the blank <Suspense fallback={null}> in all four scenes (WardrobeScene, ChefScene, CoachScene, PetScene) with a real progress indicator using drei's useProgress via drei <Html>. Create a small shared SceneLoader component (e.g. components/three/SceneLoader.tsx, 'use client') that reads useProgress() and renders a percentage/spinner inside <Html center>. Wire it as the Suspense fallback in each scene. Keep it visually consistent with each scene's existing theme where trivial, but a single shared indicator is acceptable. Ensure it stays inside the Canvas/Suspense (drei useProgress + Html require the R3F context).",
+    "Rebuild and re-measure with scripts/measure-load.mjs for the landing page and all four routes (label after-*), and record the largest JS chunk raw+gzip after. Confirm: landing loads no 3D model bytes; each demo route's cold-load transferred bytes dropped substantially vs baseline (combined effect of FEAT-002 texture compression + not eagerly loading extra garments); the largest JS chunk raw+gzip is materially smaller than 913347/238953 on the routes where the leak was fixed.",
+    "For each scene capture an after-*.png fixed-camera screenshot and diff it against the FEAT-001 baseline screenshot (same route, same camera, animations disabled). The scenes MUST render identically — same framing, same colors (tone mapping/exposure unchanged, tint constants unchanged). Record the diff result per scene in docs/perf/. If a scene differs, treat it as a regression and fix the compression policy or loader wiring rather than accepting it."
+  ],
+  "acceptance_criteria": [
+    "projects/digital-wardrobe/index.html no longer statically references the ~913KB three chunk; the largest JS chunk referenced by that page's HTML is materially smaller (report raw+gzip before/after).",
+    "The heavy three/three-vrm code loads only when a 3D scene is actually mounted (dynamic ssr:false), not as part of any static page bundle; the landing page loads NO 3D model bytes (verified by measure-load.mjs byType showing 0 .vrm/.glb on /).",
+    "All four scenes show a real useProgress-driven loading indicator instead of a blank fallback while the model loads.",
+    "Cold-load transferred bytes per demo route drop substantially vs the FEAT-001 baseline (report before/after per route).",
+    "All four 3D scenes render IDENTICALLY to baseline (fixed-camera before/after screenshots diff clean); tone mapping/exposure and any tint constants are unchanged.",
+    "npm run lint clean (font warning aside) and npm run build static export succeeds; all four demo routes still prerender."
+  ],
+  "verification": [
+    "npm run build then inspect projects/digital-wardrobe/index.html referenced chunks (largest shrinks) and compute raw+gzip of the new largest chunk",
+    "node scripts/measure-load.mjs --route / --label after-landing  (byType shows no .vrm/.glb)",
+    "node scripts/measure-load.mjs per demo route --label after-<route>  (transferred bytes down vs baseline; screenshot diffs clean vs baseline PNG)",
+    "npm run lint && npm run build"
+  ],
+  "blocked_reason": null,
+  "findings": ""
+}

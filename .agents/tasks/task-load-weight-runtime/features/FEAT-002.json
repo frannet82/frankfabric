@@ -1,0 +1,29 @@
+{
+  "id": "FEAT-002",
+  "type": "feat",
+  "description": "Add the repeatable asset-compression SCRIPT (scripts/compress-assets.mjs) and run it to cut model bytes on disk. Adapt tireshop's chunk-level GLB/VRM rewriter (studied at /projects/sandbox/tireshop commit 889f4ed scripts/compress-assets.mjs — do NOT modify tireshop): parse the GLB container by hand, re-encode ONLY the embedded image bufferViews to WebP via sharp (resize + WebP), leaving geometry, morph targets, skeletons and every VRM extension (VRMC_vrm, VRMC_springBone, VRMC_materials_mtoon, ...) byte-for-byte intact. WebP is chosen (NOT KTX2/Basis) because frankfabric tints materials via material.color and needs canvas-decodable textures, and three's GLTFLoader decodes image/webp natively so NO runtime decoder is required. Applies to public/models/characters/drophunter/**/*.vrm (the ~38MB of VRMs — the biggest win) and public/models/characters/schnauzer/schnauzer.glb (12MB, embedded texture). Also handle the coach OBJ's external PNGs and the swedish-chef standalone jpg where a WebP/resize win is available and safe.",
+  "status": "pending",
+  "steps": [
+    "Create scripts/compress-assets.mjs adapting tireshop's script: GLB parse (12-byte header + JSON chunk 0x4E4F534A + BIN chunk 0x004E4942), re-encode each image bufferView to WebP with sharp (resize to a per-material cap, effort 6), rebuild the BIN chunk with 4-byte alignment, patch bufferViews[].byteOffset/byteLength + images[].mimeType + buffers[0].byteLength, reserialize. Guard: refuse to touch any image bufferView shared with an accessor; skip images <64px; only adopt WebP when it is actually smaller than the source bytes; require sharp (already present, no new dep).",
+    "Make it re-runnable and self-seeding EXACTLY like tireshop: read pristine originals from assets-src/models/ and write compressed copies to public/models/. On first run, if assets-src/models/ does not exist, seed it by copying the current (pristine) public/models/ into it FIRST, so output never feeds back into input. Support --src, --out, --dry-run flags. assets-src/ must be gitignored (added in FEAT-001).",
+    "Per-texture policy (adapt tireshop's, but note frankfabric has NO canvas getImageData tint pipeline so there is no canvas-readability constraint beyond WebP being canvas-decodable anyway): keep face/skin/eyes textures at a higher cap+quality (e.g. 1536px q90), normal maps near-lossless (e.g. 1536px q95), garments/props more aggressive (e.g. 1024px q82). The schnauzer albedo is a single large scan texture (RETOPO 2k) — cap it (e.g. 1024–1536px) at a quality that keeps the dog reading identically in the fixed camera.",
+    "Run `node scripts/compress-assets.mjs` (non-dry) to rewrite the VRMs and schnauzer.glb in place under public/models. Record before/after bytes per file and the total public/models reduction.",
+    "Handle the coach textures: coach.mtl references two external PNGs (0000026121C8D638out.png 83KB + a 1.3KB png). Only re-encode/resize if it yields a real win AND the coach renders identically — the MTLLoader resolves map_Kd by filename, so if converting to .webp, the .mtl map_Kd lines and RESOURCE_PATH resolution must still work (prefer leaving the tiny PNGs as-is if the win is negligible; document the decision). The swedish-chef standalone swedish_chef_diff.jpg (208KB) is loaded via THREE.TextureLoader by URL — converting it would require changing TEXTURE_URL in ChefScene.tsx AND keeping asset() base-path correctness; only do so if it is a real win and the chef renders identically.",
+    "Confirm every model/texture URL still resolves through lib/asset.ts (no hardcoded paths introduced). Re-run `npm run build` to confirm the static export still succeeds with the rewritten assets in place.",
+    "Update README.md's stale sections if needed to reflect reality (the chef is a Swedish Chef FBX, not a drophunter VRM; note the compression script) — keep this minimal and factual; do NOT rewrite unrelated docs."
+  ],
+  "acceptance_criteria": [
+    "scripts/compress-assets.mjs exists, uses only already-present deps (sharp), is idempotent/re-runnable (reads assets-src/, writes public/models/), and supports --dry-run.",
+    "public/models total bytes on disk drop substantially (target: roughly halve or better — tireshop cut its VRM/GLB set ~62%); report exact before/after per file and in total.",
+    "Every rewritten .vrm still loads: VRM extensions preserved (drophunter avatar + garments + eyes render, spring bones/MToon intact); schnauzer.glb still loads with its embedded (now WebP) texture.",
+    "No hardcoded asset paths introduced; all URLs still go through asset().",
+    "`npm run build` static export still succeeds after assets are rewritten."
+  ],
+  "verification": [
+    "node scripts/compress-assets.mjs --dry-run  (reports per-file size deltas, writes nothing)",
+    "node scripts/compress-assets.mjs  then  du -sh public/models  (confirm the drop)",
+    "npm run build  (static export succeeds with rewritten assets)"
+  ],
+  "blocked_reason": null,
+  "findings": ""
+}

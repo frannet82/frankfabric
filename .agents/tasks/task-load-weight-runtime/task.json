@@ -1,0 +1,7 @@
+{
+  "task_id": "task-load-weight-runtime",
+  "task_description": "Workstream 1 of 4 (Load Weight and Runtime Perf) for frankfabric: adapt the tireshop perf playbook to the whole frankfabric site. Establish a recorded baseline; add a repeatable WebP asset-compression script that cuts model bytes on disk (VRMs + schnauzer glb); shrink the largest JS chunk via code-splitting (extract shared runtime values out of the three-heavy scene module so the wardrobe page stops statically preloading the ~913KB three chunk); load only what the initial view needs and defer the rest to interaction; and replace blank Suspense fallbacks with a real drei useProgress indicator. Prove every 3D scene renders identically (fixed-camera before/after screenshot diffs) and that lint + static-export build stay green. One branch (perf/load-weight-runtime), not pushed.",
+  "status": "in_progress",
+  "feature_order": ["FEAT-001", "FEAT-002", "FEAT-003"],
+  "blocked_reason": null
+}
