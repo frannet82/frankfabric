@@ -101,6 +101,13 @@ export const projects: Project[] = [
     image: "/images/final_futuristic_avatar.jpg",
     video: "/videos/digital-wardrobe-preview.mp4",
   },
+  {
+    label: "LIVE DEMO · 3D virtual pet",
+    tag: "3D",
+    title: "Fabric Pet Virtual Tamagotchi",
+    meta: "Feed, play with, and care for a 3D schnauzer that lives in your browser",
+    href: "/projects/virtual-pet",
+  },
 ];
 
 export const ticker = [
