@@ -1,0 +1,8 @@
+{
+  "task_id": "task-visual-lighting-quality",
+  "task_description": "Workstream 2 (Visual Quality and Lighting) applied to the WHOLE frankfabric site: improve the lighting/shadows/material depth of all four 3D scenes (coach, chef, wardrobe, pet) with proper key/fill/bounce rigs, softer shadow edges, ContactShadows so nothing floats, and more ground/backdrop depth; introduce exactly ONE shared High/Fast quality concept (frankfabric has none today) used across all scenes, gating heavier effects to High while keeping Fast at least as cheap as today; adapt the tireshop techniques as reference only (never modify tireshop). Prove with before/after fixed-camera screenshots per scene and Fast-vs-after + High frame-time numbers (state machine+browser), no avatar skin blow-out, tone-mapping changes measurement-gated per CONSTRAINT #2. lint clean (expected font warning aside) + static-export build succeeds. Commit on branch visual/lighting-quality off merged main; do not push.",
+  "status": "in_progress",
+  "branch": "visual/lighting-quality",
+  "feature_order": ["FEAT-001", "FEAT-002", "FEAT-003"],
+  "blocked_reason": null
+}

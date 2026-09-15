@@ -25,6 +25,11 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import dynamic from "next/dynamic";
 import { respondToMessage, type ChatMessage } from "@/lib/chef/chefEngine";
 import { ChefVoice } from "@/lib/chef/chefVoice";
+import {
+  QualityProvider,
+  useQuality,
+} from "@/components/three/quality";
+import QualityToggle from "@/components/three/QualityToggle";
 
 const ChefScene = dynamic(() => import("@/components/chef/ChefScene"), {
   ssr: false,
@@ -50,7 +55,18 @@ const GREETING_SUGGESTIONS = [
   "How do I make lentil soup?",
 ];
 
+// Wraps the widget in the shared QualityProvider so its stage and the shared
+// QualityToggle read/write the SAME quality tier (components/three/quality.ts).
 export default function ChefChatbot() {
+  return (
+    <QualityProvider>
+      <ChefChatbotInner />
+    </QualityProvider>
+  );
+}
+
+function ChefChatbotInner() {
+  const { quality } = useQuality();
   const [messages, setMessages] = useState<ChatMessage[]>([
     { role: "assistant", content: GREETING },
   ]);
@@ -136,7 +152,11 @@ export default function ChefChatbot() {
     <div className="absolute inset-0 z-[5] flex flex-col md:flex-row bg-ac-cream/90 backdrop-blur-[1px]">
       {/* 3D chef stage */}
       <div className="relative md:w-[42%] w-full h-[38%] md:h-full min-h-[120px] bg-gradient-to-b from-ac-sky/40 to-ac-leaf/25 border-b md:border-b-0 md:border-r border-ac-leaf/40">
-        <ChefScene speaking={speaking} getLoudness={getLoudness} />
+        <ChefScene speaking={speaking} getLoudness={getLoudness} quality={quality} />
+        {/* Shared High/Fast render-quality control, placed unobtrusively in the
+            stage's top-left so it never overlaps the mute toggle (top-right) or
+            the label (bottom). Same control across all four scenes. */}
+        <QualityToggle className="absolute top-2 left-2 z-10" />
         {/* Accessible mute toggle. Focusable, labeled, and reflects state. */}
         <button
           type="button"

@@ -37,6 +37,11 @@ import { OBJLoader } from "three/examples/jsm/loaders/OBJLoader.js";
 import { MTLLoader } from "three/examples/jsm/loaders/MTLLoader.js";
 import { asset } from "@/lib/asset";
 import SceneLoader from "@/components/three/SceneLoader";
+import {
+  DEFAULT_QUALITY,
+  qualitySettings,
+  type Quality,
+} from "@/components/three/quality";
 
 type SceneProps = {
   // True while the coach's reply is "playing"; opens the talking-motion window.
@@ -44,6 +49,11 @@ type SceneProps = {
   // Returns a live 0..1 audio loudness (Web Audio AnalyserNode RMS). When it
   // returns 0 while speaking (e.g. muted), the bob falls back to a sine wobble.
   getLoudness?: () => number;
+  // Shared High/Fast render-quality tier (components/three/quality.ts). Gates
+  // Canvas shadows, dpr, shadow-map resolution, soft shadows and the heavier
+  // fill/bounce lights + ground backdrop. Defaults to High so the standalone
+  // look is unchanged from before this feature.
+  quality?: Quality;
 };
 
 // Coach OBJ + its companion MTL. Every path is base-path-prefixed via asset()
@@ -237,13 +247,73 @@ function Avatar({
   );
 }
 
+// A subtle procedural ground plane so the coach reads as standing ON something
+// rather than floating over only the ContactShadows. It is a plain-color matte
+// disc placed at y=0 (the same plane ContactShadows uses) with a soft radial
+// vignette baked into a tiny canvas texture, so it fades out at the edges and
+// never shows a hard rim in the fixed shot. No external image asset — the
+// texture is generated in-memory, so it adds nothing to the cold-load budget.
+// Gated to High (it costs an extra draw + a receiveShadow surface); on Fast the
+// figure keeps only its ContactShadows, exactly like today.
+function GroundBackdrop() {
+  const texture = useMemo(() => {
+    const size = 256;
+    const canvas = document.createElement("canvas");
+    canvas.width = size;
+    canvas.height = size;
+    const ctx = canvas.getContext("2d");
+    if (ctx) {
+      const grad = ctx.createRadialGradient(
+        size / 2,
+        size / 2,
+        size * 0.08,
+        size / 2,
+        size / 2,
+        size / 2
+      );
+      // Cool neutral gym-floor grey, fading to transparent at the rim so the
+      // disc dissolves into the scene background instead of ending on a line.
+      grad.addColorStop(0, "rgba(210,212,216,1)");
+      grad.addColorStop(0.62, "rgba(196,198,203,1)");
+      grad.addColorStop(1, "rgba(196,198,203,0)");
+      ctx.fillStyle = grad;
+      ctx.fillRect(0, 0, size, size);
+    }
+    const tex = new THREE.CanvasTexture(canvas);
+    tex.colorSpace = THREE.SRGBColorSpace;
+    return tex;
+  }, []);
+
+  useEffect(() => {
+    return () => texture.dispose();
+  }, [texture]);
+
+  return (
+    <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, -0.001, 0]} receiveShadow>
+      <circleGeometry args={[4.2, 64]} />
+      <meshStandardMaterial
+        map={texture}
+        transparent
+        roughness={0.95}
+        metalness={0}
+      />
+    </mesh>
+  );
+}
+
 // `speaking` + `getLoudness` drive the whole-group talking motion in <Avatar />.
 // The OBJ is unrigged, so there is no body-animation prop.
-export default function CoachScene({ speaking = false, getLoudness }: SceneProps) {
+export default function CoachScene({
+  speaking = false,
+  getLoudness,
+  quality = DEFAULT_QUALITY,
+}: SceneProps) {
+  const q = qualitySettings(quality);
+  const isHigh = quality === "high";
   return (
     <Canvas
-      shadows
-      dpr={[1, 2]}
+      shadows={q.shadows}
+      dpr={q.dpr}
       camera={{ position: [0, AIM_HEIGHT, CAMERA_DISTANCE], fov: 34 }}
       gl={{ antialias: true, alpha: true }}
       // react-three-fiber forwards unknown props to the underlying <canvas>, so
@@ -251,6 +321,8 @@ export default function CoachScene({ speaking = false, getLoudness }: SceneProps
       role="img"
       aria-label="3D coach avatar"
       onCreated={({ gl, camera }) => {
+        // Tone mapping unchanged (ACESFilmic): the coach OBJ renders skin fine
+        // under the near-neutral rig below, so per CONSTRAINT #2 we leave it.
         gl.toneMapping = THREE.ACESFilmicToneMapping;
         // Fixed, front-facing framing: aim the camera straight at the aim point
         // the model was recentered onto (its upper chest). No OrbitControls,
@@ -258,33 +330,59 @@ export default function CoachScene({ speaking = false, getLoudness }: SceneProps
         camera.lookAt(0, AIM_HEIGHT, 0);
       }}
     >
-      {/* Bright, energetic gym lighting kept near-neutral so the coach's
-          textures show their true colors. */}
-      <ambientLight intensity={0.9} color="#ffffff" />
+      {/* NOTE: drei <SoftShadows> is intentionally NOT used. It rewrites the
+          global shadow-map shader chunk, which collides with the VRM's MToon
+          Face ShaderMaterial in the wardrobe scene; to keep ONE consistent soft
+          approach across all four scenes we soften edges the plan's alternative
+          way instead — higher shadow-map res on High + tuned ContactShadows
+          blur. */}
+
+      {/* Proper key/fill/bounce rig, kept NEAR-NEUTRAL so the coach's textures
+          keep their true color (no colored blow-out under the stronger key). */}
+      {/* Base ambient so shaded sides never go black. */}
+      <ambientLight intensity={0.62} color="#ffffff" />
+      {/* KEY: the shaping light, front-right and high; only it casts shadows.
+          Shadow-map resolution scales with quality (High > today's 1024). */}
       <directionalLight
         position={[3, 6, 4]}
-        intensity={1.1}
+        intensity={1.15}
         color="#fffdf2"
-        castShadow
-        shadow-mapSize-width={1024}
-        shadow-mapSize-height={1024}
+        castShadow={q.shadows}
+        shadow-mapSize-width={q.shadowMapSize}
+        shadow-mapSize-height={q.shadowMapSize}
+        shadow-bias={-0.0009}
       />
-      {/* Soft neutral fill from the opposite side. */}
+      {/* FILL: softer, from the opposite (left) side to open up the shadow. */}
       <directionalLight position={[-4, 3, -3]} intensity={0.5} color="#ffffff" />
-      {/* Very gentle sky-to-ground bounce, near-neutral so it never tints. */}
+      {/* Sky-to-ground bounce, near-neutral so it never tints the textures. */}
       <hemisphereLight args={["#eef4ff", "#f3f0e6", 0.45]} />
+      {/* RIM / back-bounce (High only): a subtle behind-and-above point light
+          that separates the figure from the backdrop. Skipped on Fast. */}
+      {isHigh ? (
+        <pointLight
+          position={[-1.6, 3.2, -2.6]}
+          intensity={0.55}
+          color="#ffffff"
+          distance={9}
+          decay={1.6}
+        />
+      ) : null}
 
       <Suspense fallback={<SceneLoader />}>
         <group position={[0, 0, 0]}>
           <Avatar speaking={speaking} getLoudness={getLoudness} />
         </group>
+        {/* Ground backdrop for depth — High only (extra draw + shadow catcher). */}
+        {isHigh ? <GroundBackdrop /> : null}
       </Suspense>
 
+      {/* Kept ContactShadows so the figure never floats; softened blur a touch
+          for a gentler edge that reads with the new rig. */}
       <ContactShadows
         position={[0, 0, 0]}
         opacity={0.3}
         scale={4}
-        blur={2.6}
+        blur={isHigh ? 3.0 : 2.6}
         far={2}
         color="#111111"
       />

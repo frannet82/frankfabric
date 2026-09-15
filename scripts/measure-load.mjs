@@ -39,6 +39,15 @@ const ROUTE = args.get('route') || '/';
 const LABEL = args.get('label') || 'load';
 const OUT = resolve(args.get('out') || 'docs/perf');
 const PORT = Number(args.get('port') || 5199);
+// Optional measurement-only quality selection: 'high' | 'fast'. When set, the
+// harness clicks the shared QualityToggle radio (rendered by every scene
+// wrapper) AFTER the canvas mounts, so a fixed-camera screenshot of both the
+// High and Fast render paths can be captured deterministically without changing
+// any scene/quality CODE. The toggle only reads/writes the shared quality tier
+// (components/three/quality.ts, default 'high'); this flips it as a user would.
+// Omit to capture the default (High) path. Byte totals are unaffected by tier
+// (no tier fetches a different asset), so the default byte report is unchanged.
+const QUALITY = args.get('quality');
 
 // The base path the production static export is served under on GitHub Pages.
 // The HTML references /frankfabric/... asset URLs, so the server mounts out/
@@ -221,6 +230,25 @@ async function main() {
     .then(() => true)
     .catch(() => false);
 
+  // Measurement-only: force a specific render path by clicking the shared
+  // QualityToggle radio (High/Fast) the same way a user would, so a fixed-camera
+  // screenshot of each path can be captured. This changes NO scene/quality code.
+  let qualitySelected = null;
+  if (hasCanvas && QUALITY) {
+    const wanted = String(QUALITY).toLowerCase() === 'fast' ? 'Fast' : 'High';
+    const clicked = await page
+      .getByRole('radio', { name: wanted, exact: true })
+      .first()
+      .click({ timeout: 5000 })
+      .then(() => true)
+      .catch(() => false);
+    if (!clicked) {
+      console.error(`Could not click the "${wanted}" quality radio for ${routePath}.`);
+    } else {
+      qualitySelected = wanted.toLowerCase();
+    }
+  }
+
   // Settle a few frames so pose/tinting/materials are applied before the shot.
   // 3D routes pull several MB of VRM/GLB, so give large assets time to finish
   // before we screenshot and tear down (a premature teardown aborts in-flight
@@ -253,6 +281,7 @@ async function main() {
     url: target,
     ready,
     hasCanvas,
+    quality: qualitySelected,
     unresolvedFailures: unresolved,
     errors: errors.slice(0, 30),
     viewport: { width: 1280, height: 900 },

@@ -43,6 +43,11 @@ import {
   loadPetState,
   savePetState,
 } from "@/lib/pet/petStorage";
+import {
+  QualityProvider,
+  useQuality,
+} from "@/components/three/quality";
+import QualityToggle from "@/components/three/QualityToggle";
 
 const PetScene = dynamic(() => import("@/components/pet/PetScene"), {
   ssr: false,
@@ -102,7 +107,18 @@ const ACTION_META: {
   { action: "clean", label: "Clean", emoji: "🛁", color: "bg-pet-clean" },
 ];
 
+// Wraps the widget in the shared QualityProvider so its stage and the shared
+// QualityToggle read/write the SAME quality tier (components/three/quality.ts).
 export default function VirtualPet() {
+  return (
+    <QualityProvider>
+      <VirtualPetInner />
+    </QualityProvider>
+  );
+}
+
+function VirtualPetInner() {
+  const { quality } = useQuality();
   const [state, setState] = useState<PetState | null>(null);
   // Transient one-shot action passed to the 3D scene (null when idle).
   const [pendingAction, setPendingAction] = useState<PetAction | null>(null);
@@ -211,7 +227,11 @@ export default function VirtualPet() {
           action={pendingAction}
           actionNonce={actionNonce}
           wellbeing={wellbeing}
+          quality={quality}
         />
+        {/* Shared High/Fast render-quality control, placed unobtrusively in the
+            stage's top-left. Same control across all four scenes. */}
+        <QualityToggle className="absolute top-2 left-2 z-10" />
         <span className="absolute bottom-2 left-0 right-0 text-center font-mono text-[10px] tracking-widest uppercase text-pet-inkSoft pointer-events-none">
           {petName}
         </span>

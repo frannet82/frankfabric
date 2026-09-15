@@ -36,6 +36,11 @@ import { ContactShadows, useGLTF } from "@react-three/drei";
 import * as THREE from "three";
 import { asset } from "@/lib/asset";
 import SceneLoader from "@/components/three/SceneLoader";
+import {
+  DEFAULT_QUALITY,
+  qualitySettings,
+  type Quality,
+} from "@/components/three/quality";
 
 // The self-contained schnauzer .glb. Base-path-prefixed via asset() so it
 // resolves to /frankfabric/models/... in production. Never hardcode a bare
@@ -67,6 +72,10 @@ type SceneProps = {
   actionNonce?: number;
   // Overall wellbeing 0..100; gently scales liveliness.
   wellbeing: number;
+  // Shared High/Fast render-quality tier (components/three/quality.ts). Gates
+  // Canvas shadows, dpr, shadow-map resolution, soft shadows and the heavier
+  // fill/bounce lights + ground backdrop. Defaults to High.
+  quality?: Quality;
 };
 
 // Loads the schnauzer and drives the whole-group mood/action motion. The model
@@ -281,6 +290,57 @@ function Pet({ mood, action, actionNonce, wellbeing }: SceneProps) {
   );
 }
 
+// A subtle procedural ground plane so the dog reads as sitting ON something
+// rather than floating over only the ContactShadows. A matte disc at y=0 with a
+// soft radial vignette baked into a small in-memory canvas texture (no external
+// asset, nothing added to the cold-load budget), fading out at the rim. Gated
+// to High; on Fast the dog keeps only its ContactShadows, exactly like today.
+function GroundBackdrop() {
+  const texture = useMemo(() => {
+    const size = 256;
+    const canvas = document.createElement("canvas");
+    canvas.width = size;
+    canvas.height = size;
+    const ctx = canvas.getContext("2d");
+    if (ctx) {
+      const grad = ctx.createRadialGradient(
+        size / 2,
+        size / 2,
+        size * 0.08,
+        size / 2,
+        size / 2,
+        size / 2
+      );
+      // Warm rug/floor tone matching the cozy Tamagotchi vibe, fading to
+      // transparent at the rim so the disc dissolves into the background.
+      grad.addColorStop(0, "rgba(228,212,190,1)");
+      grad.addColorStop(0.62, "rgba(214,196,170,1)");
+      grad.addColorStop(1, "rgba(214,196,170,0)");
+      ctx.fillStyle = grad;
+      ctx.fillRect(0, 0, size, size);
+    }
+    const tex = new THREE.CanvasTexture(canvas);
+    tex.colorSpace = THREE.SRGBColorSpace;
+    return tex;
+  }, []);
+
+  useEffect(() => {
+    return () => texture.dispose();
+  }, [texture]);
+
+  return (
+    <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, -0.001, 0]} receiveShadow>
+      <circleGeometry args={[3.6, 64]} />
+      <meshStandardMaterial
+        map={texture}
+        transparent
+        roughness={0.95}
+        metalness={0}
+      />
+    </mesh>
+  );
+}
+
 // Mood + transient action + wellbeing drive the whole-group motion in <Pet />.
 // The mesh is unrigged, so there is no bone-animation prop.
 export default function PetScene({
@@ -288,11 +348,14 @@ export default function PetScene({
   action,
   actionNonce,
   wellbeing,
+  quality = DEFAULT_QUALITY,
 }: SceneProps) {
+  const q = qualitySettings(quality);
+  const isHigh = quality === "high";
   return (
     <Canvas
-      shadows
-      dpr={[1, 2]}
+      shadows={q.shadows}
+      dpr={q.dpr}
       camera={{ position: [0, AIM_HEIGHT + 0.35, CAMERA_DISTANCE], fov: 34 }}
       gl={{ antialias: true, alpha: true }}
       // react-three-fiber forwards unknown props to the underlying <canvas>, so
@@ -300,27 +363,47 @@ export default function PetScene({
       role="img"
       aria-label="3D virtual pet dog"
       onCreated={({ gl, camera }) => {
+        // Tone mapping unchanged (ACESFilmic): the scan renders fine under the
+        // near-neutral warm rig below, so per CONSTRAINT #2 we leave it.
         gl.toneMapping = THREE.ACESFilmicToneMapping;
         // Fixed, front-facing framing: aim slightly down at the dog's mid-body
         // so it reads centered on all fours. No OrbitControls, no zoom.
         camera.lookAt(0, AIM_HEIGHT, 0);
       }}
     >
+      {/* NOTE: drei <SoftShadows> is intentionally NOT used (see WardrobeScene);
+          we keep ONE consistent soft approach across all four scenes — higher
+          shadow-map res on High + tuned ContactShadows blur. */}
+
       {/* Warm, cozy lighting kept near-neutral so the scan's texture shows its
-          true colors. */}
-      <ambientLight intensity={0.85} color="#fff6ea" />
+          true colors — now a proper key/fill/bounce rig (only the key casts
+          shadows). */}
+      <ambientLight intensity={0.8} color="#fff6ea" />
+      {/* KEY: front-right; the only shadow caster. Shadow-map res scales with
+          quality (High above today's 1024). */}
       <directionalLight
         position={[3, 5, 4]}
         intensity={1.15}
         color="#fff3e0"
-        castShadow
-        shadow-mapSize-width={1024}
-        shadow-mapSize-height={1024}
+        castShadow={q.shadows}
+        shadow-mapSize-width={q.shadowMapSize}
+        shadow-mapSize-height={q.shadowMapSize}
+        shadow-bias={-0.0009}
       />
-      {/* Soft fill from the opposite side. */}
+      {/* FILL: softer, from the opposite side. */}
       <directionalLight position={[-4, 3, -3]} intensity={0.45} color="#ffffff" />
-      {/* Gentle sky-to-ground bounce. */}
+      {/* Sky-to-ground bounce. */}
       <hemisphereLight args={["#fff2dd", "#efe2c9", 0.5]} />
+      {/* RIM / back-bounce (High only): subtle separation from the backdrop. */}
+      {isHigh ? (
+        <pointLight
+          position={[-1.8, 2.4, -2.4]}
+          intensity={0.5}
+          color="#fff2dd"
+          distance={9}
+          decay={1.6}
+        />
+      ) : null}
 
       <Suspense fallback={<SceneLoader />}>
         <group position={[0, 0, 0]}>
@@ -331,13 +414,16 @@ export default function PetScene({
             wellbeing={wellbeing}
           />
         </group>
+        {/* Ground backdrop for depth — High only. */}
+        {isHigh ? <GroundBackdrop /> : null}
       </Suspense>
 
+      {/* Kept ContactShadows so the dog never floats; softened blur on High. */}
       <ContactShadows
         position={[0, 0, 0]}
         opacity={0.32}
         scale={4}
-        blur={2.6}
+        blur={isHigh ? 3.0 : 2.6}
         far={2}
         color="#3a2c1a"
       />
