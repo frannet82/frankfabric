@@ -29,10 +29,11 @@
 // { ssr: false } so it never runs during Next.js static generation.
 // ---------------------------------------------------------------------------
 
-import { Suspense, useEffect, useMemo, useRef } from "react";
+import { Suspense, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Canvas, useFrame, useLoader } from "@react-three/fiber";
 import { OrbitControls, ContactShadows } from "@react-three/drei";
 import * as THREE from "three";
+import SceneLoader from "@/components/three/SceneLoader";
 import { GLTFLoader } from "three/examples/jsm/loaders/GLTFLoader.js";
 import { FBXLoader } from "three/examples/jsm/loaders/FBXLoader.js";
 import {
@@ -43,74 +44,48 @@ import {
 import { asset } from "@/lib/asset";
 import { retargetMixamoClip } from "@/lib/vrm/retarget";
 import { Garment } from "@/lib/vrm/transplant";
+import {
+  OPTIONS,
+  type Category,
+  type WardrobeAnimation,
+  type WardrobeSelection,
+  type WardrobeColors,
+} from "@/components/wardrobe/wardrobeOptions";
 
-export type Category = "outfit" | "bottom" | "shoes" | "hat";
-
-// Which humanoid animation the avatar plays. "rest" means no clip is playing
-// (the avatar stays in its idle rest pose while the scene auto-rotates); the
-// others map to the retargeted FBX clips bundled in public/animations/.
-export type WardrobeAnimation = "rest" | "idle" | "walking" | "waving";
+// OPTIONS and the shared wardrobe types now live in the lightweight
+// components/wardrobe/wardrobeOptions.ts module (NO three.js imports), so the
+// control UI (WardrobeBuilder) can import them WITHOUT dragging this
+// three.js-heavy scene module into the static page bundle. Re-export OPTIONS +
+// the types here so any existing importer of this module keeps working.
+export {
+  OPTIONS,
+  type Category,
+  type WardrobeAnimation,
+  type WardrobeSelection,
+  type WardrobeColors,
+};
 
 // FBX animation clips (Mixamo-style humanoid rigs). Loaded client-side only via
 // FBXLoader and retargeted onto the VRM humanoid — see retargetMixamoClip
 // below. URLs are base-path-prefixed so they resolve under /frankfabric/ in
 // production.
+//
+// These clips are loaded ON DEMAND — the same on-demand pattern the garments
+// use (a garment VRM streams in only when its <Garment url=…> is selected).
+// Each clip is fetched only once its animation has actually been requested by
+// the current view: on cold load that is just the builder's default ("idle"),
+// so walking.fbx (~0.37MB) + waving.fbx (~0.62MB) are NOT streamed until the
+// user first selects them. This keeps the wardrobe cold load from eagerly
+// pulling ~0.99MB of clips the initial view never plays, without changing the
+// animation UX — the mixer/crossfade wiring below drives whichever clips have
+// loaded, and switching among Rest/Idle/Walking/Waving still crossfades.
 const ANIMATION_URLS: Record<Exclude<WardrobeAnimation, "rest">, string> = {
   idle: asset("/animations/idle.fbx"),
   walking: asset("/animations/walking.fbx"),
   waving: asset("/animations/waving.fbx"),
 };
 
-export type WardrobeSelection = Record<Category, number>;
-export type WardrobeColors = Record<Category, string>;
-
-// Option labels shown in the UI. Index 0 is always the "Base"/"None" option:
-// selecting it mounts no garment for that category, so the base body shows
-// through unclothed for that slot.
-export const OPTIONS: Record<Category, string[]> = {
-  outfit: [
-    "Base",
-    "Tank Top",
-    "Shirt",
-    "Hoodie",
-    "Crop Top",
-    "Light Shirt",
-    "Full Jacket",
-    "Tucked Shirt",
-    "Sweater",
-  ],
-  bottom: [
-    "Base",
-    "Cargo Pants",
-    "Casual Shorts",
-    "Skirt",
-    "Sport Shorts",
-    "Above-Knee Shorts",
-    "Waist Shorts",
-    "Double-Belt Pants",
-  ],
-  shoes: [
-    "None",
-    "Sneakers",
-    "Short Boots",
-    "Thin Shoe",
-    "Dress Boots",
-    "Tall Boots",
-    "Tennis Shoes",
-    "High Top",
-  ],
-  hat: [
-    "None",
-    "Short",
-    "Ponytail",
-    "Curled Bangs",
-    "Buns",
-    "Straight",
-    "Swept",
-    "Long Spike",
-    "Dreds",
-  ],
-};
+type ClipName = Exclude<WardrobeAnimation, "rest">;
 
 // The minimally-clothed modular base body. Base-path-prefixed so it resolves to
 // /frankfabric/models/characters/drophunter/body.vrm in production and
@@ -217,63 +192,78 @@ function Avatar({ selection, colors, animation }: SceneProps) {
     };
   }, [vrm]);
 
-  // --- Animation: load + retarget the Mixamo FBX clips -------------------
+  // --- Animation: load + retarget the Mixamo FBX clips ON DEMAND ---------
   //
-  // useLoader with FBXLoader runs entirely client-side (this whole component
-  // is loaded via next/dynamic { ssr:false }, so FBXLoader never executes
-  // during static generation). Each raw FBX is retargeted onto the VRM
-  // humanoid via retargetMixamoClip and driven by a single AnimationMixer.
-  const idleFbx = useLoader(FBXLoader, ANIMATION_URLS.idle);
-  const walkingFbx = useLoader(FBXLoader, ANIMATION_URLS.walking);
-  const wavingFbx = useLoader(FBXLoader, ANIMATION_URLS.waving);
+  // The clips are loaded the same way garments are: only when they are
+  // actually needed. Rather than eagerly useLoader-ing idle/walking/waving at
+  // mount (~2.57MB), we mount a per-clip <ClipLoader> ONLY for clips that have
+  // been requested. A clip is "requested" once its animation has been selected
+  // — seeded with the initial `animation` prop so the builder's default
+  // ("idle") loads on cold start, while walking/waving defer until the user
+  // first picks them. Each ClipLoader suspends on its own FBX fetch, retargets
+  // the clip, and hands it to registerClip which builds the AnimationAction on
+  // the shared mixer; the crossfade then drives whichever actions exist.
 
-  // All mutable playback state (mixer + per-clip actions + the action that is
-  // currently faded in) lives in a single ref that this component owns and
-  // mutates. Keeping it in a ref — rather than in useMemo return values — keeps
-  // the AnimationAction mutations (reset/fadeIn/play) off React-tracked values.
-  const playback = useRef<{
-    mixer: THREE.AnimationMixer;
-    actions: Record<
-      Exclude<WardrobeAnimation, "rest">,
-      THREE.AnimationAction | null
-    >;
-  } | null>(null);
-  // The action currently faded in (null at rest). Its own ref so the crossfade
-  // effect only mutates `ref.current`, which is a permitted ref write.
+  // The single AnimationMixer that drives every clip. Built by useMemo and used
+  // as a RETURNED VALUE — not written into a ref during render — so it exists
+  // before ANY child effect runs. Child (ClipLoader) effects fire before parent
+  // effects on the same commit, so building the mixer in a parent effect would
+  // leave it null when a clip first tries to register (the bug that left the
+  // avatar stuck in its T-pose). Rebuilt when the avatar (`vrm`) changes.
+  const mixer = useMemo(() => new THREE.AnimationMixer(vrm.scene), [vrm]);
+  // Per-clip retargeted actions, filled in as each ClipLoader loads its clip.
+  // Held in a ref because it is mutated only from callbacks/effects (never
+  // during render) and must not itself trigger re-renders. Rebuilt whenever the
+  // mixer is rebuilt (see the effect below).
+  const actions = useRef<Record<ClipName, THREE.AnimationAction | null>>({
+    idle: null,
+    walking: null,
+    waving: null,
+  });
+  // The action currently faded in (null at rest). A ref so the crossfade
+  // callback only mutates `ref.current`, which is a permitted ref write.
   const currentAction = useRef<THREE.AnimationAction | null>(null);
 
-  // (Re)build the mixer and retargeted actions whenever the avatar or a loaded
-  // FBX changes. Retargeting maps each Mixamo clip onto the VRM humanoid bones.
+  // Which clips have been requested so far (so their <ClipLoader> is mounted
+  // and their FBX fetched). Seeded from the initial animation: "rest" needs no
+  // clip, anything else needs its own clip on cold load. This is the on-demand
+  // gate — walking/waving are absent from this set until first selected.
+  const [requested, setRequested] = useState<Set<ClipName>>(() =>
+    animation === "rest" ? new Set() : new Set<ClipName>([animation])
+  );
+
+  // When the selected animation changes to a clip we have not requested yet,
+  // add it so its ClipLoader mounts and streams the FBX in on demand. This is
+  // the React "adjust state while rendering" pattern (not a setState-in-effect
+  // cascade): the extra render happens before the browser paints, so the new
+  // ClipLoader mounts in the same commit that reflects the selection.
+  if (animation !== "rest" && !requested.has(animation)) {
+    setRequested(new Set(requested).add(animation));
+  }
+
+  // Stop the mixer's actions when it is torn down (avatar change/unmount). We
+  // do NOT clear `actions.current` here: on a rig rebuild each ClipLoader's
+  // effect re-runs (it depends on `vrm`) and re-registers its clip against the
+  // new mixer, overwriting the stale entry — clearing here would instead race
+  // ahead of those child effects (child effects run before parent effects) and
+  // wipe a just-registered clip, stranding the avatar in its T-pose.
   useEffect(() => {
-    const mixer = new THREE.AnimationMixer(vrm.scene);
-    const build = (fbx: THREE.Group): THREE.AnimationAction | null => {
-      const raw = fbx.animations?.[0];
-      if (!raw) return null;
-      const clip = retargetMixamoClip(fbx, raw, vrm);
-      return clip ? mixer.clipAction(clip) : null;
-    };
-    playback.current = {
-      mixer,
-      actions: {
-        idle: build(idleFbx),
-        walking: build(walkingFbx),
-        waving: build(wavingFbx),
-      },
-    };
-    currentAction.current = null;
     return () => {
       mixer.stopAllAction();
-      playback.current = null;
       currentAction.current = null;
     };
-  }, [vrm, idleFbx, walkingFbx, wavingFbx]);
+  }, [mixer]);
 
-  // Crossfade to the requested clip when `animation` changes; "rest" fades all
-  // actions out so the avatar returns to its rest pose.
-  useEffect(() => {
-    const state = playback.current;
-    if (!state) return;
-    const next = animation === "rest" ? null : state.actions[animation];
+  // Crossfade to the requested clip: fade the current action out and the target
+  // in. Called both when `animation` changes AND when a just-loaded clip
+  // registers its action (a clip selected before its FBX finished loading still
+  // starts playing the moment it becomes available). "rest" fades everything
+  // out so the avatar returns to its rest pose.
+  const applyCrossfade = useCallback(() => {
+    const next = animation === "rest" ? null : actions.current[animation];
+    // If the requested clip has not loaded/registered yet, wait — the
+    // ClipLoader will call this again once its action exists.
+    if (animation !== "rest" && !next) return;
     const prev = currentAction.current;
     if (next === prev) return;
 
@@ -290,20 +280,56 @@ function Avatar({ selection, colors, animation }: SceneProps) {
       prev.fadeOut(FADE);
     }
     currentAction.current = next;
-  }, [animation, idleFbx, walkingFbx, wavingFbx, vrm]);
+  }, [animation]);
+
+  // Called by each ClipLoader once its retargeted clip is ready. The action is
+  // built HERE from the shared mixer (the same mixer useFrame advances), so all
+  // clips play on one timeline and crossfades between them work. Passing the
+  // retargeted clip (not a pre-built action) keeps the single-mixer invariant.
+  // Then re-evaluate the crossfade in case this is the clip currently awaited.
+  const registerClip = useCallback(
+    (name: ClipName, clip: THREE.AnimationClip | null) => {
+      actions.current[name] = clip ? mixer.clipAction(clip) : null;
+      applyCrossfade();
+    },
+    [applyCrossfade, mixer]
+  );
+
+  // Re-run the crossfade when the selected animation changes.
+  useEffect(() => {
+    applyCrossfade();
+  }, [applyCrossfade]);
 
   // CharacterStudio's per-frame update contract: advance the animation mixer
   // first (which poses the normalized humanoid bones), then vrm.update(delta)
   // so SpringBones/lookAt and the retargeted pose are both applied. Garments
   // transplanted onto the base skeleton follow automatically.
   useFrame((_, delta) => {
-    playback.current?.mixer.update(delta);
+    mixer.update(delta);
     vrm.update(delta);
   });
 
   return (
     <group>
       <primitive object={vrm.scene} />
+
+      {/* On-demand animation clip loaders. One mounts per requested clip; each
+          suspends on its own FBX fetch, retargets it against this VRM, and
+          registers the resulting clip into the shared mixer. Unrequested clips
+          (walking/waving on cold load) render nothing, so their FBX is never
+          fetched — mirroring the garment on-demand load pattern.
+
+          Each loader gets its OWN <Suspense fallback={null}> so streaming a
+          newly-selected clip mid-session does NOT blank the already-rendered
+          avatar behind the scene-level SceneLoader: the avatar keeps playing
+          its current pose and the new clip simply crossfades in once ready. */}
+      {(["idle", "walking", "waving"] as ClipName[])
+        .filter((name) => requested.has(name))
+        .map((name) => (
+          <Suspense key={name} fallback={null}>
+            <ClipLoader name={name} vrm={vrm} register={registerClip} />
+          </Suspense>
+        ))}
 
       {/* Required eyes trait. The base body ships with empty eye sockets (the
           "black hole" bug); this transplants the authored "Regular Eyes" mesh
@@ -344,6 +370,41 @@ function Avatar({ selection, colors, animation }: SceneProps) {
   );
 }
 
+// Loads a SINGLE Mixamo FBX clip on demand and registers its retargeted
+// AnimationAction with the parent Avatar's shared mixer. This component
+// suspends (via useLoader) until its own FBX has streamed in, so mounting it is
+// what triggers the network fetch — exactly the on-demand pattern the garment
+// <Garment> components use. It renders no scene objects; it exists only to own
+// one clip's load + retarget lifecycle.
+function ClipLoader({
+  name,
+  vrm,
+  register,
+}: {
+  name: ClipName;
+  vrm: VRM;
+  register: (name: ClipName, clip: THREE.AnimationClip | null) => void;
+}) {
+  // useLoader with FBXLoader runs entirely client-side (this whole component is
+  // loaded via next/dynamic { ssr:false }, so FBXLoader never executes during
+  // static generation) and suspends until the FBX is fetched.
+  const fbx = useLoader(FBXLoader, ANIMATION_URLS[name]);
+
+  useEffect(() => {
+    const raw = fbx.animations?.[0];
+    const clip = raw ? retargetMixamoClip(fbx, raw, vrm) : null;
+    // Hand the retargeted clip to the parent, which builds the action from the
+    // shared mixer so all clips play on one timeline and crossfades work.
+    register(name, clip);
+    return () => {
+      register(name, null);
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [fbx, vrm, name]);
+
+  return null;
+}
+
 export default function WardrobeScene({
   selection,
   colors,
@@ -374,7 +435,7 @@ export default function WardrobeScene({
       <directionalLight position={[-5, 3, -4]} intensity={0.35} />
       <hemisphereLight args={["#ffffff", "#cbc7bd", 0.5]} />
 
-      <Suspense fallback={null}>
+      <Suspense fallback={<SceneLoader />}>
         <group position={[0, 0, 0]}>
           <Avatar selection={selection} colors={colors} animation={animation} />
         </group>

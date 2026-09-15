@@ -29,7 +29,7 @@ import {
   type WardrobeSelection,
   type WardrobeColors,
   type WardrobeAnimation,
-} from "@/components/wardrobe/WardrobeScene";
+} from "@/components/wardrobe/wardrobeOptions";
 import { asset } from "@/lib/asset";
 
 const WardrobeScene = dynamic(

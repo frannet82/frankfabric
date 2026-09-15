@@ -36,6 +36,7 @@ import * as THREE from "three";
 import { OBJLoader } from "three/examples/jsm/loaders/OBJLoader.js";
 import { MTLLoader } from "three/examples/jsm/loaders/MTLLoader.js";
 import { asset } from "@/lib/asset";
+import SceneLoader from "@/components/three/SceneLoader";
 
 type SceneProps = {
   // True while the coach's reply is "playing"; opens the talking-motion window.
@@ -273,7 +274,7 @@ export default function CoachScene({ speaking = false, getLoudness }: SceneProps
       {/* Very gentle sky-to-ground bounce, near-neutral so it never tints. */}
       <hemisphereLight args={["#eef4ff", "#f3f0e6", 0.45]} />
 
-      <Suspense fallback={null}>
+      <Suspense fallback={<SceneLoader />}>
         <group position={[0, 0, 0]}>
           <Avatar speaking={speaking} getLoudness={getLoudness} />
         </group>

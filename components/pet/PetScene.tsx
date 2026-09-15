@@ -35,6 +35,7 @@ import { Canvas, useFrame } from "@react-three/fiber";
 import { ContactShadows, useGLTF } from "@react-three/drei";
 import * as THREE from "three";
 import { asset } from "@/lib/asset";
+import SceneLoader from "@/components/three/SceneLoader";
 
 // The self-contained schnauzer .glb. Base-path-prefixed via asset() so it
 // resolves to /frankfabric/models/... in production. Never hardcode a bare
@@ -321,7 +322,7 @@ export default function PetScene({
       {/* Gentle sky-to-ground bounce. */}
       <hemisphereLight args={["#fff2dd", "#efe2c9", 0.5]} />
 
-      <Suspense fallback={null}>
+      <Suspense fallback={<SceneLoader />}>
         <group position={[0, 0, 0]}>
           <Pet
             mood={mood}

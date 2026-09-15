@@ -1,0 +1,38 @@
+{
+  "project_type": "Next.js 16 (App Router) + React 19 + TypeScript static-export portfolio site with four interactive 3D demos (Three.js / @react-three/fiber / drei / @pixiv/three-vrm), served on GitHub Pages under base path /frankfabric/.",
+  "language": "TypeScript / TSX (some .mjs build scripts, one lib/chef/llm.js)",
+  "build_system": "npm + Next.js 16 with Turbopack. `output: 'export'` emits a fully static site into out/. GitHub Pages basePath/assetPrefix = /frankfabric in production (see next.config.js). NOTE: this is Turbopack, NOT webpack/Vite — Vite-style manualChunks does NOT apply; JS splitting is via route-level dynamic imports and keeping heavy modules out of statically-imported graphs.",
+  "test_framework": "No unit test framework. Verification is: `npm run lint` (eslint 9) + `npm run build` (static export) + a cold-load/screenshot harness (scripts/measure-load.mjs, playwright-core devDependency, user-approved) that serves out/ under the /frankfabric/ base path in a headless Chrome for Testing and sums transferred bytes + captures fixed-camera screenshots per route.",
+  "build_command": "npm install && npm run build",
+  "test_command": "npm run lint && npm run build",
+  "verification_instructions": "1) npm run lint (must be clean except the ONE pre-existing @next/next/no-page-custom-font warning in app/layout.tsx). 2) npm run build (static export must succeed; all four demo routes + landing must prerender). 3) node scripts/measure-load.mjs per route to record cold-load transferred bytes + fixed-camera screenshot; compare against docs/perf baseline; screenshots must diff clean (scene renders identically). 4) node scripts/compress-assets.mjs re-runs idempotently from assets-src/.",
+  "snapshot_or_generated_files": "public/models/**/*.vrm and public/models/characters/schnauzer/schnauzer.glb are REWRITTEN IN PLACE by scripts/compress-assets.mjs (embedded textures re-encoded to WebP). Pristine originals are seeded to assets-src/models/ on first run (assets-src/ is gitignored — it is the source of truth so the script never recompresses its own output). docs/perf/ holds baseline + after measurement JSON + PNG screenshots (committed as evidence).",
+  "setup_instructions": "npm install (deps already resolve). Chrome for Testing browser already on machine at /opt/playwright/chromium-1232/chrome-linux64/chrome (symlinked at /usr/local/bin/chrome); the harness points playwright-core at it via executablePath so NO browser download is needed.",
+  "environment_constraints": "network OPEN_INTERNET. Node 22. sharp 0.34.5 already present transitively (used by the compression script — no new dep). playwright-core to be added as a devDependency (USER-APPROVED) for the measurement harness only; it is NEVER shipped to the browser. The playwright MCP power exposes no callable tools in this sandbox, so a script harness is used instead.",
+  "contribution_requirements": "Static export must keep working: every WebGL/DOM component stays behind next/dynamic { ssr:false }; guard window/localStorage. EVERY public asset URL (models, textures, decoders, images, videos) MUST go through lib/asset.ts asset() / basePath — hardcoded '/models/...' 404s in production. Do NOT commit node_modules/, .next/, or out/ (already in .gitignore). Preserve the merged virtual-pet demo (PR #24).",
+  "key_patterns": "3D scenes are client-only ('use client') and imported via next/dynamic { ssr:false } from a wrapper. Tinting is done via material.color.copy() on MToon (three-vrm) / MeshStandard materials — there is NO canvas getImageData pixel-readback tint pipeline in frankfabric (that existed only in the tireshop reference), so WebP+resize is safe for every texture and no GPU-compressed KTX2 constraint applies. transplantGarment (lib/vrm/transplant.tsx) rebinds garment VRM skinned meshes onto the base drophunter skeleton by bone name. Wardrobe non-default garments already load on selection via <Garment url=...> changing. Cameras are fixed per scene (wardrobe has OrbitControls with autoRotate at rest; chef/coach/pet are locked lookAt). tone mapping = ACESFilmicToneMapping everywhere — do NOT change exposure/tone-mapping.",
+  "relevant_files": [
+    "next.config.js (basePath/export config — do not break)",
+    "lib/asset.ts (asset() base-path helper — every URL goes through it)",
+    "components/WardrobeBuilder.tsx (STATICALLY imports OPTIONS runtime value from WardrobeScene — this value import drags the three-heavy module graph into the wardrobe page's static bundle, which is why the 913KB chunk is preloaded in the wardrobe HTML)",
+    "components/wardrobe/WardrobeScene.tsx (drophunter VRM base + eyes + swappable garment VRMs; holds OPTIONS/GARMENT_URLS/EYES_URL/MODEL_URL; Suspense fallback={null})",
+    "lib/vrm/transplant.tsx (garment transplant + applyColor via material.color, no canvas readback)",
+    "lib/vrm/retarget.ts (mixamo clip retarget)",
+    "components/chef/ChefScene.tsx (Swedish Chef FBX 435KB + jpg 208KB; Suspense fallback={null}; README is stale re: drophunter chef)",
+    "components/chef/ChefChatbot.tsx (dynamic ssr:false wrapper)",
+    "components/coach/CoachScene.tsx (coach.obj 526KB + mtl + 2 PNG; Suspense fallback={null})",
+    "components/coach/CoachChatbot.tsx (dynamic ssr:false wrapper)",
+    "components/pet/PetScene.tsx (schnauzer.glb 12MB with EMBEDDED texture; useGLTF.preload at module scope; Suspense fallback={null})",
+    "components/pet/VirtualPet.tsx (dynamic ssr:false wrapper)",
+    "app/page.tsx (landing — CSS/SVG posters + one small mp4, NO 3D assets on landing)",
+    "app/projects/{digital-wardrobe,chef-chatbot,coach-trainer,virtual-pet}/page.tsx"
+  ],
+  "directory_structure": "app/ (routes), components/{coach,chef,pet,wardrobe}/ (3D scenes + chat UIs), lib/{coach,chef,pet,vrm}/ + lib/asset.ts + lib/data.ts, data/ (recipes/workouts json), public/models/characters/{drophunter(38MB VRMs),schnauzer(12MB glb + a 4.7MB RETOPO_COL_2k_0.png that is UNREFERENCED dead weight),swedish-chef,coach}, public/animations (idle/walking/waving fbx 2.5MB), public/images, public/videos, public/wardrobe/thumbnails. scripts/ holds build-time .mjs scripts (convert-avatar-jpeg.mjs exists).",
+  "baseline": {
+    "measured_on": "TBD-record-in-docs/perf",
+    "largest_js_chunk_raw_bytes": 913347,
+    "largest_js_chunk_gzip_bytes": 238953,
+    "public_models_bytes_on_disk": "56M (drophunter 38M, schnauzer 17M incl dead 4.7M png, swedish-chef 632K, coach 608K)",
+    "note": "Cold-load transferred bytes per route to be captured by scripts/measure-load.mjs in FEAT-001."
+  }
+}

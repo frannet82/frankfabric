@@ -17,6 +17,11 @@
 /.next/
 /out/
 
+# perf: source-of-truth asset tree for scripts/compress-assets.mjs (FEAT-002).
+# It holds pristine originals so the compressor never recompresses its own
+# output; must NEVER be committed.
+/assets-src/
+
 # production
 /build
 
