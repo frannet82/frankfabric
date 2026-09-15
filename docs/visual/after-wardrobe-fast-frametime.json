@@ -1,0 +1,41 @@
+{
+  "label": "after-wardrobe-fast-frametime",
+  "dir": "/projects/sandbox/frankfabric/out",
+  "route": "/projects/digital-wardrobe/",
+  "basePath": "/frankfabric",
+  "url": "http://localhost:5335/frankfabric/projects/digital-wardrobe/",
+  "note": "Pre-change (today) reading. Today has no quality selector, so this IS the Fast-path-equivalent baseline. GPU is a software rasterizer (SwiftShader) in headless Chrome; absolute FPS is not hardware-representative — only the relative before/after comparison on this machine is meaningful.",
+  "browser": "151.0.7922.10",
+  "chromePath": "/usr/local/bin/chrome",
+  "glArgs": [
+    "--use-gl=angle",
+    "--use-angle=swiftshader",
+    "--ignore-gpu-blocklist",
+    "--no-sandbox"
+  ],
+  "viewport": {
+    "width": 1280,
+    "height": 900,
+    "deviceScaleFactor": 1
+  },
+  "settleMs": 4000,
+  "durationMs": 5000,
+  "quality": "fast",
+  "frames": 59,
+  "frameTimeMs": {
+    "median": 83.3,
+    "mean": 84.742,
+    "p95": 100.1,
+    "min": 16.6,
+    "max": 150
+  },
+  "fps": {
+    "median": 12.005,
+    "mean": 11.8,
+    "p95": 9.99
+  },
+  "errors": [
+    "Failed to load resource: the server responded with a status of 404 (Not Found)"
+  ],
+  "measuredAt": "2026-09-15T19:40:01.784Z"
+}

@@ -1,0 +1,196 @@
+{
+  "label": "after-pet-high",
+  "dir": "/projects/sandbox/frankfabric/out",
+  "route": "/projects/virtual-pet/",
+  "basePath": "/frankfabric",
+  "url": "http://localhost:5327/frankfabric/projects/virtual-pet/",
+  "ready": true,
+  "hasCanvas": true,
+  "quality": "high",
+  "unresolvedFailures": [],
+  "errors": [
+    "Failed to load resource: the server responded with a status of 404 (Not Found)",
+    "requestfailed /frankfabric/: net::ERR_ABORTED"
+  ],
+  "viewport": {
+    "width": 1280,
+    "height": 900
+  },
+  "totalBytes": 9873067,
+  "totalMB": 9.873,
+  "byType": {
+    ".css": 43592,
+    "[document]": 21946,
+    ".js": 1553893,
+    "[stylesheet]": 26134,
+    ".woff2": 97596,
+    ".glb": 7978696,
+    "[fetch]": 99118,
+    ".txt": 52092
+  },
+  "resources": [
+    {
+      "url": "/frankfabric/models/characters/schnauzer/schnauzer.glb",
+      "bytes": 7978696,
+      "status": 200,
+      "type": "fetch"
+    },
+    {
+      "url": "/frankfabric/_next/static/chunks/14xn09938dzkx.js",
+      "bytes": 922472,
+      "status": 200,
+      "type": "script"
+    },
+    {
+      "url": "/frankfabric/_next/static/chunks/3jh1u-s3k0bkk.js",
+      "bytes": 203384,
+      "status": 200,
+      "type": "script"
+    },
+    {
+      "url": "/frankfabric/_next/static/chunks/0ymgnzqzlow_2.js",
+      "bytes": 146512,
+      "status": 200,
+      "type": "script"
+    },
+    {
+      "url": "/frankfabric/",
+      "bytes": 99118,
+      "status": 200,
+      "type": "fetch"
+    },
+    {
+      "url": "/frankfabric/_next/static/chunks/2dkw-zhix-01v.js",
+      "bytes": 78362,
+      "status": 200,
+      "type": "script"
+    },
+    {
+      "url": "/frankfabric/_next/static/chunks/14mrh2-p_w84d.js",
+      "bytes": 54646,
+      "status": 200,
+      "type": "script"
+    },
+    {
+      "url": "/frankfabric/_next/static/chunks/2kqrbujyxigm8.js",
+      "bytes": 50234,
+      "status": 200,
+      "type": "script"
+    },
+    {
+      "url": "/frankfabric/__next.__PAGE__.txt?_rsc=JlNrowfuEzYW_GtS",
+      "bytes": 47717,
+      "status": 200,
+      "type": "fetch"
+    },
+    {
+      "url": "https://fonts.gstatic.com/s/ibmplexsans/v23/zYXzKVElMYYaJe8bpLHnCwDKr932-G7dytD-Dmu1syxeKYY.woff2",
+      "bytes": 45712,
+      "status": 200,
+      "type": "font"
+    },
+    {
+      "url": "/frankfabric/_next/static/chunks/2sdu6hbxm_5_3.css",
+      "bytes": 43592,
+      "status": 200,
+      "type": "stylesheet"
+    },
+    {
+      "url": "https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=IBM+Plex+Sans:wght@300;400;500;600&family=IBM+Plex+Mono:wght@400;500&family=Cormorant+Garamond:wght@500;600&family=Jost:wght@300;400;500;600&display=swap",
+      "bytes": 26134,
+      "status": 200,
+      "type": "stylesheet"
+    },
+    {
+      "url": "/frankfabric/_next/static/chunks/41vhus88_a-zp.js",
+      "bytes": 24045,
+      "status": 200,
+      "type": "script"
+    },
+    {
+      "url": "https://fonts.gstatic.com/s/spacegrotesk/v22/V8mDoQDjQSkFtoMM3T6r8E7mPbF4Cw.woff2",
+      "bytes": 22288,
+      "status": 200,
+      "type": "font"
+    },
+    {
+      "url": "/frankfabric/projects/virtual-pet/",
+      "bytes": 21946,
+      "status": 200,
+      "type": "document"
+    },
+    {
+      "url": "/frankfabric/_next/static/chunks/14bmvgmyz9hfb.js",
+      "bytes": 21754,
+      "status": 200,
+      "type": "script"
+    },
+    {
+      "url": "/frankfabric/_next/static/chunks/09pdu24jezzy8.js",
+      "bytes": 20201,
+      "status": 200,
+      "type": "script"
+    },
+    {
+      "url": "/frankfabric/_next/static/chunks/1v9x90yhz7fpy.js",
+      "bytes": 18054,
+      "status": 200,
+      "type": "script"
+    },
+    {
+      "url": "https://fonts.gstatic.com/s/ibmplexmono/v20/-F6qfjptAgt5VM-kVkqdyU8n3twJwlBFgg.woff2",
+      "bytes": 14888,
+      "status": 200,
+      "type": "font"
+    },
+    {
+      "url": "https://fonts.gstatic.com/s/ibmplexmono/v20/-F63fjptAgt5VM-kVkqdyU8n1i8q1w.woff2",
+      "bytes": 14708,
+      "status": 200,
+      "type": "font"
+    },
+    {
+      "url": "/frankfabric/_next/static/chunks/turbopack-3dytf-owzyd28.js",
+      "bytes": 10625,
+      "status": 200,
+      "type": "script"
+    },
+    {
+      "url": "/frankfabric/_next/static/chunks/05-c3ty_6dwfk.js",
+      "bytes": 3377,
+      "status": 200,
+      "type": "script"
+    },
+    {
+      "url": "/frankfabric/__next._index.txt?_rsc=D7Z0tAUSXYB1Wr8c",
+      "bytes": 2826,
+      "status": 200,
+      "type": "fetch"
+    },
+    {
+      "url": "/frankfabric/__next._head.txt?_rsc=pdnkD_mCCEH8LfcJ",
+      "bytes": 1045,
+      "status": 200,
+      "type": "fetch"
+    },
+    {
+      "url": "/frankfabric/__next._tree.txt?_rsc=G8N4N8ep-ksS8yoP",
+      "bytes": 504,
+      "status": 200,
+      "type": "fetch"
+    },
+    {
+      "url": "/frankfabric/_next/static/chunks/0y5q2d034-ybt.js",
+      "bytes": 227,
+      "status": 200,
+      "type": "script"
+    },
+    {
+      "url": "blob:/76603b8b-5e7c-46c3-9f9d-6ed31710c72a",
+      "bytes": 0,
+      "status": 200,
+      "type": "fetch"
+    }
+  ],
+  "measuredAt": "2026-09-15T19:38:24.098Z"
+}

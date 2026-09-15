@@ -40,6 +40,14 @@ const PORT = Number(args.get('port') || 5198);
 const DURATION = Number(args.get('duration') || 5000);
 // How long to let the scene settle after the canvas mounts before timing.
 const SETTLE = Number(args.get('settle') || 4000);
+// Optional measurement-only quality selection: 'high' | 'fast'. When set, the
+// harness clicks the shared QualityToggle radio (rendered by every scene
+// wrapper) AFTER the canvas mounts, so both the High and Fast render paths can
+// be measured deterministically without changing any scene/quality CODE. The
+// toggle only reads/writes the shared quality tier (components/three/quality.ts,
+// default 'high'); this flips it exactly as a user would. Omit to measure the
+// default (High) path.
+const QUALITY = args.get('quality');
 
 // The base path the production static export is served under on GitHub Pages.
 // The HTML references /frankfabric/... asset URLs, so the server mounts out/ at
@@ -181,6 +189,29 @@ async function main() {
     process.exit(2);
   }
 
+  // Measurement-only: force a specific render path by clicking the shared
+  // QualityToggle radio (High/Fast) the same way a user would. This changes NO
+  // scene/quality code — it just drives the existing control so both paths can
+  // be measured deterministically. Done before the settle so the new tier's
+  // Canvas (dpr/shadows) is applied and settled before timing begins.
+  let qualitySelected = null;
+  if (QUALITY) {
+    const wanted = String(QUALITY).toLowerCase() === 'fast' ? 'Fast' : 'High';
+    const clicked = await page
+      .getByRole('radio', { name: wanted, exact: true })
+      .first()
+      .click({ timeout: 5000 })
+      .then(() => true)
+      .catch(() => false);
+    if (!clicked) {
+      console.error(`Could not click the "${wanted}" quality radio for ${routePath}.`);
+      await browser.close();
+      server.close();
+      process.exit(3);
+    }
+    qualitySelected = wanted.toLowerCase();
+  }
+
   // Let pose/tinting/materials/animations settle before timing.
   await page.waitForTimeout(SETTLE);
 
@@ -228,6 +259,7 @@ async function main() {
     viewport: { width: 1280, height: 900, deviceScaleFactor: 1 },
     settleMs: SETTLE,
     durationMs: DURATION,
+    quality: qualitySelected,
     frames,
     frameTimeMs: {
       median: round(median),
