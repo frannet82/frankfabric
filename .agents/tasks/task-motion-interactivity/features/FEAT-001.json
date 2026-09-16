@@ -1,0 +1,30 @@
+{
+  "id": "FEAT-001",
+  "type": "chore",
+  "description": "Environment setup, green baseline, and MANDATORY WS3 BEFORE evidence. Confirm the merged main builds/lints cleanly, create the motion/interactivity branch, and record fixed-camera BEFORE screenshots + Fast/High frame-time for the four affected scenes under docs/motion/ (so it never overwrites docs/perf/ or docs/visual/). This baseline is what the WS3 AFTER numbers are proven against; frame time must not regress on Fast.",
+  "status": "completed",
+  "steps": [
+    "Put Node 22 on PATH: export PATH=/opt/toolchains/.nvm/versions/node/v22.23.2/bin:$PATH (node is not on PATH by default). Confirm `node -v` prints v22.x.",
+    "From /projects/sandbox/frankfabric run `npm install` (node_modules is pre-populated but install to be safe).",
+    "Create and switch to a NEW branch off the current main: `git checkout main && git checkout -b motion/interactivity`. Do NOT push. Note: main has some untracked .agents/tasks/* files from prior runs; leave them, they are not part of this workstream's commits.",
+    "Run `npm run lint` and confirm the ONLY finding is the known @next/next/no-page-custom-font warning in app/layout.tsx (0 other errors/warnings). Record the output.",
+    "Run `npm run build` and confirm the static export succeeds and all routes prerender: /, /projects/digital-wardrobe, /projects/coach-trainer, /projects/chef-chatbot, /projects/virtual-pet. The out/ dir is produced (gitignored — do not commit).",
+    "Create docs/motion/ and write docs/motion/BASELINE.md stating: the machine (Linux sandbox), the browser (headless Chrome at /usr/local/bin/chrome, SwiftShader software GL so only same-machine before/after deltas are meaningful), the git SHA of main this baseline was taken at, and how to reproduce.",
+    "Record BEFORE fixed-camera screenshots + load JSON for the affected routes using the existing harness, writing to docs/motion/: `node scripts/measure-load.mjs --dir out --route /projects/chef-chatbot/ --label before-chef --out docs/motion` and likewise for /projects/coach-trainer/ (before-coach), /projects/virtual-pet/ (before-pet), and /projects/digital-wardrobe/ (before-wardrobe).",
+    "Record BEFORE frame-time for Fast AND High for each affected route using `node scripts/measure-frametime.mjs --dir out --route <route> --label before-<scene>-<quality> --out docs/motion --quality <high|fast>` (fast is the load-bearing regression gate; also capture high). Do the four scenes for both qualities.",
+    "Summarize the BEFORE Fast + High median frame-time per scene in docs/motion/BASELINE.md as a table so FEAT-004's AFTER can be compared directly. Also cross-reference the WS2 Fast baseline in docs/visual/AFTER.md and note they should be in the same ballpark (same scenes, pre-WS3)."
+  ],
+  "acceptance_criteria": [
+    "`npm run lint` shows only the known font warning; `npm run build` completes a static export with all five routes prerendered.",
+    "Branch motion/interactivity exists off main and is checked out (not pushed).",
+    "docs/motion/ contains BEFORE screenshots + load JSON for chef, coach, pet, wardrobe routes, and BEFORE frame-time JSON for each scene at BOTH high and fast quality.",
+    "docs/motion/BASELINE.md records machine + browser + main SHA + a reproducible command list and a BEFORE frame-time table (Fast + High per scene)."
+  ],
+  "verification": [
+    "Re-run `npm run lint` and `npm run build` and confirm both pass (font warning aside).",
+    "List docs/motion/ and confirm before-*.png, before-*.json (load), and before-*-fast-frametime.json / before-*-high-frametime.json exist for all four scenes.",
+    "Confirm out/, .next/, node_modules/, assets-src/ are NOT staged for commit (git status)."
+  ],
+  "blocked_reason": null,
+  "findings": "Environment: Node v22.23.2 (prepended /opt/toolchains/.nvm/versions/node/v22.23.2/bin to PATH; not on PATH by default). Ran `npm install` (already up to date, 517 pkgs; the 4 npm-audit vulns are pre-existing and unrelated). Cut branch `motion/interactivity` off `main` @ 68adeb786acf30363998f03a13f0d959f06f7c58 (68adeb7 = Merge PR #26 visual/lighting-quality; WS1+WS2 merged). Build gate GREEN on the new branch with NO source changes: `npm run lint` -> only the expected @next/next/no-page-custom-font warning in app/layout.tsx (0 errors, 0 other warnings); `npm run build` -> Next.js 16.2.11 static export succeeds, all five routes prerender (/, /projects/chef-chatbot, /projects/coach-trainer, /projects/digital-wardrobe, /projects/virtual-pet). Evidence written under docs/motion/ ONLY (docs/perf and docs/visual untouched): 4 load JSON + 4 fixed-camera PNG (before-chef/coach/pet/wardrobe; all ready:true, unresolvedFailures:[]; totals chef 2.60MB, coach 2.46MB, pet 9.87MB, wardrobe 8.27MB) and 8 frame-time JSON (before-<scene>-{fast,high}-frametime.json). BEFORE median frame time (ms), software SwiftShader GL so only same-machine deltas matter: chef Fast 66.7 / High 83.3; coach Fast 83.3 / High 83.4; pet Fast 183.3 / High 283.3; wardrobe Fast 83.3 / High 116.7. These match the WS2 Fast/High baseline in docs/visual (chef 66.7/83.3, coach 83.3/83.4, pet 183.3/300, wardrobe 83.3/116.7) within software-rasterizer noise, confirming a faithful pre-WS3 baseline. docs/motion/BASELINE.md records machine (Linux x86-64 sandbox), browser (Chrome for Testing 151.0.7922.10 at /usr/local/bin/chrome, ANGLE+SwiftShader), main SHA, reproducible command list, and the Fast+High per-scene table (the WS3 Fast regression gate). Verified out/, .next/, node_modules/, assets-src/ are gitignored and NOT staged. Committed only docs/motion + this task-state update; did not push (orchestrator handles that). Left prior-run untracked .agents/tasks/* files alone. Cross-ref harness label naming: measure-frametime writes <label>.json, so labels use the `before-<scene>-<quality>-frametime` form to match the acceptance-criteria filenames."
+}

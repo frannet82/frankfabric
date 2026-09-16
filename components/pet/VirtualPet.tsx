@@ -228,6 +228,7 @@ function VirtualPetInner() {
           actionNonce={actionNonce}
           wellbeing={wellbeing}
           quality={quality}
+          onPetClick={() => doAction("play")}
         />
         {/* Shared High/Fast render-quality control, placed unobtrusively in the
             stage's top-left. Same control across all four scenes. */}

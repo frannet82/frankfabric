@@ -1,0 +1,474 @@
+{
+  "label": "after-wardrobe",
+  "dir": "/projects/sandbox/frankfabric/out",
+  "route": "/projects/digital-wardrobe/",
+  "basePath": "/frankfabric",
+  "url": "http://localhost:5199/frankfabric/projects/digital-wardrobe/",
+  "ready": true,
+  "hasCanvas": true,
+  "quality": null,
+  "unresolvedFailures": [],
+  "errors": [
+    "requestfailed /frankfabric/: net::ERR_ABORTED",
+    "Failed to load resource: the server responded with a status of 404 (Not Found)"
+  ],
+  "viewport": {
+    "width": 1280,
+    "height": 900
+  },
+  "totalBytes": 8271262,
+  "totalMB": 8.271,
+  "byType": {
+    ".css": 43621,
+    "[document]": 47511,
+    ".js": 1770335,
+    "[stylesheet]": 26134,
+    ".woff2": 161812,
+    ".png": 2245955,
+    "[fetch]": 99118,
+    ".txt": 52092,
+    ".vrm": 2248236,
+    ".fbx": 1576448
+  },
+  "resources": [
+    {
+      "url": "/frankfabric/animations/idle.fbx",
+      "bytes": 1576448,
+      "status": 200,
+      "type": "fetch"
+    },
+    {
+      "url": "/frankfabric/models/characters/drophunter/body.vrm",
+      "bytes": 945716,
+      "status": 200,
+      "type": "fetch"
+    },
+    {
+      "url": "/frankfabric/_next/static/chunks/35t_5ohp3sbc_.js",
+      "bytes": 923709,
+      "status": 200,
+      "type": "script"
+    },
+    {
+      "url": "/frankfabric/models/characters/drophunter/head/short.vrm",
+      "bytes": 427604,
+      "status": 200,
+      "type": "fetch"
+    },
+    {
+      "url": "/frankfabric/models/characters/drophunter/eyes/regulareyes.vrm",
+      "bytes": 318904,
+      "status": 200,
+      "type": "fetch"
+    },
+    {
+      "url": "/frankfabric/models/characters/drophunter/legs/cargopants.vrm",
+      "bytes": 247200,
+      "status": 200,
+      "type": "fetch"
+    },
+    {
+      "url": "/frankfabric/_next/static/chunks/1sb_35h56d1t2.js",
+      "bytes": 220920,
+      "status": 200,
+      "type": "script"
+    },
+    {
+      "url": "/frankfabric/_next/static/chunks/3jh1u-s3k0bkk.js",
+      "bytes": 203384,
+      "status": 200,
+      "type": "script"
+    },
+    {
+      "url": "/frankfabric/models/characters/drophunter/chest/shirt.vrm",
+      "bytes": 162364,
+      "status": 200,
+      "type": "fetch"
+    },
+    {
+      "url": "/frankfabric/_next/static/chunks/0ymgnzqzlow_2.js",
+      "bytes": 146512,
+      "status": 200,
+      "type": "script"
+    },
+    {
+      "url": "/frankfabric/models/characters/drophunter/feet/sneakers.vrm",
+      "bytes": 146448,
+      "status": 200,
+      "type": "fetch"
+    },
+    {
+      "url": "/frankfabric/wardrobe/thumbnails/legs-abovekneeshorts.png",
+      "bytes": 101283,
+      "status": 200,
+      "type": "image"
+    },
+    {
+      "url": "/frankfabric/",
+      "bytes": 99118,
+      "status": 200,
+      "type": "fetch"
+    },
+    {
+      "url": "/frankfabric/wardrobe/thumbnails/feet-thinshoe.png",
+      "bytes": 94966,
+      "status": 200,
+      "type": "image"
+    },
+    {
+      "url": "/frankfabric/wardrobe/thumbnails/feet-shortboots.png",
+      "bytes": 92449,
+      "status": 200,
+      "type": "image"
+    },
+    {
+      "url": "/frankfabric/wardrobe/thumbnails/legs-waistshorts.png",
+      "bytes": 91216,
+      "status": 200,
+      "type": "image"
+    },
+    {
+      "url": "/frankfabric/wardrobe/thumbnails/legs-casualshorts.png",
+      "bytes": 87614,
+      "status": 200,
+      "type": "image"
+    },
+    {
+      "url": "/frankfabric/wardrobe/thumbnails/head-dreds.png",
+      "bytes": 86663,
+      "status": 200,
+      "type": "image"
+    },
+    {
+      "url": "/frankfabric/wardrobe/thumbnails/feet-hightop.png",
+      "bytes": 85168,
+      "status": 200,
+      "type": "image"
+    },
+    {
+      "url": "/frankfabric/wardrobe/thumbnails/feet-sneakers.png",
+      "bytes": 83331,
+      "status": 200,
+      "type": "image"
+    },
+    {
+      "url": "/frankfabric/wardrobe/thumbnails/legs-doublebeltpants.png",
+      "bytes": 83231,
+      "status": 200,
+      "type": "image"
+    },
+    {
+      "url": "/frankfabric/wardrobe/thumbnails/head-swept.png",
+      "bytes": 79579,
+      "status": 200,
+      "type": "image"
+    },
+    {
+      "url": "/frankfabric/wardrobe/thumbnails/feet-tallboots.png",
+      "bytes": 76863,
+      "status": 200,
+      "type": "image"
+    },
+    {
+      "url": "/frankfabric/wardrobe/thumbnails/chest-croptop.png",
+      "bytes": 74482,
+      "status": 200,
+      "type": "image"
+    },
+    {
+      "url": "/frankfabric/wardrobe/thumbnails/feet-dressboots.png",
+      "bytes": 74384,
+      "status": 200,
+      "type": "image"
+    },
+    {
+      "url": "/frankfabric/wardrobe/thumbnails/chest-tuckedshirt.png",
+      "bytes": 74255,
+      "status": 200,
+      "type": "image"
+    },
+    {
+      "url": "/frankfabric/wardrobe/thumbnails/head-short.png",
+      "bytes": 74147,
+      "status": 200,
+      "type": "image"
+    },
+    {
+      "url": "/frankfabric/wardrobe/thumbnails/feet-tennisshoes.png",
+      "bytes": 74067,
+      "status": 200,
+      "type": "image"
+    },
+    {
+      "url": "/frankfabric/wardrobe/thumbnails/chest-shirt.png",
+      "bytes": 74010,
+      "status": 200,
+      "type": "image"
+    },
+    {
+      "url": "/frankfabric/_next/static/chunks/2gbofbxsxxplt.js",
+      "bytes": 72182,
+      "status": 200,
+      "type": "script"
+    },
+    {
+      "url": "/frankfabric/wardrobe/thumbnails/legs-cargopants.png",
+      "bytes": 72156,
+      "status": 200,
+      "type": "image"
+    },
+    {
+      "url": "/frankfabric/wardrobe/thumbnails/head-curledbangs.png",
+      "bytes": 70541,
+      "status": 200,
+      "type": "image"
+    },
+    {
+      "url": "/frankfabric/wardrobe/thumbnails/chest-hoodie.png",
+      "bytes": 69585,
+      "status": 200,
+      "type": "image"
+    },
+    {
+      "url": "/frankfabric/wardrobe/thumbnails/legs-skirt.png",
+      "bytes": 69544,
+      "status": 200,
+      "type": "image"
+    },
+    {
+      "url": "/frankfabric/wardrobe/thumbnails/head-buns.png",
+      "bytes": 68702,
+      "status": 200,
+      "type": "image"
+    },
+    {
+      "url": "/frankfabric/wardrobe/thumbnails/head-straight.png",
+      "bytes": 68337,
+      "status": 200,
+      "type": "image"
+    },
+    {
+      "url": "/frankfabric/wardrobe/thumbnails/head-longspike.png",
+      "bytes": 67973,
+      "status": 200,
+      "type": "image"
+    },
+    {
+      "url": "/frankfabric/wardrobe/thumbnails/legs-sportshorts.png",
+      "bytes": 67737,
+      "status": 200,
+      "type": "image"
+    },
+    {
+      "url": "/frankfabric/wardrobe/thumbnails/head-ponytail.png",
+      "bytes": 65405,
+      "status": 200,
+      "type": "image"
+    },
+    {
+      "url": "/frankfabric/wardrobe/thumbnails/chest-tanktop.png",
+      "bytes": 61364,
+      "status": 200,
+      "type": "image"
+    },
+    {
+      "url": "/frankfabric/wardrobe/thumbnails/chest-fulljacket.png",
+      "bytes": 60661,
+      "status": 200,
+      "type": "image"
+    },
+    {
+      "url": "/frankfabric/_next/static/chunks/14mrh2-p_w84d.js",
+      "bytes": 54646,
+      "status": 200,
+      "type": "script"
+    },
+    {
+      "url": "/frankfabric/wardrobe/thumbnails/chest-sweater.png",
+      "bytes": 54067,
+      "status": 200,
+      "type": "image"
+    },
+    {
+      "url": "/frankfabric/_next/static/chunks/2kqrbujyxigm8.js",
+      "bytes": 50234,
+      "status": 200,
+      "type": "script"
+    },
+    {
+      "url": "/frankfabric/__next.__PAGE__.txt?_rsc=Kc42AdXSWuA2UPFS",
+      "bytes": 47717,
+      "status": 200,
+      "type": "fetch"
+    },
+    {
+      "url": "/frankfabric/projects/digital-wardrobe/",
+      "bytes": 47511,
+      "status": 200,
+      "type": "document"
+    },
+    {
+      "url": "https://fonts.gstatic.com/s/ibmplexsans/v23/zYXzKVElMYYaJe8bpLHnCwDKr932-G7dytD-Dmu1syxeKYY.woff2",
+      "bytes": 45712,
+      "status": 200,
+      "type": "font"
+    },
+    {
+      "url": "/frankfabric/_next/static/chunks/3y3k73nngqkj_.css",
+      "bytes": 43621,
+      "status": 200,
+      "type": "stylesheet"
+    },
+    {
+      "url": "/frankfabric/wardrobe/thumbnails/chest-lightshirt.png",
+      "bytes": 42175,
+      "status": 200,
+      "type": "image"
+    },
+    {
+      "url": "https://fonts.gstatic.com/s/cormorantgaramond/v21/co3bmX5slCNuHLi8bLeY9MK7whWMhyjYqXtK.woff2",
+      "bytes": 37640,
+      "status": 200,
+      "type": "font"
+    },
+    {
+      "url": "https://fonts.gstatic.com/s/jost/v20/92zatBhPNqw73oTd4g.woff2",
+      "bytes": 26576,
+      "status": 200,
+      "type": "font"
+    },
+    {
+      "url": "https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=IBM+Plex+Sans:wght@300;400;500;600&family=IBM+Plex+Mono:wght@400;500&family=Cormorant+Garamond:wght@500;600&family=Jost:wght@300;400;500;600&display=swap",
+      "bytes": 26134,
+      "status": 200,
+      "type": "stylesheet"
+    },
+    {
+      "url": "/frankfabric/_next/static/chunks/41vhus88_a-zp.js",
+      "bytes": 24045,
+      "status": 200,
+      "type": "script"
+    },
+    {
+      "url": "https://fonts.gstatic.com/s/spacegrotesk/v22/V8mDoQDjQSkFtoMM3T6r8E7mPbF4Cw.woff2",
+      "bytes": 22288,
+      "status": 200,
+      "type": "font"
+    },
+    {
+      "url": "/frankfabric/_next/static/chunks/14bmvgmyz9hfb.js",
+      "bytes": 21754,
+      "status": 200,
+      "type": "script"
+    },
+    {
+      "url": "/frankfabric/_next/static/chunks/09pdu24jezzy8.js",
+      "bytes": 20201,
+      "status": 200,
+      "type": "script"
+    },
+    {
+      "url": "/frankfabric/_next/static/chunks/10hnmo-hyo52h.js",
+      "bytes": 18746,
+      "status": 200,
+      "type": "script"
+    },
+    {
+      "url": "https://fonts.gstatic.com/s/ibmplexmono/v20/-F6qfjptAgt5VM-kVkqdyU8n3twJwlBFgg.woff2",
+      "bytes": 14888,
+      "status": 200,
+      "type": "font"
+    },
+    {
+      "url": "https://fonts.gstatic.com/s/ibmplexmono/v20/-F63fjptAgt5VM-kVkqdyU8n1i8q1w.woff2",
+      "bytes": 14708,
+      "status": 200,
+      "type": "font"
+    },
+    {
+      "url": "/frankfabric/_next/static/chunks/turbopack-3dytf-owzyd28.js",
+      "bytes": 10625,
+      "status": 200,
+      "type": "script"
+    },
+    {
+      "url": "/frankfabric/_next/static/chunks/05-c3ty_6dwfk.js",
+      "bytes": 3377,
+      "status": 200,
+      "type": "script"
+    },
+    {
+      "url": "/frankfabric/__next._index.txt?_rsc=mkqA2ISz-AcGBYc9",
+      "bytes": 2826,
+      "status": 200,
+      "type": "fetch"
+    },
+    {
+      "url": "/frankfabric/__next._head.txt?_rsc=mF4X2LIlGOlSuLle",
+      "bytes": 1045,
+      "status": 200,
+      "type": "fetch"
+    },
+    {
+      "url": "/frankfabric/__next._tree.txt?_rsc=S-hFnToMAovISyvn",
+      "bytes": 504,
+      "status": 200,
+      "type": "fetch"
+    },
+    {
+      "url": "blob:/9d3763cb-39b0-4ffb-bc25-93fd0d8c6902",
+      "bytes": 0,
+      "status": 200,
+      "type": "fetch"
+    },
+    {
+      "url": "blob:/58a394c4-4631-483b-9fc8-b0adfdc08dc5",
+      "bytes": 0,
+      "status": 200,
+      "type": "fetch"
+    },
+    {
+      "url": "blob:/d294c54a-f3bc-4fc2-a6d7-ed8fa56c9cb1",
+      "bytes": 0,
+      "status": 200,
+      "type": "fetch"
+    },
+    {
+      "url": "blob:/f78ea768-816c-41be-b74a-d5df67473d78",
+      "bytes": 0,
+      "status": 200,
+      "type": "fetch"
+    },
+    {
+      "url": "blob:/ed12087d-b067-44d1-8f91-d5c57df672a2",
+      "bytes": 0,
+      "status": 200,
+      "type": "fetch"
+    },
+    {
+      "url": "blob:/e1be5304-5381-4ef9-9765-e5edf5d241b6",
+      "bytes": 0,
+      "status": 200,
+      "type": "fetch"
+    },
+    {
+      "url": "blob:/cee7e672-d080-4eca-b992-dcfdbe12b1c6",
+      "bytes": 0,
+      "status": 200,
+      "type": "fetch"
+    },
+    {
+      "url": "blob:/04801cc6-bf03-4237-8bfc-6946d1d063bf",
+      "bytes": 0,
+      "status": 200,
+      "type": "fetch"
+    },
+    {
+      "url": "blob:/ed21b20e-b6f6-45c7-89e3-add8302c7e0e",
+      "bytes": 0,
+      "status": 200,
+      "type": "fetch"
+    }
+  ],
+  "measuredAt": "2026-09-15T20:23:36.567Z"
+}

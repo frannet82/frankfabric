@@ -79,3 +79,15 @@ export const OPTIONS: Record<Category, string[]> = {
     "Dreds",
   ],
 };
+
+// Pure helper: given a category's CURRENT option index, return the NEXT valid
+// index, wrapping around using the number of options in OPTIONS (the content
+// source of truth). Used by WardrobeBuilder so a 3D garment click advances the
+// SAME selection the option menus set — no garment list or wrap math lives in
+// the scene. Kept here (a non-three module) so it can be shared without pulling
+// the three.js scene into the static bundle.
+export function nextIndex(category: Category, current: number): number {
+  const len = OPTIONS[category].length;
+  if (len <= 0) return current;
+  return (current + 1) % len;
+}

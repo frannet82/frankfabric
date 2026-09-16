@@ -30,11 +30,13 @@
 // during static generation.
 // ---------------------------------------------------------------------------
 
-import { Suspense, useEffect, useMemo, useRef } from "react";
-import { Canvas, useFrame } from "@react-three/fiber";
-import { ContactShadows, useGLTF } from "@react-three/drei";
+import { Suspense, useEffect, useMemo, useRef, useState } from "react";
+import { Canvas, useFrame, type ThreeEvent } from "@react-three/fiber";
+import { ContactShadows, useCursor, useGLTF } from "@react-three/drei";
+import { damp3 } from "maath/easing";
 import * as THREE from "three";
 import { asset } from "@/lib/asset";
+import type { PetAction } from "@/lib/pet/petState";
 import SceneLoader from "@/components/three/SceneLoader";
 import {
   DEFAULT_QUALITY,
@@ -66,7 +68,7 @@ type SceneProps = {
   // 'dirty'|'sad'. Drives the always-on ambient motion.
   mood: string;
   // Transient one-shot trigger set for ~1s when the visitor takes an action.
-  action?: "feed" | "play" | "sleep" | "clean" | null;
+  action?: PetAction | null;
   // Monotonic counter bumped on every action click. The one-shot re-arms on
   // this value (not just `action`), so repeating the SAME action still fires.
   actionNonce?: number;
@@ -76,13 +78,24 @@ type SceneProps = {
   // Canvas shadows, dpr, shadow-map resolution, soft shadows and the heavier
   // fill/bounce lights + ground backdrop. Defaults to High.
   quality?: Quality;
+  // Called on pointer-down on the clickable dog mesh. VirtualPet wires this to
+  // its EXISTING doAction(action) (decayForElapsed + applyAction from
+  // lib/pet/petState.ts, then persist), so the click raises a REAL PetAction
+  // exactly like the on-screen action buttons. This scene NEVER mutates stats.
+  onPetClick?: () => void;
 };
 
 // Loads the schnauzer and drives the whole-group mood/action motion. The model
 // is unrigged, so ALL motion is applied to the group transform in useFrame —
 // never to bones.
-function Pet({ mood, action, actionNonce, wellbeing }: SceneProps) {
+function Pet({ mood, action, actionNonce, wellbeing, onPetClick }: SceneProps) {
   const { scene } = useGLTF(MODEL_URL);
+
+  // Hover affordance on the clickable dog mesh (drei useCursor sets the CSS
+  // cursor to pointer while hovered). The click raises a REAL action through
+  // VirtualPet.doAction — the scene never mutates stats itself.
+  const [hovered, setHovered] = useState(false);
+  useCursor(hovered);
 
   // The group we animate. Its rest is identity (position 0 / rotation 0); every
   // frame writes ABSOLUTE offsets to it (see useFrame), so nothing accumulates.
@@ -283,8 +296,23 @@ function Pet({ mood, action, actionNonce, wellbeing }: SceneProps) {
     group.rotation.x = droopLean + actionRotX;
   });
 
+  // Pointer-down on the dog raises the action through the callback (which calls
+  // VirtualPet.doAction). stopPropagation so the whole mesh reads as one target.
+  const handleDown = (e: ThreeEvent<PointerEvent>) => {
+    e.stopPropagation();
+    onPetClick?.();
+  };
+
   return (
-    <group ref={groupRef}>
+    <group
+      ref={groupRef}
+      onPointerDown={handleDown}
+      onPointerOver={(e) => {
+        e.stopPropagation();
+        setHovered(true);
+      }}
+      onPointerOut={() => setHovered(false)}
+    >
       <primitive object={model} />
     </group>
   );
@@ -341,6 +369,199 @@ function GroundBackdrop() {
   );
 }
 
+// INTERACTION-RESPONSIVE CAMERA NUDGE. LAYERED on the pinned framing: the
+// camera still starts at [0, AIM_HEIGHT + 0.35, CAMERA_DISTANCE] and always
+// looks at [0, AIM_HEIGHT, 0] (those constants are untouched). Each frame we
+// ease a small ADDITIVE offset toward a per-action rest pose with drei's maath
+// `damp3`, then write camera.position = pinnedRest + offset and re-aim at a
+// slightly nudged look target. The move is tiny (a few cm) so the locked shot
+// holds and eases back to rest as the pulse decays.
+//
+// CRITICAL: the rig reacts ONLY to the transient `action` the state engine
+// surfaced (VirtualPet's doAction output) — it never derives anything itself.
+// `actionNonce` re-arms the pulse so repeating the SAME action still reads.
+const PINNED_CAM = new THREE.Vector3(0, AIM_HEIGHT + 0.35, CAMERA_DISTANCE);
+const PINNED_LOOK = new THREE.Vector3(0, AIM_HEIGHT, 0);
+
+// Per-action additive camera offset (metres) + look-target offset (metres),
+// applied ON TOP of the pinned rest. A playful push-in on feed/play; a gentle
+// settle/pull-back on sleep; a small steady framing on clean.
+function petActionPose(action: PetAction | null | undefined): {
+  posOffset: THREE.Vector3;
+  lookOffset: THREE.Vector3;
+} {
+  switch (action) {
+    case "feed":
+    case "play":
+      // Quick playful push-in toward the pup.
+      return {
+        posOffset: new THREE.Vector3(0, -0.03, -0.2),
+        lookOffset: new THREE.Vector3(0, -0.03, 0),
+      };
+    case "sleep":
+      // Gentle pull-back + settle down.
+      return {
+        posOffset: new THREE.Vector3(0, 0.06, 0.14),
+        lookOffset: new THREE.Vector3(0, -0.04, 0),
+      };
+    case "clean":
+      // Small steady framing hold.
+      return {
+        posOffset: new THREE.Vector3(0.05, 0.02, 0.02),
+        lookOffset: new THREE.Vector3(0, 0, 0),
+      };
+    default:
+      return {
+        posOffset: new THREE.Vector3(0, 0, 0),
+        lookOffset: new THREE.Vector3(0, 0, 0),
+      };
+  }
+}
+
+function CameraRig({
+  action,
+  actionNonce = 0,
+}: {
+  action?: PetAction | null;
+  actionNonce?: number;
+}) {
+  const posOffset = useRef(new THREE.Vector3());
+  const lookOffset = useRef(new THREE.Vector3());
+  // Short 0..1 pulse re-armed on every nonce so the same action reads again and
+  // we always ease back to the pinned rest even while an action lingers.
+  const pulse = useRef(0);
+  useEffect(() => {
+    pulse.current = 1;
+  }, [actionNonce]);
+
+  useFrame((state, delta) => {
+    const { posOffset: targetPos, lookOffset: targetLook } = petActionPose(action);
+    pulse.current = Math.max(0, pulse.current - delta / 1.2);
+    const scale = pulse.current;
+
+    damp3(
+      posOffset.current,
+      [targetPos.x * scale, targetPos.y * scale, targetPos.z * scale],
+      0.5,
+      delta
+    );
+    damp3(
+      lookOffset.current,
+      [targetLook.x * scale, targetLook.y * scale, targetLook.z * scale],
+      0.5,
+      delta
+    );
+
+    state.camera.position.set(
+      PINNED_CAM.x + posOffset.current.x,
+      PINNED_CAM.y + posOffset.current.y,
+      PINNED_CAM.z + posOffset.current.z
+    );
+    state.camera.lookAt(
+      PINNED_LOOK.x + lookOffset.current.x,
+      PINNED_LOOK.y + lookOffset.current.y,
+      PINNED_LOOK.z + lookOffset.current.z
+    );
+  });
+
+  return null;
+}
+
+// AMBIENT LIFE: a few soft "dust motes" drifting low over the rug so the stage
+// isn't dead when idle. All procedural (no external asset). The heavier version
+// (more, larger motes with more drift) is gated to High; on Fast we keep a tiny
+// always-on shimmer so the scene still lives without regressing the Fast frame
+// budget.
+function DustMotes({ high }: { high: boolean }) {
+  const count = high ? 20 : 7;
+
+  const seeds = useMemo(() => {
+    const arr: { x: number; z: number; base: number; phase: number; freq: number }[] = [];
+    for (let i = 0; i < count; i++) {
+      const a = (i / count) * Math.PI * 2;
+      const r = 0.35 + 0.55 * (((i * 7) % 5) / 5);
+      arr.push({
+        x: Math.cos(a) * r,
+        z: -0.05 + Math.sin(a) * r * 0.7,
+        base: 0.1 + 0.35 * (((i * 3) % 5) / 5),
+        phase: (i * 1.27) % (Math.PI * 2),
+        freq: 0.4 + ((i * 3) % 5) / 6,
+      });
+    }
+    return arr;
+  }, [count]);
+
+  const geometry = useMemo(() => {
+    const g = new THREE.BufferGeometry();
+    g.setAttribute(
+      "position",
+      new THREE.BufferAttribute(new Float32Array(count * 3), 3)
+    );
+    return g;
+  }, [count]);
+
+  const sprite = useMemo(() => {
+    const size = 64;
+    const canvas = document.createElement("canvas");
+    canvas.width = size;
+    canvas.height = size;
+    const ctx = canvas.getContext("2d");
+    if (ctx) {
+      const grad = ctx.createRadialGradient(
+        size / 2,
+        size / 2,
+        0,
+        size / 2,
+        size / 2,
+        size / 2
+      );
+      // Warm, soft mote matching the cozy Tamagotchi palette.
+      grad.addColorStop(0, "rgba(255,238,205,0.6)");
+      grad.addColorStop(1, "rgba(255,238,205,0)");
+      ctx.fillStyle = grad;
+      ctx.fillRect(0, 0, size, size);
+    }
+    const tex = new THREE.CanvasTexture(canvas);
+    return tex;
+  }, []);
+
+  useEffect(() => {
+    return () => {
+      geometry.dispose();
+      sprite.dispose();
+    };
+  }, [geometry, sprite]);
+
+  useFrame((state) => {
+    const t = state.clock.elapsedTime;
+    const pos = geometry.getAttribute("position") as THREE.BufferAttribute;
+    // Heavier drift on High, a gentler float on Fast so the frame budget holds.
+    const driftY = high ? 0.14 : 0.06;
+    const driftX = high ? 0.05 : 0.02;
+    for (let i = 0; i < count; i++) {
+      const s = seeds[i];
+      const y = s.base + driftY * (0.5 + 0.5 * Math.sin(t * s.freq + s.phase));
+      const x = s.x + Math.sin(t * s.freq * 0.6 + s.phase) * driftX;
+      pos.setXYZ(i, x, y, s.z);
+    }
+    pos.needsUpdate = true;
+  });
+
+  return (
+    <points geometry={geometry} frustumCulled={false}>
+      <pointsMaterial
+        map={sprite}
+        size={high ? 0.09 : 0.06}
+        sizeAttenuation
+        transparent
+        depthWrite={false}
+        opacity={high ? 0.4 : 0.28}
+        color="#ffffff"
+      />
+    </points>
+  );
+}
+
 // Mood + transient action + wellbeing drive the whole-group motion in <Pet />.
 // The mesh is unrigged, so there is no bone-animation prop.
 export default function PetScene({
@@ -349,6 +570,7 @@ export default function PetScene({
   actionNonce,
   wellbeing,
   quality = DEFAULT_QUALITY,
+  onPetClick,
 }: SceneProps) {
   const q = qualitySettings(quality);
   const isHigh = quality === "high";
@@ -405,6 +627,11 @@ export default function PetScene({
         />
       ) : null}
 
+      {/* Interaction-responsive camera nudge, layered on the pinned framing.
+          Reacts ONLY to the transient action the state engine surfaced; eases
+          back to the locked shot. */}
+      <CameraRig action={action} actionNonce={actionNonce} />
+
       <Suspense fallback={<SceneLoader />}>
         <group position={[0, 0, 0]}>
           <Pet
@@ -412,8 +639,12 @@ export default function PetScene({
             action={action}
             actionNonce={actionNonce}
             wellbeing={wellbeing}
+            onPetClick={onPetClick}
           />
         </group>
+        {/* Ambient life: cheap warm dust motes, always on (tiny on Fast, heavier
+            only on High so the Fast frame budget never regresses). */}
+        <DustMotes high={isHigh} />
         {/* Ground backdrop for depth — High only. */}
         {isHigh ? <GroundBackdrop /> : null}
       </Suspense>
