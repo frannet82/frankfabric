@@ -118,6 +118,15 @@ const GESTURE_BONES = {
 } as const;
 type GestureBoneKey = keyof typeof GESTURE_BONES;
 
+// Floor for the loudness-driven gesture amplitude multiplier. While speaking,
+// the per-frame gesture amplitude scales between this floor and 1 with live
+// audio loudness (Web Audio AnalyserNode RMS). The floor guarantees the coach
+// still clearly gestures when loudness reads 0 or is unavailable (e.g. muted,
+// or no AnalyserNode yet), so behaviour degrades to the previous speaking-gated
+// motion rather than going limp. The multiplier is clamped to <= 1 so the
+// bounded per-bone amplitudes are never exceeded (limbs never clip the body).
+const GESTURE_LOUDNESS_FLOOR = 0.55;
+
 // The astronaut GLB stands upright. We scale it off its TALLEST bound to a
 // ~1.7-unit-tall figure so the fixed camera frames a cozy, front-facing
 // head-and-torso shot, the same read the chef gets, regardless of authoring
@@ -141,6 +150,7 @@ const CAMERA_DISTANCE = 2.4;
 // clips, so all limb motion is authored here in useFrame.
 function Avatar({
   speaking = false,
+  getLoudness,
   reducedMotion = false,
 }: {
   speaking?: boolean;
@@ -157,6 +167,14 @@ function Avatar({
   // Multiplies every bone oscillation so the gesture fades in/out with no snap;
   // at amount == 0 the bones sit at their captured rest rotation exactly.
   const gestureRef = useRef(0);
+  // Smoothed per-frame amplitude multiplier driven by live audio loudness while
+  // speaking. Mirrors how ChefScene's jaw prefers the real AnalyserNode RMS over
+  // its sine fallback: when getLoudness() returns a usable value we scale the
+  // gesture between GESTURE_LOUDNESS_FLOOR (so the coach still clearly gestures
+  // on quiet passages / when loudness is unavailable) and 1 (loud passages
+  // gesture bigger). It stays bounded to <= 1 so the per-bone amplitudes never
+  // exceed their clip-safe caps, and it is only consulted while `speaking`.
+  const loudnessAmpRef = useRef(GESTURE_LOUDNESS_FLOOR);
 
   // Clone the GLB scene with SkeletonUtils so each SkinnedMesh's skeleton is
   // correctly rebound to the cloned bones (a plain Object3D.clone would collapse
@@ -265,7 +283,31 @@ function Avatar({
     const gTarget = reducedMotion ? 0 : speaking ? 1 : 0;
     const kGesture = 1 - Math.exp(-delta * 6);
     gestureRef.current += (gTarget - gestureRef.current) * kGesture;
-    const amt = gestureRef.current;
+
+    // Loudness-driven amplitude. While speaking (and NOT under reduced motion),
+    // prefer the live AnalyserNode RMS: scale the gesture between the floor and
+    // 1 so louder passages gesture bigger while quiet passages / missing audio
+    // still read as a clear gesture. When not speaking the target relaxes back
+    // to the floor. Smoothed framerate-independently so intensity swells and
+    // settles with the audio instead of jittering per frame. Reduced motion
+    // keeps this off the critical path since `amt` is already driven to 0 below.
+    let loudTarget = GESTURE_LOUDNESS_FLOOR;
+    if (speaking && !reducedMotion) {
+      const loud = getLoudness ? getLoudness() : 0;
+      if (loud > 0.01) {
+        loudTarget = Math.min(
+          1,
+          GESTURE_LOUDNESS_FLOOR + (1 - GESTURE_LOUDNESS_FLOOR) * Math.min(1, loud)
+        );
+      }
+    }
+    const kLoud = 1 - Math.exp(-delta * 10);
+    loudnessAmpRef.current += (loudTarget - loudnessAmpRef.current) * kLoud;
+
+    // Final gesture multiplier: the speaking-gated fade-in (gestureRef) times the
+    // loudness amplitude. At rest (gestureRef == 0) this is 0 so the bones sit at
+    // their exact captured rest rotation; while speaking it rides the audio.
+    const amt = gestureRef.current * loudnessAmpRef.current;
 
     // A very subtle always-on idle sway so the astronaut is never perfectly
     // static even when silent. It is gated by reduced motion (idle == 0 then)
@@ -702,9 +744,12 @@ function KettlebellProp({
   );
 }
 
-// `speaking` drives the procedural bone gesturing in <Avatar />. The GLB is
-// rigged (52 joints) but ships no baked clips, so the arm/spine/head motion is
-// authored procedurally and gated to the speaking window.
+// `speaking` opens the gesture window and `getLoudness` drives its intensity in
+// <Avatar />. The GLB is rigged (52 joints) but ships no baked clips, so the
+// arm/spine/head motion is authored procedurally: it fades in while speaking and
+// its amplitude rides the live AnalyserNode loudness (with a floor so it still
+// clearly gestures when loudness is 0/unavailable). Reduced motion drives it to
+// the exact captured rest pose regardless of loudness.
 export default function CoachScene({
   speaking = false,
   getLoudness,
