@@ -127,6 +127,37 @@ type GestureBoneKey = keyof typeof GESTURE_BONES;
 // bounded per-bone amplitudes are never exceeded (limbs never clip the body).
 const GESTURE_LOUDNESS_FLOOR = 0.55;
 
+// ARMS-CLOSE BASE POSE. The astronaut GLB's captured REST pose is a wide
+// A/T-ish stance: the upper-arm bones' local +Y (bone-length) axis points almost
+// straight out to the sides in world space (RightArm bone-length -> world -X,
+// LeftArm -> world +X; both bones' local +Z maps to world -Y = down). Measured
+// with a throwaway node probe against astronaut.glb. To bring each arm DOWN and
+// IN toward the torso we rotate its bone-length axis from "out to the side"
+// toward "down", which is a POSITIVE rotation about the bone's LOCAL X axis for
+// BOTH arms (positive x-Euler swings local +Y toward local +Z = world down).
+// The gesture code already animates the arm's x-Euler as its main swing, so we
+// simply fold this inward offset into the base rotation the gestures ride on.
+//
+// The upper arms take the bulk of the offset (they start fully horizontal, ~90
+// deg from hanging). A smaller inward offset on the forearms tucks the hands in
+// toward the body so the silhouette reads as "arms relaxed at the sides" rather
+// than "elbows out". Both offsets are POSITIVE-x for both sides (the rig is
+// mirror-symmetric across x, and both arms' local +Z points world-down).
+// Chosen so that idle sits arms-close and full-amplitude gestures (upper arm
+// peak ~0.26 rad, forearm ~0.5 rad) still keep the hands clear of the torso.
+const ARM_UPPER_INWARD = 1.02;
+const ARM_FORE_INWARD = 0.28;
+
+// Per-bone inward offset (radians) added to the captured REST rotation to build
+// the ARMS-CLOSE base the gestures animate around. Only the arm chain is
+// adjusted; spine/neck/head keep their captured rest. Absent bones are ignored.
+const ARM_BASE_OFFSET: Partial<Record<GestureBoneKey, [number, number, number]>> = {
+  rArm: [ARM_UPPER_INWARD, 0, 0],
+  lArm: [ARM_UPPER_INWARD, 0, 0],
+  rForearm: [ARM_FORE_INWARD, 0, 0],
+  lForearm: [ARM_FORE_INWARD, 0, 0],
+};
+
 // The astronaut GLB stands upright. We scale it off its TALLEST bound to a
 // ~1.7-unit-tall figure so the fixed camera frames a cozy, front-facing
 // head-and-torso shot, the same read the chef gets, regardless of authoring
@@ -162,7 +193,10 @@ function Avatar({
   // The gesture bones and each bone's captured rest rotation. Bones absent at
   // runtime are skipped gracefully (we simply never animate them).
   const boneRef = useRef<Partial<Record<GestureBoneKey, THREE.Object3D>>>({});
-  const restRef = useRef<Partial<Record<GestureBoneKey, THREE.Euler>>>({});
+  // The ARMS-CLOSE base rotation each gesture animates around. For the arm chain
+  // this is the captured rest PLUS the measured inward offset (ARM_BASE_OFFSET)
+  // so the arms rest close to the body; for the other bones it is the raw rest.
+  const baseRef = useRef<Partial<Record<GestureBoneKey, THREE.Euler>>>({});
   // Smoothed 0..1 "gesture amount" easing toward 1 while speaking, 0 otherwise.
   // Multiplies every bone oscillation so the gesture fades in/out with no snap;
   // at amount == 0 the bones sit at their captured rest rotation exactly.
@@ -249,13 +283,29 @@ function Avatar({
   // during render.
   useEffect(() => {
     const bones: Partial<Record<GestureBoneKey, THREE.Object3D>> = {};
-    const rests: Partial<Record<GestureBoneKey, THREE.Euler>> = {};
+    const bases: Partial<Record<GestureBoneKey, THREE.Euler>> = {};
     (Object.keys(GESTURE_BONES) as GestureBoneKey[]).forEach((key) => {
       const bone = model.getObjectByName(GESTURE_BONES[key]) ?? null;
       if (bone) {
         bones[key] = bone;
-        // Capture rest rotation as a fresh Euler so runtime writes never lose it.
-        rests[key] = bone.rotation.clone();
+        // Capture the rest rotation, then fold in the measured inward offset for
+        // the arm chain so the ARMS-CLOSE pose becomes the base the gestures
+        // ride on (the wide T/A rest is never the animation base). Non-arm bones
+        // get no offset, so their base is the raw rest. Stored as a fresh Euler
+        // so runtime writes never lose it. Also seat the bone at its base now so
+        // the very first frame (and the reduced-motion hold) reads arms-close.
+        const offset = ARM_BASE_OFFSET[key];
+        const base = bone.rotation.clone();
+        if (offset) {
+          base.set(
+            base.x + offset[0],
+            base.y + offset[1],
+            base.z + offset[2],
+            base.order
+          );
+        }
+        bases[key] = base;
+        bone.rotation.copy(base);
       } else {
         console.warn(
           `[CoachScene] gesture bone "${GESTURE_BONES[key]}" not found; skipping its motion.`
@@ -263,10 +313,10 @@ function Avatar({
       }
     });
     boneRef.current = bones;
-    restRef.current = rests;
+    baseRef.current = bases;
     return () => {
       boneRef.current = {};
-      restRef.current = {};
+      baseRef.current = {};
     };
   }, [model]);
 
@@ -315,7 +365,7 @@ function Avatar({
     const idle = reducedMotion ? 0 : 1;
 
     const bones = boneRef.current;
-    const rests = restRef.current;
+    const bases = baseRef.current;
 
     // Add a bounded per-bone offset ON TOP of the captured rest rotation. The
     // `amt` term is the speaking-gated gesture; the `idleTerm` is the tiny
@@ -331,12 +381,16 @@ function Avatar({
       idleTerm = 0
     ) => {
       const bone = bones[key];
-      const rest = rests[key];
-      if (!bone || !rest) return;
+      const base = bases[key];
+      if (!bone || !base) return;
+      // Animate the bounded gesture ON TOP OF the ARMS-CLOSE base (rest + inward
+      // offset for the arms), so the coach gestures gently while speaking and
+      // eases back to arms-close, never to the wide rest. At amt == 0 (silent
+      // or reduced motion) the bones sit exactly at their arms-close base.
       bone.rotation.set(
-        rest.x + dx * amt + idleTerm * idle,
-        rest.y + dy * amt,
-        rest.z + dz * amt
+        base.x + dx * amt + idleTerm * idle,
+        base.y + dy * amt,
+        base.z + dz * amt
       );
     };
 
@@ -429,7 +483,7 @@ function Avatar({
   useEffect(() => {
     return () => {
       boneRef.current = {};
-      restRef.current = {};
+      baseRef.current = {};
     };
   }, [model]);
 
