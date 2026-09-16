@@ -351,7 +351,7 @@ function WardrobeBuilderInner() {
     <div
       className="relative w-full flex flex-col overflow-hidden rounded-3xl"
       style={{
-        minHeight: 760,
+        minHeight: 820,
         fontFamily: "Jost, sans-serif",
         color: "#2c2a26",
         background:
@@ -378,7 +378,7 @@ function WardrobeBuilderInner() {
       {/* body: 3-column layout on wide screens (LEFT menu · stage · RIGHT
           menu); stacks vertically on narrow screens (stage first, then the
           menu sections full-width below). */}
-      <div className="relative z-10 flex-1 flex flex-col lg:grid lg:grid-cols-[minmax(220px,260px)_1fr_minmax(220px,260px)] lg:gap-4 px-4 sm:px-8 pb-7">
+      <div className="relative z-10 flex-1 flex flex-col lg:grid lg:grid-cols-[minmax(180px,210px)_1fr_minmax(180px,210px)] lg:gap-3 px-4 sm:px-6 pb-7">
         {/* LEFT vertical menu — Shoes + Hair */}
         <nav
           aria-label="Shoes and Hair options"
@@ -387,9 +387,11 @@ function WardrobeBuilderInner() {
           {LEFT_CATEGORIES.map(renderCategorySection)}
         </nav>
 
-        {/* CENTER 3D stage + global animation selector */}
-        <main className="order-1 lg:order-2 flex flex-col min-h-[420px] lg:min-h-0">
-          <div className="relative flex-1 min-h-[420px]">
+        {/* CENTER 3D stage + global animation selector. Raised the stage
+            min-height (420 -> 520) and narrowed the side menu columns above so
+            the avatar gets noticeably more room to fill the stage (issue 4). */}
+        <main className="order-1 lg:order-2 flex flex-col min-h-[520px] lg:min-h-0">
+          <div className="relative flex-1 min-h-[520px]">
             <div className="absolute inset-0">
               <WardrobeScene {...sceneProps} />
             </div>

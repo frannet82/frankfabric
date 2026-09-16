@@ -1,0 +1,30 @@
+{
+  "id": "FEAT-001",
+  "type": "chore",
+  "description": "Environment setup + baseline. Create the branch, install deps, confirm the lint+build baseline is green (with the one known font warning), build the static export, and capture BEFORE screenshots for issues 1 (pet), 2 (chef+coach), and 4 (wardrobe at both viewport widths) as evidence under docs/fixes/.",
+  "status": "completed",
+  "steps": [
+    "export PATH=\"/opt/toolchains/.nvm/versions/node/v22.23.2/bin:$PATH\" for every shell.",
+    "From /projects/sandbox/frankfabric create ONE new branch off main: git checkout main && git checkout -b fix/scene-and-voice-polish. Do NOT push.",
+    "Run npm install.",
+    "Run npm run lint and confirm the ONLY finding is the pre-existing @next/next/no-page-custom-font warning in app/layout.tsx (0 errors otherwise). Record the output.",
+    "Run npm run build and confirm the static export succeeds and all five routes prerender: /, /projects/coach-trainer, /projects/chef-chatbot, /projects/digital-wardrobe, /projects/virtual-pet.",
+    "Capture BEFORE evidence under docs/fixes/ using scripts/measure-viewports.mjs (requires the out/ from the build): pet route /projects/virtual-pet/ label before-pet (--widths 1280); chef route /projects/chef-chatbot/ label before-chef (--widths 1280); coach route /projects/coach-trainer/ label before-coach (--widths 1280); wardrobe route /projects/digital-wardrobe/ label before-wardrobe at BOTH widths (default 390 and 1280). Example: node scripts/measure-viewports.mjs --route /projects/virtual-pet/ --label before-pet --out docs/fixes --widths 1280.",
+    "Commit the branch setup + BEFORE evidence: git add docs/fixes && git commit -m 'chore(fixes): branch + BEFORE evidence for scene/voice polish'. Never git add node_modules/, .next/, out/, or assets-src/."
+  ],
+  "acceptance_criteria": [
+    "Branch fix/scene-and-voice-polish exists off main and is checked out.",
+    "npm run lint shows only the known font warning, 0 errors.",
+    "npm run build succeeds and prerenders all five routes.",
+    "docs/fixes/ contains BEFORE png+json for pet, chef, coach, and wardrobe (390 and 1280), committed.",
+    "No node_modules/.next/out/assets-src staged."
+  ],
+  "verification": [
+    "npm run lint (only font warning)",
+    "npm run build (static export succeeds, 5 routes prerender)",
+    "ls docs/fixes/ shows the BEFORE-* artifacts",
+    "git status is clean of build/dependency artifacts"
+  ],
+  "blocked_reason": null,
+  "findings": "Branch fix/scene-and-voice-polish created off main (commit 2aa4804, PR #28 merge) and checked out; NOT pushed. npm install: up to date, 517 packages (audit reports 4 pre-existing vulns, unrelated). npm run lint: 1 warning / 0 errors = exactly the known @next/next/no-page-custom-font warning in app/layout.tsx:20. npm run build: succeeded (Next.js 16.2.11, Turbopack); all 5 routes prerendered static: /, /projects/chef-chatbot, /projects/coach-trainer, /projects/digital-wardrobe, /projects/virtual-pet (plus /_not-found). BEFORE evidence committed under docs/fixes/ (commit e945905, 14 files): before-pet-1280.{png,json}+before-pet.json; before-chef-1280.{png,json}+before-chef.json; before-coach-1280.{png,json}+before-coach.json; before-wardrobe-{390,1280}.{png,json}+before-wardrobe.json. All captures hasCanvas=true, noHorizontalScroll=true. Harness serves built out/ under /frankfabric internally (out/frankfabric path does not exist on disk; that is expected). node_modules/.next/out/assets-src confirmed gitignored and NOT staged; only docs/fixes committed. Pre-existing untracked .agents/ planning artifacts left untouched. NOTE for FEAT-002: chef/coach/pet captures are fixed-camera stills with speaking=false, so before-chef/before-coach show arms at rest; to evidence arm motion for issue 2, FEAT-002 will need a scripted speaking=true interaction or code-path proof per context environment_constraints."
+}

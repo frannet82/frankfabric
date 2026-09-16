@@ -59,9 +59,22 @@ const MODEL_TARGET_SIZE = 1.8;
 
 // World-space height the camera aims at (roughly the dog's mid-body while it
 // stands on all fours). The model is recentered so this point reads centered.
-const AIM_HEIGHT = 0.55;
+// Raised slightly (from 0.55) so the aim point sits nearer the shoulders/head
+// now that the dog faces the camera and its head is the feature we frame.
+const AIM_HEIGHT = 0.62;
 // How far back the fixed camera sits from the aim point.
 const CAMERA_DISTANCE = 2.9;
+
+// FRAMING FIX (issue 1): the schnauzer.glb long axis (nose-to-tail) runs along
+// X and its narrow width along Z, but the fixed camera looks down -Z, so by
+// default it faces the dog's flank (head turned away, tail toward camera). We
+// rotate the INNER recenter root about Y so the nose faces +Z toward the
+// camera, then recompute the recenter Box3 AFTER the rotation so the rotated
+// model stays centered on the aim point. The sign was determined EMPIRICALLY
+// with an after-pet screenshot: +PI/2 turns the head toward the camera (mass is
+// shifted toward -X, the denser head end). A small extra yaw gives a friendlier
+// three-quarter view rather than a flat, dead-on face.
+const BODY_YAW = Math.PI / 2 + THREE.MathUtils.degToRad(8);
 
 type SceneProps = {
   // Current discrete mood (from moodFor): 'happy'|'content'|'hungry'|'tired'|
@@ -168,9 +181,18 @@ function Pet({
       if (largest > 0) root.scale.setScalar(MODEL_TARGET_SIZE / largest);
     }
 
-    // Recenter deterministically off a fresh Box3 of the SCALED model so the
-    // fixed camera reliably frames the dog. Center it horizontally/in depth and
-    // lift it so its vertical center sits at AIM_HEIGHT (mid-body).
+    // Turn the dog to face the camera. The model's forward/nose axis runs along
+    // X; a +PI/2 (plus a ~20deg yaw) rotation about Y swings the nose toward +Z
+    // (the camera) for a friendly three-quarter view. Applied to this INNER
+    // recenter root ONLY — the animated groupRef stays at identity rest so the
+    // useFrame ABSOLUTE-offset math and the CameraRig PINNED_CAM/PINNED_LOOK
+    // additive math remain valid. We recompute the recenter Box3 BELOW, AFTER
+    // this rotation, so the rotated model stays centered on the aim point.
+    root.rotation.y = BODY_YAW;
+
+    // Recenter deterministically off a fresh Box3 of the SCALED + ROTATED model
+    // so the fixed camera reliably frames the dog. Center it horizontally/in
+    // depth and lift it so its vertical center sits at AIM_HEIGHT (mid-body).
     root.updateMatrixWorld(true);
     const box = new THREE.Box3().setFromObject(root);
     if (!box.isEmpty()) {

@@ -355,45 +355,56 @@ function Avatar({
       );
     };
 
-    // Right arm: gentle forearm raise/rotate + a little upper-arm sway.
+    // ROOT CAUSE (issue 2a): the bone-write path is correct (all 6 arm bones
+    // resolve on the cloned FBX and writing bone.rotation updates matrixWorld —
+    // re-confirmed at runtime), and `speaking` reliably drives gestureRef -> 1.
+    // The user perceived "no motion" purely because the OLD amplitudes (a few
+    // hundredths to ~0.22 rad) were too SUBTLE against the tucked rest pose to
+    // read within the fixed head-and-torso framing. The fix is to raise the
+    // amplitudes into a clearly visible range: the upper arms lift/swing, the
+    // forearms raise noticeably, and the hands rotate, so the chef obviously
+    // gesticulates while replying. Amplitudes are still bounded so the arms stay
+    // within frame and never flail through the body/hat.
+    //
+    // Right arm: pronounced forearm raise/rotate + a clear upper-arm swing.
     setBone(
       "rUpperArm",
-      0.10 * Math.sin(t * 2.1),
-      0.08 * Math.sin(t * 1.7 + 0.5),
-      0.06 * Math.sin(t * 2.4)
+      0.30 * Math.sin(t * 2.1),
+      0.22 * Math.sin(t * 1.7 + 0.5),
+      0.18 * Math.sin(t * 2.4)
     );
     setBone(
       "rForearm",
-      0.22 * (0.5 + 0.5 * Math.sin(t * 3.1)),
-      0.10 * Math.sin(t * 2.6 + 0.9),
-      0.08 * Math.sin(t * 3.4)
+      0.55 * (0.5 + 0.5 * Math.sin(t * 3.1)),
+      0.26 * Math.sin(t * 2.6 + 0.9),
+      0.20 * Math.sin(t * 3.4)
     );
     setBone(
       "rHand",
-      0.14 * Math.sin(t * 4.2),
-      0.10 * Math.sin(t * 3.7 + 1.2),
-      0.08 * Math.sin(t * 4.6)
+      0.34 * Math.sin(t * 4.2),
+      0.24 * Math.sin(t * 3.7 + 1.2),
+      0.20 * Math.sin(t * 4.6)
     );
 
     // Left arm: same motif, out of phase (offset frequencies/phases) so the two
     // sides never mirror each other exactly.
     setBone(
       "lUpperArm",
-      0.10 * Math.sin(t * 1.9 + 1.6),
-      0.08 * Math.sin(t * 1.5 + 2.1),
-      0.06 * Math.sin(t * 2.2 + 1.1)
+      0.30 * Math.sin(t * 1.9 + 1.6),
+      0.22 * Math.sin(t * 1.5 + 2.1),
+      0.18 * Math.sin(t * 2.2 + 1.1)
     );
     setBone(
       "lForearm",
-      0.22 * (0.5 + 0.5 * Math.sin(t * 2.8 + 1.3)),
-      0.10 * Math.sin(t * 2.3 + 2.4),
-      0.08 * Math.sin(t * 3.1 + 0.7)
+      0.55 * (0.5 + 0.5 * Math.sin(t * 2.8 + 1.3)),
+      0.26 * Math.sin(t * 2.3 + 2.4),
+      0.20 * Math.sin(t * 3.1 + 0.7)
     );
     setBone(
       "lHand",
-      0.14 * Math.sin(t * 3.9 + 2.0),
-      0.10 * Math.sin(t * 3.4 + 0.4),
-      0.08 * Math.sin(t * 4.3 + 1.8)
+      0.34 * Math.sin(t * 3.9 + 2.0),
+      0.24 * Math.sin(t * 3.4 + 0.4),
+      0.20 * Math.sin(t * 4.3 + 1.8)
     );
   });
 

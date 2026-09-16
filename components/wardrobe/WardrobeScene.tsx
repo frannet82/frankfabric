@@ -742,7 +742,11 @@ export default function WardrobeScene({
     <Canvas
       shadows={q.shadows}
       dpr={q.dpr}
-      camera={{ position: [0, 1.35, 2.6], fov: 40 }}
+      // Tighter framing (issue 4): camera pulled in (2.6 -> 2.15) and a slightly
+      // narrower fov (40 -> 36) so the avatar fills the enlarged stage. Turntable
+      // and drag/zoom (OrbitControls below) are unchanged; minDistance still
+      // allows zooming in further and maxDistance still allows pulling back.
+      camera={{ position: [0, 1.3, 2.15], fov: 36 }}
       gl={{ antialias: true }}
       // react-three-fiber forwards unknown props to the underlying <canvas>, so
       // these give assistive tech a text alternative for the wardrobe stage.

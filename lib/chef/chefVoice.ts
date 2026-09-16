@@ -192,6 +192,49 @@ export class ChefVoice {
     const isEnglishLang = (v: SpeechSynthesisVoice) =>
       (v.lang ?? "").toLowerCase().startsWith("en");
 
+    // QUALITY PREFERENCE (issue 3): among any candidate set, prefer the most
+    // natural-sounding voice and AVOID the lowest-quality fallback. Higher
+    // score = better. We reward names hinting at enhanced/cloud/neural engines
+    // ('google','natural','enhanced','premium','neural', plus well-known
+    // high-quality OS voices) and reward remote voices (localService === false,
+    // which on most browsers are the higher-quality cloud voices). This is
+    // robust across browsers: when none of these signals exist the scores tie
+    // and we keep the first candidate (today's behaviour).
+    const qualityNameHints = [
+      "google",
+      "natural",
+      "enhanced",
+      "premium",
+      "neural",
+      "siri",
+      "wavenet",
+      "eloquence",
+    ];
+    const qualityScore = (v: SpeechSynthesisVoice) => {
+      let score = 0;
+      // Remote/cloud voices are typically the higher-quality ones.
+      if (v.localService === false) score += 2;
+      if (nameHas(v, qualityNameHints)) score += 3;
+      return score;
+    };
+    // Return the highest-scoring voice from a candidate list, preserving list
+    // order on ties (so an explicit priority order still wins when quality is
+    // equal). null when the list is empty.
+    const best = (
+      candidates: SpeechSynthesisVoice[]
+    ): SpeechSynthesisVoice | null => {
+      let chosen: SpeechSynthesisVoice | null = null;
+      let bestScore = -Infinity;
+      for (const v of candidates) {
+        const s = qualityScore(v);
+        if (s > bestScore) {
+          bestScore = s;
+          chosen = v;
+        }
+      }
+      return chosen;
+    };
+
     // Common Italian SpeechSynthesis voice-name hints (macOS/iOS/Windows).
     const italianNameHints = [
       "luca",
@@ -220,19 +263,22 @@ export class ChefVoice {
 
     // (1) Italian-accent: an it-* voice, or a voice named like a known Italian
     // one. An Italian voice reading English text speaks with an Italian accent.
-    const italian =
-      voices.find(isItalianLang) ??
-      voices.find((v) => nameHas(v, italianNameHints)) ??
-      null;
+    // Prefer the highest-QUALITY Italian voice among those available.
+    const italianCandidates = voices.filter(
+      (v) => isItalianLang(v) || nameHas(v, italianNameHints)
+    );
+    const italian = best(italianCandidates);
     if (italian) return italian;
 
-    // (2) A male English voice by name hint.
-    const maleEnglish =
-      voices.find((v) => isEnglishLang(v) && nameHas(v, maleNameHints)) ?? null;
+    // (2) A male English voice by name hint — highest-quality among them.
+    const maleEnglish = best(
+      voices.filter((v) => isEnglishLang(v) && nameHas(v, maleNameHints))
+    );
     if (maleEnglish) return maleEnglish;
 
-    // (3) Any English voice.
-    const anyEnglish = voices.find(isEnglishLang) ?? null;
+    // (3) Any English voice — prefer the highest-quality one (so we never fall
+    // to the lowest-quality en-* voice when a natural/cloud one exists).
+    const anyEnglish = best(voices.filter(isEnglishLang));
     if (anyEnglish) return anyEnglish;
 
     // (4) Platform default.
@@ -276,11 +322,15 @@ export class ChefVoice {
     }
 
     const utter = new SpeechSynthesisUtterance(trimmed);
-    // OLD-MAN timbre: a low pitch and a slightly slow rate read as an elderly
-    // man rather than the previous bright/young voice (pitch 1.1). Tuned by ear
-    // as heuristics — adjust here to age the voice up/down.
-    utter.rate = 0.9;
-    utter.pitch = 0.7;
+    // NATURAL timbre (issue 3): the previous extreme low pitch (0.7) was the
+    // primary cause of the "robot" complaint. Move pitch to a natural,
+    // slightly-warm value and keep the rate near natural so the chef reads as a
+    // real, mature-sounding voice rather than a synthetic drone. Combined with
+    // the higher-quality voice preference in pickVoice(), this removes the
+    // robotic character. (True neural TTS is not achievable within Web Speech +
+    // static export without a new dependency — see FEAT-002 findings.)
+    utter.rate = 0.97;
+    utter.pitch = 0.95;
     utter.volume = 1;
     // Re-pick in case voices loaded since construction; fall back to the cached
     // pick. Never gate on availability — null just means "use the default".
