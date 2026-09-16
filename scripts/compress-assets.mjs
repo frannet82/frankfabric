@@ -1,11 +1,11 @@
 // compress-assets.mjs — repeatable asset compressor for the frankfabric VRMs
-// and the schnauzer prop GLB.
+// and any other embedded-texture GLBs.
 //
 // WHAT IT DOES
 //   Shrinks the weight of every drophunter avatar/garment VRM
-//   (public/models/characters/drophunter/**) and the schnauzer prop GLB
-//   (public/models/characters/schnauzer/schnauzer.glb) by re-encoding their
-//   EMBEDDED textures: each image is decoded, resized to a sane per-material
+//   (public/models/characters/drophunter/**) and any other GLB/VRM with
+//   EMBEDDED textures under public/models/** by re-encoding those textures:
+//   each image is decoded, resized to a sane per-material
 //   cap, and re-encoded as WebP. Nothing else in the file is touched —
 //   geometry, morph targets, skeletons and every VRM extension (VRMC_vrm,
 //   VRMC_springBone, VRMC_materials_mtoon, KHR_materials_unlit,
@@ -134,7 +134,7 @@ function serializeGlb(json, bin) {
 // ---- per-texture policy ----------------------------------------------------
 // Face/skin/eyes/mouth textures carry facial detail (and, in frankfabric, are
 // the maps material.color tints), so they stay at a higher resolution and
-// quality. Everything else (hair, garments, the schnauzer scan) can be more
+// quality. Everything else (hair, garments, props) can be more
 // aggressive. Match is by the glTF image `name`, case-insensitive. The
 // drophunter maps are named e.g. "..._skin_BaseColor", "..._Face_BaseColor",
 // "..._eyes_BaseColor", "..._mouth_BaseColor", "..._skin_Normal".
