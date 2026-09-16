@@ -245,17 +245,26 @@ function Avatar({
     // Always-on gentle breathing bob so the coach is never perfectly static.
     const breathe = 0.012 * Math.sin(t * 1.6);
 
-    // Vertical bob: breathing baseline plus an energetic talking bob.
-    const bob = breathe + energy * bobDrive * 0.06 * (0.5 + 0.5 * Math.sin(t * 5.5));
+    // Vertical bob: breathing baseline plus an energetic talking bob. NOTE the
+    // coach OBJ is UNRIGGED (no bones), so real arm/hand motion is physically
+    // impossible — instead we make the whole-group "talking" motion clearly
+    // visible while speaking. Amplitudes raised from the previous subtle values
+    // (bob 0.06 -> 0.11, sway 0.05 -> 0.09, yaw 0.09 -> 0.16, lean 0.04 -> 0.08)
+    // plus a small pitch nod, so the coach obviously bobs/sways/leans and reads
+    // as animated (not a bone rig — the model has none). Still bounded to hold
+    // the fixed head-and-torso framing.
+    const bob = breathe + energy * bobDrive * 0.11 * (0.5 + 0.5 * Math.sin(t * 5.5));
     group.position.y = restY.current + bob;
 
-    // Side-to-side sway + slight rotation about Y (a coach shifting weight and
-    // turning to address you). Small offsets, eased by energy.
-    group.position.x = energy * 0.05 * Math.sin(t * 2.3);
-    group.rotation.y = energy * 0.09 * Math.sin(t * 1.9);
+    // Side-to-side sway + rotation about Y (a coach shifting weight and turning
+    // to address you). Eased by energy so it fades in/out with speech.
+    group.position.x = energy * 0.09 * Math.sin(t * 2.3);
+    group.rotation.y = energy * 0.16 * Math.sin(t * 1.9);
 
-    // Slight forward lean (rotate about X) while talking, easing back to 0.
-    group.rotation.x = energy * 0.04 * (0.5 + 0.5 * Math.sin(t * 3.1));
+    // Forward lean + a small nod (rotate about X) while talking, easing back to
+    // 0. The blend of a slow lean and a quicker nod reads as an emphatic coach.
+    group.rotation.x =
+      energy * (0.08 * (0.5 + 0.5 * Math.sin(t * 3.1)) + 0.03 * Math.sin(t * 6.2));
   });
 
   // On unmount, dispose ONLY the resources this component owns. obj.clone(true)

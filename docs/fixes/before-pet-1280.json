@@ -1,0 +1,18 @@
+{
+  "label": "before-pet",
+  "route": "/projects/virtual-pet/",
+  "url": "http://localhost:5198/frankfabric/projects/virtual-pet/",
+  "basePath": "/frankfabric",
+  "reducedMotion": "not-emulated",
+  "screenshotAnimations": "disabled",
+  "width": 1280,
+  "height": 900,
+  "hasCanvas": true,
+  "ready": true,
+  "scrollWidth": 1280,
+  "innerWidth": 1280,
+  "clientWidth": 1280,
+  "noHorizontalScroll": true,
+  "screenshot": "/projects/sandbox/frankfabric/docs/fixes/before-pet-1280.png",
+  "measuredAt": "2026-09-16T07:04:49.409Z"
+}

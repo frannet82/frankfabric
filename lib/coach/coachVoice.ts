@@ -196,13 +196,54 @@ export class CoachVoice {
       "english",
     ];
 
-    // (1) A clear/bright English voice by name hint.
-    const brightEnglish =
-      voices.find((v) => isEnglishLang(v) && nameHas(v, brightEnglishHints)) ?? null;
+    // QUALITY PREFERENCE (issue 3): among any candidate set, prefer the most
+    // natural-sounding voice and AVOID the lowest-quality fallback. Higher
+    // score = better. We reward names hinting at enhanced/cloud/neural engines
+    // ('google','natural','enhanced','premium','neural', plus well-known
+    // high-quality OS voices) and reward remote voices (localService === false,
+    // typically the higher-quality cloud voices). Robust across browsers: when
+    // none of these signals exist the scores tie and we keep the first
+    // candidate (today's behaviour).
+    const qualityNameHints = [
+      "google",
+      "natural",
+      "enhanced",
+      "premium",
+      "neural",
+      "siri",
+      "wavenet",
+      "eloquence",
+    ];
+    const qualityScore = (v: SpeechSynthesisVoice) => {
+      let score = 0;
+      if (v.localService === false) score += 2;
+      if (nameHas(v, qualityNameHints)) score += 3;
+      return score;
+    };
+    const best = (
+      candidates: SpeechSynthesisVoice[]
+    ): SpeechSynthesisVoice | null => {
+      let chosen: SpeechSynthesisVoice | null = null;
+      let bestScore = -Infinity;
+      for (const v of candidates) {
+        const s = qualityScore(v);
+        if (s > bestScore) {
+          bestScore = s;
+          chosen = v;
+        }
+      }
+      return chosen;
+    };
+
+    // (1) A clear/bright English voice by name hint — highest-quality among them.
+    const brightEnglish = best(
+      voices.filter((v) => isEnglishLang(v) && nameHas(v, brightEnglishHints))
+    );
     if (brightEnglish) return brightEnglish;
 
-    // (2) Any English voice.
-    const anyEnglish = voices.find(isEnglishLang) ?? null;
+    // (2) Any English voice — prefer the highest-quality one so we never fall to
+    // the lowest-quality en-* voice when a natural/cloud one exists.
+    const anyEnglish = best(voices.filter(isEnglishLang));
     if (anyEnglish) return anyEnglish;
 
     // (3) Platform default.

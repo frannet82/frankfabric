@@ -73,12 +73,6 @@ export type Project = {
 
 export const projects: Project[] = [
   {
-    label: "PROJECT SHOT · Cloud Migration dashboard",
-    tag: "AWS",
-    title: "Migration Control Plane",
-    meta: "Landing-zone & cost telemetry",
-  },
-  {
     label: "PROJECT SHOT · Coach trainer interface",
     tag: "Fitness",
     title: "Coach Fabric Smart Fit Trainer",

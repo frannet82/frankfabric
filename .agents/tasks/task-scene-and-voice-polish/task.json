@@ -1,0 +1,7 @@
+{
+  "task_id": "task-scene-and-voice-polish",
+  "task_description": "Follow-up bug-fix/polish on frannet82/frankfabric: five user-reported issues fixed on ONE new branch (fix/scene-and-voice-polish) off merged main, not pushed. (1) Pet framed side-on with head hidden -> rotate model so head faces camera. (2) Chef+Coach 'arms don't move' -> diagnose & fix chef gestures (coach is unrigged OBJ, surface honestly). (3) Chef+Coach voices sound robotic -> tune Web Speech pitch/rate + prefer quality voices (flag neural-TTS would need a new dependency). (4) Wardrobe avatar space too small -> enlarge stage/framing. (5) Remove the Migration Control Plane card from lib/data.ts. Preserve WS1-WS4 wins.",
+  "status": "in_progress",
+  "feature_order": ["FEAT-001", "FEAT-002"],
+  "blocked_reason": null
+}

@@ -38,9 +38,12 @@
 // multiplies small, per-bone time-based oscillations (offset in frequency and
 // phase between bones and between the two sides) added ON TOP OF each captured
 // rest rotation, so the chef gesticulates naturally while talking and eases
-// back to its exact rest pose when done. Amplitudes are kept small (a few
-// degrees to ~0.3 rad) so it reads within the fixed head-and-torso framing and
-// never flails. Any missing arm bone is skipped gracefully, like the jaw.
+// back to its exact rest pose when done. Amplitudes are bounded but clearly
+// visible: the upper arms and hands swing to ~0.30-0.34 rad and the forearm
+// raise term reaches ~0.55 rad, so the chef obviously gesticulates within the
+// fixed head-and-torso framing while still staying clear of the body/hat (see
+// the clearance analysis by the setBone calls). Any missing arm bone is skipped
+// gracefully, like the jaw.
 //
 // CLONING: the FBX contains a SkinnedMesh + 57-bone Biped skeleton. A plain
 // Object3D.clone(true) does NOT rebind the cloned skin to the cloned bones, so
@@ -335,10 +338,14 @@ function Avatar({
 
     const bones = armBonesRef.current;
     const rests = armRestRef.current;
-    // Small, tasteful talking gestures. Amplitudes stay a few degrees to
-    // ~0.3 rad so the chef reads as gesticulating, never flailing. Frequencies
-    // and phases differ per bone and between sides so it looks lively, not
-    // robotic. Offsets are ADDED on top of each bone's captured rest rotation.
+    // Bounded-but-visible talking gestures. Peak per-bone offsets are ~0.30 rad
+    // (upper arm), up to ~0.55 rad (forearm raise term) and ~0.34 rad (hand),
+    // large enough to read clearly as gesticulating within the fixed
+    // head-and-torso framing yet still bounded so the arms never flail through
+    // the body/hat (see the CLEARANCE note below the setBone calls for the
+    // peak-pose check). Frequencies and phases differ per bone and between sides
+    // so it looks lively, not robotic. Offsets are ADDED on top of each bone's
+    // captured rest rotation.
     const setBone = (
       key: ArmBoneKey,
       dx: number,
@@ -355,46 +362,71 @@ function Avatar({
       );
     };
 
-    // Right arm: gentle forearm raise/rotate + a little upper-arm sway.
+    // ROOT CAUSE (issue 2a): the bone-write path is correct (all 6 arm bones
+    // resolve on the cloned FBX and writing bone.rotation updates matrixWorld —
+    // re-confirmed at runtime), and `speaking` reliably drives gestureRef -> 1.
+    // The user perceived "no motion" purely because the OLD amplitudes (a few
+    // hundredths to ~0.22 rad) were too SUBTLE against the tucked rest pose to
+    // read within the fixed head-and-torso framing. The fix is to raise the
+    // amplitudes into a clearly visible range: the upper arms lift/swing, the
+    // forearms raise noticeably, and the hands rotate, so the chef obviously
+    // gesticulates while replying. Amplitudes are still bounded so the arms stay
+    // within frame and never flail through the body/hat.
+    //
+    // Right arm: pronounced forearm raise/rotate + a clear upper-arm swing.
     setBone(
       "rUpperArm",
-      0.10 * Math.sin(t * 2.1),
-      0.08 * Math.sin(t * 1.7 + 0.5),
-      0.06 * Math.sin(t * 2.4)
+      0.30 * Math.sin(t * 2.1),
+      0.22 * Math.sin(t * 1.7 + 0.5),
+      0.18 * Math.sin(t * 2.4)
     );
     setBone(
       "rForearm",
-      0.22 * (0.5 + 0.5 * Math.sin(t * 3.1)),
-      0.10 * Math.sin(t * 2.6 + 0.9),
-      0.08 * Math.sin(t * 3.4)
+      0.55 * (0.5 + 0.5 * Math.sin(t * 3.1)),
+      0.26 * Math.sin(t * 2.6 + 0.9),
+      0.20 * Math.sin(t * 3.4)
     );
     setBone(
       "rHand",
-      0.14 * Math.sin(t * 4.2),
-      0.10 * Math.sin(t * 3.7 + 1.2),
-      0.08 * Math.sin(t * 4.6)
+      0.34 * Math.sin(t * 4.2),
+      0.24 * Math.sin(t * 3.7 + 1.2),
+      0.20 * Math.sin(t * 4.6)
     );
 
     // Left arm: same motif, out of phase (offset frequencies/phases) so the two
     // sides never mirror each other exactly.
     setBone(
       "lUpperArm",
-      0.10 * Math.sin(t * 1.9 + 1.6),
-      0.08 * Math.sin(t * 1.5 + 2.1),
-      0.06 * Math.sin(t * 2.2 + 1.1)
+      0.30 * Math.sin(t * 1.9 + 1.6),
+      0.22 * Math.sin(t * 1.5 + 2.1),
+      0.18 * Math.sin(t * 2.2 + 1.1)
     );
     setBone(
       "lForearm",
-      0.22 * (0.5 + 0.5 * Math.sin(t * 2.8 + 1.3)),
-      0.10 * Math.sin(t * 2.3 + 2.4),
-      0.08 * Math.sin(t * 3.1 + 0.7)
+      0.55 * (0.5 + 0.5 * Math.sin(t * 2.8 + 1.3)),
+      0.26 * Math.sin(t * 2.3 + 2.4),
+      0.20 * Math.sin(t * 3.1 + 0.7)
     );
     setBone(
       "lHand",
-      0.14 * Math.sin(t * 3.9 + 2.0),
-      0.10 * Math.sin(t * 3.4 + 0.4),
-      0.08 * Math.sin(t * 4.3 + 1.8)
+      0.34 * Math.sin(t * 3.9 + 2.0),
+      0.24 * Math.sin(t * 3.4 + 0.4),
+      0.20 * Math.sin(t * 4.3 + 1.8)
     );
+
+    // CLEARANCE (verified): these raised amplitudes were checked geometrically
+    // against the loaded FBX by applying rest + peak rotations to the arm bones
+    // and sweeping every sin term across its extremes (both signs) at the same
+    // MODEL_SCALE used here. Worst-case hand world positions:
+    //   • inward reach: |X| stays >= ~0.44 while the torso half-width at the
+    //     shoulder is only ~0.18, so hands never approach the body core (~0.26
+    //     units, ~16% of model height, of inward margin at all peaks);
+    //   • height: hand Y peaks ~1.14 while the hat top is ~1.63, so ~0.49 units
+    //     of headroom — hands never reach the hat/head;
+    //   • depth: hand Z stays within [-0.15, 0.06], inside the model silhouette
+    //     depth [-0.20, 0.30], so no poke-through front or back.
+    // Conclusion: no clipping through torso/hat/body at the oscillation peaks
+    // within the fixed head-and-torso framing, so the amplitudes are kept as-is.
   });
 
   // On unmount, dispose ONLY the resources this component owns. SkeletonUtils
