@@ -48,6 +48,7 @@ import {
   useQuality,
 } from "@/components/three/quality";
 import QualityToggle from "@/components/three/QualityToggle";
+import { useReducedMotion } from "@/components/three/useReducedMotion";
 
 const PetScene = dynamic(() => import("@/components/pet/PetScene"), {
   ssr: false,
@@ -119,6 +120,7 @@ export default function VirtualPet() {
 
 function VirtualPetInner() {
   const { quality } = useQuality();
+  const reducedMotion = useReducedMotion();
   const [state, setState] = useState<PetState | null>(null);
   // Transient one-shot action passed to the 3D scene (null when idle).
   const [pendingAction, setPendingAction] = useState<PetAction | null>(null);
@@ -229,6 +231,7 @@ function VirtualPetInner() {
           wellbeing={wellbeing}
           quality={quality}
           onPetClick={() => doAction("play")}
+          reducedMotion={reducedMotion}
         />
         {/* Shared High/Fast render-quality control, placed unobtrusively in the
             stage's top-left. Same control across all four scenes. */}

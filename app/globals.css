@@ -101,3 +101,27 @@ a:hover {
     filter: none;
   }
 }
+
+/*
+ * Reduced-motion: honour the OS "prefers reduced motion" setting for ALL CSS
+ * animations and transitions across the site in one place. This neutralises the
+ * landing-page tailwind animations (animate-scan, animate-ticker,
+ * animate-marquee, animate-emberPulse, animate-ringSpin, animate-floatY) plus
+ * the SceneLoader spinners and any hover translate/transition — WITHOUT
+ * deleting the keyframes. Elements that rely on an animation only for looping
+ * MOVEMENT (ticker/marquee rails) still render their content statically at
+ * their start position, so no layout is lost. The in-scene WebGL motion (camera
+ * nudges, idle bob/sway, ambient particles, wardrobe autoRotate) is gated
+ * separately via components/three/useReducedMotion.ts, since it is JS-driven
+ * per-frame and not reachable by this CSS rule.
+ */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+    scroll-behavior: auto !important;
+  }
+}

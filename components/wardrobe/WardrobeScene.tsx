@@ -177,6 +177,14 @@ type WardrobeSceneProps = SceneProps & {
   // last changed + a monotonic nonce). The camera nudge keys off this
   // content-layer output, easing back to the turntable framing afterwards.
   lastChange?: { category: Category; nonce: number } | null;
+  // When true (user prefers reduced motion), all AMBIENT motion is gated: the
+  // OrbitControls turntable autoRotate is forced off, the garment-change camera
+  // nudge holds the pinned framing, and the atelier motes are skipped. The
+  // avatar's selected animation clip (idle/walking/waving) still plays when the
+  // user explicitly picks it, and drag-to-rotate / scroll-to-zoom still work;
+  // only the AUTOMATIC ambient motion is damped. Defaults to false so behaviour
+  // is identical to today.
+  reducedMotion?: boolean;
 };
 
 function Avatar({ selection, colors, animation, cycleCategory }: SceneProps) {
@@ -565,8 +573,10 @@ function GarmentHitbox({
 // a nonce), never off click coordinates.
 function CameraRig({
   lastChange,
+  reducedMotion = false,
 }: {
   lastChange?: { category: Category; nonce: number } | null;
+  reducedMotion?: boolean;
 }) {
   // Current additive dolly amount (metres along the view direction) and a small
   // vertical look bias, both eased toward a pulse-scaled target and back to 0.
@@ -584,7 +594,12 @@ function CameraRig({
   }, [lastChange]);
 
   useFrame((state, delta) => {
-    pulse.current = Math.max(0, pulse.current - delta / 1.2);
+    // Reduced motion: hold the turntable framing (drive the nudge target to 0).
+    if (reducedMotion) {
+      pulse.current = 0;
+    } else {
+      pulse.current = Math.max(0, pulse.current - delta / 1.2);
+    }
     const scale = pulse.current;
 
     // Emphasis target: a small push-in (negative dolly) plus a gentle vertical
@@ -715,10 +730,12 @@ export default function WardrobeScene({
   quality = DEFAULT_QUALITY,
   lastChange = null,
   cycleCategory,
+  reducedMotion = false,
 }: WardrobeSceneProps) {
   // Keep the showroom turntable spinning at rest; hold still while a clip
-  // plays so the motion reads clearly.
-  const autoRotate = animation === "rest";
+  // plays so the motion reads clearly. Under reduced motion the turntable is
+  // forced OFF so nothing auto-rotates (the user can still drag to rotate).
+  const autoRotate = !reducedMotion && animation === "rest";
   const q = qualitySettings(quality);
   const isHigh = quality === "high";
   return (
@@ -727,6 +744,10 @@ export default function WardrobeScene({
       dpr={q.dpr}
       camera={{ position: [0, 1.35, 2.6], fov: 40 }}
       gl={{ antialias: true }}
+      // react-three-fiber forwards unknown props to the underlying <canvas>, so
+      // these give assistive tech a text alternative for the wardrobe stage.
+      role="img"
+      aria-label="Rotating 3D avatar wearing the currently selected top, bottoms, shoes and hair; drag to rotate, scroll to zoom"
       onCreated={({ gl }) => {
         // Tone mapping unchanged (ACESFilmic). The key intensity below is kept
         // at today's ~1.4 and the whole rig stays near-neutral, so the VRM's
@@ -779,7 +800,7 @@ export default function WardrobeScene({
           Reacts ONLY to the garment-change signal (content-layer output) and
           eases back to the turntable framing; the OrbitControls props below are
           untouched. */}
-      <CameraRig lastChange={lastChange} />
+      <CameraRig lastChange={lastChange} reducedMotion={reducedMotion} />
 
       <Suspense fallback={<SceneLoader />}>
         <group position={[0, 0, 0]}>
@@ -791,8 +812,9 @@ export default function WardrobeScene({
           />
         </group>
         {/* Ambient life: cheap floating motes, always on (tiny on Fast, heavier
-            only on High so the Fast frame budget never regresses). */}
-        <AtelierMotes high={isHigh} />
+            only on High so the Fast frame budget never regresses). Skipped
+            entirely under reduced motion so nothing drifts. */}
+        {reducedMotion ? null : <AtelierMotes high={isHigh} />}
         {/* Floor/backdrop for depth — High only. */}
         {isHigh ? <GroundBackdrop /> : null}
       </Suspense>

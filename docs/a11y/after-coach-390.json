@@ -1,0 +1,16 @@
+{
+  "label": "after-coach",
+  "route": "/projects/coach-trainer/",
+  "url": "http://localhost:5198/frankfabric/projects/coach-trainer/",
+  "basePath": "/frankfabric",
+  "width": 390,
+  "height": 844,
+  "hasCanvas": true,
+  "ready": true,
+  "scrollWidth": 390,
+  "innerWidth": 390,
+  "clientWidth": 390,
+  "noHorizontalScroll": true,
+  "screenshot": "/projects/sandbox/frankfabric/docs/a11y/after-coach-390.png",
+  "measuredAt": "2026-09-16T06:22:29.965Z"
+}

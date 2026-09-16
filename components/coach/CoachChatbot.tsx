@@ -38,6 +38,7 @@ import {
   useQuality,
 } from "@/components/three/quality";
 import QualityToggle from "@/components/three/QualityToggle";
+import { useReducedMotion } from "@/components/three/useReducedMotion";
 
 const CoachScene = dynamic(() => import("@/components/coach/CoachScene"), {
   ssr: false,
@@ -75,6 +76,7 @@ export default function CoachChatbot() {
 
 function CoachChatbotInner() {
   const { quality } = useQuality();
+  const reducedMotion = useReducedMotion();
   const [messages, setMessages] = useState<ChatMessage[]>([
     { role: "assistant", content: GREETING },
   ]);
@@ -178,6 +180,7 @@ function CoachChatbotInner() {
           focus={focus}
           focusNonce={focusNonce}
           onKettlebellClick={() => send("Suggest a workout")}
+          reducedMotion={reducedMotion}
         />
         {/* Shared High/Fast render-quality control, placed unobtrusively in the
             stage's top-left so it never overlaps the mute toggle (top-right) or
