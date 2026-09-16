@@ -34,6 +34,7 @@ import {
   useQuality,
 } from "@/components/three/quality";
 import QualityToggle from "@/components/three/QualityToggle";
+import { useReducedMotion } from "@/components/three/useReducedMotion";
 
 const ChefScene = dynamic(() => import("@/components/chef/ChefScene"), {
   ssr: false,
@@ -71,6 +72,7 @@ export default function ChefChatbot() {
 
 function ChefChatbotInner() {
   const { quality } = useQuality();
+  const reducedMotion = useReducedMotion();
   const [messages, setMessages] = useState<ChatMessage[]>([
     { role: "assistant", content: GREETING },
   ]);
@@ -174,6 +176,7 @@ function ChefChatbotInner() {
           focus={focus}
           focusNonce={focusNonce}
           onSampleDishClick={() => send("Suggest a recipe")}
+          reducedMotion={reducedMotion}
         />
         {/* Shared High/Fast render-quality control, placed unobtrusively in the
             stage's top-left so it never overlaps the mute toggle (top-right) or

@@ -83,12 +83,26 @@ type SceneProps = {
   // lib/pet/petState.ts, then persist), so the click raises a REAL PetAction
   // exactly like the on-screen action buttons. This scene NEVER mutates stats.
   onPetClick?: () => void;
+  // When true (user prefers reduced motion), all AMBIENT/IDLE + one-shot
+  // reaction motion is gated: the camera nudge holds the pinned framing, the
+  // whole-group breathing/bob/wiggle/droop and the feed/play/sleep/clean hop
+  // are frozen to rest, and the dust motes are skipped. The click still raises
+  // a REAL PetAction through lib/pet state — only the MOTION response is
+  // damped. Defaults to false so behaviour is identical to today.
+  reducedMotion?: boolean;
 };
 
 // Loads the schnauzer and drives the whole-group mood/action motion. The model
 // is unrigged, so ALL motion is applied to the group transform in useFrame —
 // never to bones.
-function Pet({ mood, action, actionNonce, wellbeing, onPetClick }: SceneProps) {
+function Pet({
+  mood,
+  action,
+  actionNonce,
+  wellbeing,
+  onPetClick,
+  reducedMotion = false,
+}: SceneProps) {
   const { scene } = useGLTF(MODEL_URL);
 
   // Hover affordance on the clickable dog mesh (drei useCursor sets the CSS
@@ -212,6 +226,20 @@ function Pet({ mood, action, actionNonce, wellbeing, onPetClick }: SceneProps) {
   useFrame((state, delta) => {
     const group = groupRef.current;
     if (!group) return;
+
+    // Reduced motion: hold the pet at its rest transform (identity). Every
+    // frame normally writes ABSOLUTE offsets to this group, so zeroing them =
+    // the exact rest pose (the inner model keeps its own recenter offset; no
+    // pinned constant is touched). Freeze the energy/action envelopes too so
+    // nothing lingers, and skip the per-frame offset math entirely.
+    if (reducedMotion) {
+      energyRef.current = 0;
+      actionEnvRef.current = 0;
+      group.position.set(0, 0, 0);
+      group.rotation.set(0, 0, 0);
+      return;
+    }
+
     const t = state.clock.elapsedTime;
     const dt = Math.min(delta, 0.05); // clamp huge frames (tab refocus).
 
@@ -421,9 +449,11 @@ function petActionPose(action: PetAction | null | undefined): {
 function CameraRig({
   action,
   actionNonce = 0,
+  reducedMotion = false,
 }: {
   action?: PetAction | null;
   actionNonce?: number;
+  reducedMotion?: boolean;
 }) {
   const posOffset = useRef(new THREE.Vector3());
   const lookOffset = useRef(new THREE.Vector3());
@@ -436,7 +466,12 @@ function CameraRig({
 
   useFrame((state, delta) => {
     const { posOffset: targetPos, lookOffset: targetLook } = petActionPose(action);
-    pulse.current = Math.max(0, pulse.current - delta / 1.2);
+    // Reduced motion: hold the pinned framing (drive the nudge target to 0).
+    if (reducedMotion) {
+      pulse.current = 0;
+    } else {
+      pulse.current = Math.max(0, pulse.current - delta / 1.2);
+    }
     const scale = pulse.current;
 
     damp3(
@@ -571,6 +606,7 @@ export default function PetScene({
   wellbeing,
   quality = DEFAULT_QUALITY,
   onPetClick,
+  reducedMotion = false,
 }: SceneProps) {
   const q = qualitySettings(quality);
   const isHigh = quality === "high";
@@ -583,7 +619,7 @@ export default function PetScene({
       // react-three-fiber forwards unknown props to the underlying <canvas>, so
       // these give assistive tech a text alternative for the pet stage.
       role="img"
-      aria-label="3D virtual pet dog"
+      aria-label="Animated 3D schnauzer dog that reacts to feeding, play, sleep and cleaning"
       onCreated={({ gl, camera }) => {
         // Tone mapping unchanged (ACESFilmic): the scan renders fine under the
         // near-neutral warm rig below, so per CONSTRAINT #2 we leave it.
@@ -630,7 +666,11 @@ export default function PetScene({
       {/* Interaction-responsive camera nudge, layered on the pinned framing.
           Reacts ONLY to the transient action the state engine surfaced; eases
           back to the locked shot. */}
-      <CameraRig action={action} actionNonce={actionNonce} />
+      <CameraRig
+        action={action}
+        actionNonce={actionNonce}
+        reducedMotion={reducedMotion}
+      />
 
       <Suspense fallback={<SceneLoader />}>
         <group position={[0, 0, 0]}>
@@ -640,11 +680,13 @@ export default function PetScene({
             actionNonce={actionNonce}
             wellbeing={wellbeing}
             onPetClick={onPetClick}
+            reducedMotion={reducedMotion}
           />
         </group>
         {/* Ambient life: cheap warm dust motes, always on (tiny on Fast, heavier
-            only on High so the Fast frame budget never regresses). */}
-        <DustMotes high={isHigh} />
+            only on High so the Fast frame budget never regresses). Skipped
+            entirely under reduced motion so nothing drifts. */}
+        {reducedMotion ? null : <DustMotes high={isHigh} />}
         {/* Ground backdrop for depth — High only. */}
         {isHigh ? <GroundBackdrop /> : null}
       </Suspense>

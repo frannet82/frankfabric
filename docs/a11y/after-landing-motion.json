@@ -1,0 +1,19 @@
+{
+  "label": "after-landing-motion",
+  "route": "/",
+  "url": "http://localhost:5198/frankfabric/",
+  "basePath": "/frankfabric",
+  "reducedMotion": "no-preference",
+  "screenshotAnimations": "allow",
+  "widths": [
+    {
+      "width": 1280,
+      "height": 900,
+      "scrollWidth": 1280,
+      "innerWidth": 1280,
+      "noHorizontalScroll": true
+    }
+  ],
+  "allNoHorizontalScroll": true,
+  "measuredAt": "2026-09-16T06:31:06.540Z"
+}

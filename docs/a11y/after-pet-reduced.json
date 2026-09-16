@@ -1,0 +1,19 @@
+{
+  "label": "after-pet-reduced",
+  "route": "/projects/virtual-pet/",
+  "url": "http://localhost:5198/frankfabric/projects/virtual-pet/",
+  "basePath": "/frankfabric",
+  "reducedMotion": "reduce",
+  "screenshotAnimations": "allow",
+  "widths": [
+    {
+      "width": 1280,
+      "height": 900,
+      "scrollWidth": 1280,
+      "innerWidth": 1280,
+      "noHorizontalScroll": true
+    }
+  ],
+  "allNoHorizontalScroll": true,
+  "measuredAt": "2026-09-16T06:32:13.119Z"
+}

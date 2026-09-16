@@ -37,6 +37,7 @@ import {
   useQuality,
 } from "@/components/three/quality";
 import QualityToggle from "@/components/three/QualityToggle";
+import { useReducedMotion } from "@/components/three/useReducedMotion";
 
 const WardrobeScene = dynamic(
   () => import("@/components/wardrobe/WardrobeScene"),
@@ -168,6 +169,7 @@ export default function WardrobeBuilder() {
 
 function WardrobeBuilderInner() {
   const { quality } = useQuality();
+  const reducedMotion = useReducedMotion();
   const [animation, setAnimation] = useState<WardrobeAnimation>("idle");
   // Default first-load look: a cohesive fully-clothed outfit so the atelier
   // opens on a styled avatar rather than the near-nude base body. Each index
@@ -217,11 +219,19 @@ function WardrobeBuilderInner() {
     setOption(cat, nextIndex(cat, selection[cat]));
 
   const sceneProps = useMemo(
-    () => ({ selection, colors, animation, quality, lastChange, cycleCategory }),
+    () => ({
+      selection,
+      colors,
+      animation,
+      quality,
+      lastChange,
+      cycleCategory,
+      reducedMotion,
+    }),
     // cycleCategory closes over the latest selection via setOption/setSelection
     // updater; selection is already a dep, so the memo stays fresh.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [selection, colors, animation, quality, lastChange]
+    [selection, colors, animation, quality, lastChange, reducedMotion]
   );
 
   // A single category's vertical menu section: heading, scrollable stack of
@@ -256,7 +266,7 @@ function WardrobeBuilderInner() {
                 aria-pressed={isSel}
                 aria-label={`${LABELS[cat]}: ${name}`}
                 className={[
-                  "group flex items-center gap-3 p-2 rounded-2xl border transition-all duration-150 text-left w-full",
+                  "group flex items-center gap-3 p-2 rounded-2xl border transition-all duration-150 text-left w-full focus:outline-none focus-visible:ring-2 focus-visible:ring-[#2c2a26] focus-visible:ring-offset-1",
                   isSel
                     ? "bg-[#a65a4b]/10 border-[#a65a4b] ring-2 ring-[#a65a4b]/30"
                     : "bg-white/70 border-[#e2ded6] hover:border-[#bcb7ac]",
@@ -313,7 +323,7 @@ function WardrobeBuilderInner() {
                 onClick={() => setColor(cat, color)}
                 aria-label={`Set ${LABELS[cat]} colour to ${color}`}
                 className={[
-                  "w-6 h-6 rounded-full border transition-transform duration-150",
+                  "w-6 h-6 rounded-full border transition-transform duration-150 focus:outline-none focus-visible:ring-2 focus-visible:ring-[#2c2a26] focus-visible:ring-offset-1",
                   isSel
                     ? "border-[#2c2a26] scale-110 ring-2 ring-[#2c2a26]/25"
                     : "border-[#d9d4cb] hover:scale-105",
@@ -322,7 +332,7 @@ function WardrobeBuilderInner() {
               />
             );
           })}
-          <label className="relative w-6 h-6 rounded-full overflow-hidden border border-[#d9d4cb] cursor-pointer grid place-items-center bg-white/70">
+          <label className="relative w-6 h-6 rounded-full overflow-hidden border border-[#d9d4cb] cursor-pointer grid place-items-center bg-white/70 focus-within:ring-2 focus-within:ring-[#2c2a26] focus-within:ring-offset-1">
             <span className="text-[12px] leading-none text-[#8f8a80]">+</span>
             <input
               type="color"
@@ -409,7 +419,7 @@ function WardrobeBuilderInner() {
                     aria-checked={isSel}
                     aria-label={`Play ${label} animation`}
                     className={[
-                      "px-3 py-1.5 rounded-full text-xs tracking-wide transition-all duration-150 border",
+                      "px-3 py-1.5 rounded-full text-xs tracking-wide transition-all duration-150 border focus:outline-none focus-visible:ring-2 focus-visible:ring-[#2c2a26] focus-visible:ring-offset-1",
                       isSel
                         ? "bg-[#2c2a26] text-[#f6f4ef] border-[#2c2a26]"
                         : "bg-white/70 text-[#4a463f] border-[#e2ded6] hover:border-[#bcb7ac]",

@@ -68,6 +68,13 @@ type SceneProps = {
   // produced by the engine exactly as if the user typed it. This scene never
   // constructs any workout text itself.
   onKettlebellClick?: () => void;
+  // When true (user prefers reduced motion), all AMBIENT/IDLE motion is gated:
+  // the camera nudge holds the pinned framing, the whole-group talking/idle
+  // bob + sway + lean + breathing baseline are frozen to rest, the floor
+  // shimmer is skipped, and the kettlebell prop's idle bob is frozen.
+  // Interactions still route through the engine — only the MOTION response is
+  // damped. Defaults to false so behaviour is identical to today.
+  reducedMotion?: boolean;
 };
 
 // Coach OBJ + its companion MTL. Every path is base-path-prefixed via asset()
@@ -100,9 +107,11 @@ const CAMERA_DISTANCE = 2.4;
 function Avatar({
   speaking = false,
   getLoudness,
+  reducedMotion = false,
 }: {
   speaking?: boolean;
   getLoudness?: () => number;
+  reducedMotion?: boolean;
 }) {
   // Load materials first, then feed them to the OBJLoader. useLoader memoizes
   // by loader+url and applies the extend callback synchronously per load.
@@ -205,6 +214,20 @@ function Avatar({
     const group = groupRef.current;
     if (!group) return;
     const t = state.clock.elapsedTime;
+
+    // Reduced motion: hold the coach at its rest transform. The outer group's
+    // rest is identity (restY == 0, no sway/lean), so zeroing the animated
+    // offsets = the exact rest pose — no pinned/recenter constant is touched
+    // (the inner model keeps its own recenter offset). Freeze the breathing bob
+    // too so nothing moves.
+    if (reducedMotion) {
+      energyRef.current = 0;
+      group.position.y = restY.current;
+      group.position.x = 0;
+      group.rotation.y = 0;
+      group.rotation.x = 0;
+      return;
+    }
 
     // Energy easing toward 1 (speaking) / 0 (idle), framerate-independent.
     const eTarget = speaking ? 1 : 0;
@@ -359,9 +382,11 @@ function coachFocusPose(focus: CoachFocus | null | undefined): {
 function CameraRig({
   focus,
   focusNonce = 0,
+  reducedMotion = false,
 }: {
   focus?: CoachFocus | null;
   focusNonce?: number;
+  reducedMotion?: boolean;
 }) {
   const posOffset = useRef(new THREE.Vector3());
   const lookOffset = useRef(new THREE.Vector3());
@@ -374,7 +399,12 @@ function CameraRig({
 
   useFrame((state, delta) => {
     const { posOffset: targetPos, lookOffset: targetLook } = coachFocusPose(focus);
-    pulse.current = Math.max(0, pulse.current - delta / 1.2);
+    // Reduced motion: hold the pinned framing (drive the nudge target to 0).
+    if (reducedMotion) {
+      pulse.current = 0;
+    } else {
+      pulse.current = Math.max(0, pulse.current - delta / 1.2);
+    }
     const scale = pulse.current;
 
     damp3(
@@ -500,18 +530,27 @@ function FloorShimmer({ high }: { high: boolean }) {
 // the side, within the fixed frame. On pointer-down it calls the callback
 // CoachChatbot wired to its EXISTING send() — it holds NO workout text. drei
 // useCursor gives a pointer affordance on hover.
-function KettlebellProp({ onClick }: { onClick?: () => void }) {
+function KettlebellProp({
+  onClick,
+  reducedMotion = false,
+}: {
+  onClick?: () => void;
+  reducedMotion?: boolean;
+}) {
   const [hovered, setHovered] = useState(false);
   useCursor(hovered);
   const groupRef = useRef<THREE.Group>(null);
 
   // A tiny idle bob + a hover lift so it reads as interactive. Eased so it never
-  // snaps. Purely visual; the click routes through the engine.
+  // snaps. Purely visual; the click routes through the engine. Under reduced
+  // motion the idle sine-bob is dropped (only the discrete hover lift remains);
+  // the click behaviour is unchanged.
   useFrame((state, delta) => {
     const g = groupRef.current;
     if (!g) return;
     const t = state.clock.elapsedTime;
-    const targetY = 0.09 + (hovered ? 0.03 : 0) + Math.sin(t * 1.6) * 0.006;
+    const idleBob = reducedMotion ? 0 : Math.sin(t * 1.6) * 0.006;
+    const targetY = 0.09 + (hovered ? 0.03 : 0) + idleBob;
     damp(g.position, "y", targetY, 0.18, delta);
   });
 
@@ -562,6 +601,7 @@ export default function CoachScene({
   focus = null,
   focusNonce = 0,
   onKettlebellClick,
+  reducedMotion = false,
 }: SceneProps) {
   const q = qualitySettings(quality);
   const isHigh = quality === "high";
@@ -574,7 +614,7 @@ export default function CoachScene({
       // react-three-fiber forwards unknown props to the underlying <canvas>, so
       // these give assistive tech a text alternative for the avatar stage.
       role="img"
-      aria-label="3D coach avatar"
+      aria-label="Animated 3D gym coach that bobs and gestures while giving workout advice"
       onCreated={({ gl, camera }) => {
         // Tone mapping unchanged (ACESFilmic): the coach OBJ renders skin fine
         // under the near-neutral rig below, so per CONSTRAINT #2 we leave it.
@@ -625,19 +665,31 @@ export default function CoachScene({
 
       {/* Engine-driven camera nudge, layered on the pinned framing. Reacts ONLY
           to the `focus` the engine returned; eases back to the locked shot. */}
-      <CameraRig focus={focus} focusNonce={focusNonce} />
+      <CameraRig
+        focus={focus}
+        focusNonce={focusNonce}
+        reducedMotion={reducedMotion}
+      />
 
       <Suspense fallback={<SceneLoader />}>
         <group position={[0, 0, 0]}>
-          <Avatar speaking={speaking} getLoudness={getLoudness} />
+          <Avatar
+            speaking={speaking}
+            getLoudness={getLoudness}
+            reducedMotion={reducedMotion}
+          />
         </group>
         {/* ONE clickable prop. Its handler calls CoachChatbot's EXISTING send()
             with a real query, so the answer comes from the engine — the scene
             holds no workout text. */}
-        <KettlebellProp onClick={onKettlebellClick} />
+        <KettlebellProp
+          onClick={onKettlebellClick}
+          reducedMotion={reducedMotion}
+        />
         {/* Ambient life: a cheap procedural floor shimmer, always on (tiny on
-            Fast, heavier only on High so the Fast frame budget never regresses). */}
-        <FloorShimmer high={isHigh} />
+            Fast, heavier only on High so the Fast frame budget never regresses).
+            Skipped entirely under reduced motion so nothing drifts. */}
+        {reducedMotion ? null : <FloorShimmer high={isHigh} />}
         {/* Ground backdrop for depth — High only (extra draw + shadow catcher). */}
         {isHigh ? <GroundBackdrop /> : null}
       </Suspense>

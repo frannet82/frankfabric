@@ -1,0 +1,18 @@
+{
+  "label": "after-landing",
+  "route": "/",
+  "url": "http://localhost:5198/frankfabric/",
+  "basePath": "/frankfabric",
+  "reducedMotion": "not-emulated",
+  "screenshotAnimations": "disabled",
+  "width": 390,
+  "height": 844,
+  "hasCanvas": false,
+  "ready": true,
+  "scrollWidth": 390,
+  "innerWidth": 390,
+  "clientWidth": 390,
+  "noHorizontalScroll": true,
+  "screenshot": "/projects/sandbox/frankfabric/docs/a11y/after-landing-390.png",
+  "measuredAt": "2026-09-16T06:28:28.501Z"
+}

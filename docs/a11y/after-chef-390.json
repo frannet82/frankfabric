@@ -1,0 +1,18 @@
+{
+  "label": "after-chef",
+  "route": "/projects/chef-chatbot/",
+  "url": "http://localhost:5198/frankfabric/projects/chef-chatbot/",
+  "basePath": "/frankfabric",
+  "reducedMotion": "not-emulated",
+  "screenshotAnimations": "disabled",
+  "width": 390,
+  "height": 844,
+  "hasCanvas": true,
+  "ready": true,
+  "scrollWidth": 390,
+  "innerWidth": 390,
+  "clientWidth": 390,
+  "noHorizontalScroll": true,
+  "screenshot": "/projects/sandbox/frankfabric/docs/a11y/after-chef-390.png",
+  "measuredAt": "2026-09-16T06:29:23.108Z"
+}

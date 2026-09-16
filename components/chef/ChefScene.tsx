@@ -93,6 +93,14 @@ type SceneProps = {
   // is produced by the engine exactly as if the user typed it. This scene never
   // constructs any recipe text itself.
   onSampleDishClick?: () => void;
+  // When true (user prefers reduced motion), all AMBIENT/IDLE motion is gated:
+  // the camera nudge holds the pinned framing, the steam wisp is skipped, the
+  // dish prop's idle wobble/spin is frozen, and the avatar's talking arm
+  // gestures are damped to their captured rest pose. Speech-driven jaw motion
+  // (lip-sync) still tracks the reply, and interactions still route through the
+  // engine — only the MOTION response is damped. Defaults to false so behaviour
+  // is identical to today when the preference is off.
+  reducedMotion?: boolean;
 };
 
 // Name of the jaw bone in the Swedish Chef Biped rig. Verified in FEAT-001.
@@ -143,9 +151,11 @@ const CAMERA_DISTANCE = 2.2;
 function Avatar({
   speaking = false,
   getLoudness,
+  reducedMotion = false,
 }: {
   speaking?: boolean;
   getLoudness?: () => number;
+  reducedMotion?: boolean;
 }) {
   const fbx = useLoader(FBXLoader, MODEL_URL);
   const loadedTexture = useLoader(THREE.TextureLoader, TEXTURE_URL);
@@ -313,7 +323,12 @@ function Avatar({
     // silent, framerate-independent, so gestures fade in/out with no snap. It
     // multiplies every oscillation, so at rest the arms sit at their captured
     // rest rotation exactly (amount == 0 -> zero offset).
-    const gTarget = speaking ? 1 : 0;
+    // Under reduced motion, damp the talking arm gestures to rest (target 0),
+    // so the arms ease to their captured rest rotation and hold. The gesture
+    // amount multiplies every arm oscillation, so a 0 amount = exact rest pose
+    // (no pinned pose constant is touched). Lip-sync jaw motion above still
+    // tracks speech.
+    const gTarget = reducedMotion ? 0 : speaking ? 1 : 0;
     const kGesture = 1 - Math.exp(-delta * 6);
     gestureRef.current += (gTarget - gestureRef.current) * kGesture;
     const amt = gestureRef.current;
@@ -507,9 +522,11 @@ function chefFocusPose(focus: ChefFocus | null | undefined): {
 function CameraRig({
   focus,
   focusNonce = 0,
+  reducedMotion = false,
 }: {
   focus?: ChefFocus | null;
   focusNonce?: number;
+  reducedMotion?: boolean;
 }) {
   // Current eased offsets (mutated in place by damp3 each frame).
   const posOffset = useRef(new THREE.Vector3());
@@ -524,9 +541,16 @@ function CameraRig({
 
   useFrame((state, delta) => {
     const { posOffset: targetPos, lookOffset: targetLook } = chefFocusPose(focus);
-    // Relax the pulse toward 0 (~1.2s), framerate-independent, so the reaction
-    // eases back to the locked shot even if `focus` stays the same.
-    pulse.current = Math.max(0, pulse.current - delta / 1.2);
+    // Reduced motion: hold the pinned framing exactly. We drive the pulse to 0
+    // so the nudge target is zero — the camera settles to the pinned rest and
+    // stays there (the PINNED_CAM/PINNED_LOOK constants below are untouched).
+    if (reducedMotion) {
+      pulse.current = 0;
+    } else {
+      // Relax the pulse toward 0 (~1.2s), framerate-independent, so the reaction
+      // eases back to the locked shot even if `focus` stays the same.
+      pulse.current = Math.max(0, pulse.current - delta / 1.2);
+    }
     const scale = pulse.current;
 
     // Ease the live offsets toward (target * pulse) with drei's maath damp3.
@@ -665,20 +689,30 @@ function SteamWisps({ high }: { high: boolean }) {
 // and to the side, within the fixed frame. On pointer-down it calls the
 // callback ChefChatbot wired to its EXISTING send() — it holds NO recipe text.
 // drei useCursor gives a pointer affordance on hover.
-function SampleDishProp({ onClick }: { onClick?: () => void }) {
+function SampleDishProp({
+  onClick,
+  reducedMotion = false,
+}: {
+  onClick?: () => void;
+  reducedMotion?: boolean;
+}) {
   const [hovered, setHovered] = useState(false);
   useCursor(hovered);
   const groupRef = useRef<THREE.Group>(null);
 
   // A tiny idle wobble + a hover lift so it reads as interactive. Eased so it
-  // never snaps. Purely visual; the click routes through the engine.
+  // never snaps. Purely visual; the click routes through the engine. Under
+  // reduced motion the idle sine-wobble and the continuous spin are dropped so
+  // the prop rests still (only the discrete hover lift remains as an
+  // interaction affordance); the click behaviour is unchanged.
   useFrame((state, delta) => {
     const g = groupRef.current;
     if (!g) return;
     const t = state.clock.elapsedTime;
-    const targetY = 0.02 + (hovered ? 0.03 : 0) + Math.sin(t * 1.8) * 0.006;
+    const idleBob = reducedMotion ? 0 : Math.sin(t * 1.8) * 0.006;
+    const targetY = 0.02 + (hovered ? 0.03 : 0) + idleBob;
     damp(g.position, "y", targetY, 0.18, delta);
-    g.rotation.y += delta * 0.3;
+    if (!reducedMotion) g.rotation.y += delta * 0.3;
   });
 
   const handleDown = (e: ThreeEvent<PointerEvent>) => {
@@ -729,6 +763,7 @@ export default function ChefScene({
   focus = null,
   focusNonce = 0,
   onSampleDishClick,
+  reducedMotion = false,
 }: SceneProps) {
   const q = qualitySettings(quality);
   const isHigh = quality === "high";
@@ -741,7 +776,7 @@ export default function ChefScene({
       // react-three-fiber forwards unknown props to the underlying <canvas>, so
       // these give assistive tech a text alternative for the avatar stage.
       role="img"
-      aria-label="3D chef avatar"
+      aria-label="Animated 3D chef avatar in chef whites that gestures and speaks while giving cooking answers"
       onCreated={({ gl, camera }) => {
         // Tone mapping unchanged (ACESFilmic): the chef's matte
         // MeshStandardMaterial renders its skin/face texture fine under the
@@ -792,19 +827,31 @@ export default function ChefScene({
 
       {/* Engine-driven camera nudge, layered on the pinned framing. Reacts ONLY
           to the `focus` the engine returned; eases back to the locked shot. */}
-      <CameraRig focus={focus} focusNonce={focusNonce} />
+      <CameraRig
+        focus={focus}
+        focusNonce={focusNonce}
+        reducedMotion={reducedMotion}
+      />
 
       <Suspense fallback={<SceneLoader />}>
         <group position={[0, 0, 0]}>
-          <Avatar speaking={speaking} getLoudness={getLoudness} />
+          <Avatar
+            speaking={speaking}
+            getLoudness={getLoudness}
+            reducedMotion={reducedMotion}
+          />
         </group>
         {/* ONE clickable prop. Its handler calls ChefChatbot's EXISTING send()
             with a real query, so the answer comes from the engine — the scene
             holds no recipe text. */}
-        <SampleDishProp onClick={onSampleDishClick} />
+        <SampleDishProp
+          onClick={onSampleDishClick}
+          reducedMotion={reducedMotion}
+        />
         {/* Ambient life: a cheap procedural steam wisp, always on (tiny on Fast,
-            heavier only on High so the Fast frame budget never regresses). */}
-        <SteamWisps high={isHigh} />
+            heavier only on High so the Fast frame budget never regresses).
+            Skipped entirely under reduced motion so nothing drifts. */}
+        {reducedMotion ? null : <SteamWisps high={isHigh} />}
         {/* Ground backdrop for depth — High only. */}
         {isHigh ? <GroundBackdrop /> : null}
       </Suspense>

@@ -1,0 +1,26 @@
+{
+  "label": "after-chef",
+  "route": "/projects/chef-chatbot/",
+  "url": "http://localhost:5198/frankfabric/projects/chef-chatbot/",
+  "basePath": "/frankfabric",
+  "reducedMotion": "not-emulated",
+  "screenshotAnimations": "disabled",
+  "widths": [
+    {
+      "width": 390,
+      "height": 844,
+      "scrollWidth": 390,
+      "innerWidth": 390,
+      "noHorizontalScroll": true
+    },
+    {
+      "width": 1280,
+      "height": 900,
+      "scrollWidth": 1280,
+      "innerWidth": 1280,
+      "noHorizontalScroll": true
+    }
+  ],
+  "allNoHorizontalScroll": true,
+  "measuredAt": "2026-09-16T06:29:28.453Z"
+}
