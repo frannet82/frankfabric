@@ -1,7 +1,7 @@
 {
-  "label": "after-pet",
-  "route": "/projects/virtual-pet/",
-  "url": "http://localhost:5198/frankfabric/projects/virtual-pet/",
+  "label": "after-trainer",
+  "route": "/projects/coach-trainer/",
+  "url": "http://localhost:5198/frankfabric/projects/coach-trainer/",
   "basePath": "/frankfabric",
   "reducedMotion": "not-emulated",
   "screenshotAnimations": "disabled",
@@ -22,5 +22,5 @@
     }
   ],
   "allNoHorizontalScroll": true,
-  "measuredAt": "2026-09-16T11:50:43.892Z"
+  "measuredAt": "2026-09-16T11:47:50.723Z"
 }

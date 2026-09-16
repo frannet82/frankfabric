@@ -118,13 +118,16 @@ const GESTURE_BONES = {
 } as const;
 type GestureBoneKey = keyof typeof GESTURE_BONES;
 
-// Floor for the loudness-driven gesture amplitude multiplier. While speaking,
-// the per-frame gesture amplitude scales between this floor and 1 with live
-// audio loudness (Web Audio AnalyserNode RMS). The floor guarantees the coach
-// still clearly gestures when loudness reads 0 or is unavailable (e.g. muted,
-// or no AnalyserNode yet), so behaviour degrades to the previous speaking-gated
-// motion rather than going limp. The multiplier is clamped to <= 1 so the
-// bounded per-bone amplitudes are never exceeded (limbs never clip the body).
+// Resting floor for the speaking-driven gesture amplitude multiplier. The coach
+// voice is the browser Web Speech API (SpeechSynthesis), which exposes NO live
+// amplitude, so getLoudness() is always 0. Driving the gesture INTENSITY off
+// loudness would therefore leave the coach permanently pinned at this floor and
+// reading limp. Instead the amplitude is driven by the plain `speaking` window:
+// it eases toward 1 while speaking and relaxes back to this floor when silent.
+// The floor keeps a subtle motion between replies, and the multiplier is clamped
+// to <= 1 so the bounded per-bone amplitudes are never exceeded (limbs never
+// clip the body). getLoudness is retained on the API for compatibility but is no
+// longer consulted here.
 const GESTURE_LOUDNESS_FLOOR = 0.55;
 
 // ARMS-CLOSE BASE POSE. The astronaut GLB's captured REST pose is a wide
@@ -169,11 +172,17 @@ const MODEL_TARGET_HEIGHT = 1.7;
 // the head-and-torso reads best in the fixed shot.
 const AIM_HEIGHT = 1.3;
 // Vertical fraction of the (scaled) model height that we place at AIM_HEIGHT.
-// ~0.82 puts the upper chest/neck at the aim point so the face sits just above
-// center — a cozy, front-facing framing that mirrors the chef.
-const AIM_MODEL_FRACTION = 0.82;
-// How far back the fixed camera sits from the aim point.
-const CAMERA_DISTANCE = 2.4;
+// TIGHTER FRAMING (zoom-in fix): raised from 0.82 -> 0.9 so the aim point sits
+// on the upper chest/lower face. Combined with the closer CAMERA_DISTANCE below
+// this gives a tight head-and-torso shot where the face reads prominently while
+// the top of the head stays comfortably inside the frame (no crop).
+const AIM_MODEL_FRACTION = 0.9;
+// How far back the fixed camera sits from the aim point. TIGHTER FRAMING
+// (zoom-in fix): pulled in from 2.4 -> 1.7 so the astronaut reads noticeably
+// larger in frame (a head-and-torso portrait rather than a full upper-body
+// shot). PINNED_CAM below derives from this constant, so the WS3 CameraRig eases
+// back to this closer framing after any engine nudge.
+const CAMERA_DISTANCE = 1.7;
 
 // Loads the rigged astronaut GLB (embedded textures decoded by GLTFLoader),
 // clones it with SkeletonUtils so the 4 skinned meshes rebind, and drives
@@ -181,10 +190,13 @@ const CAMERA_DISTANCE = 2.4;
 // clips, so all limb motion is authored here in useFrame.
 function Avatar({
   speaking = false,
-  getLoudness,
   reducedMotion = false,
 }: {
   speaking?: boolean;
+  // getLoudness is accepted on the props type for API compatibility with the
+  // voice wrapper but is intentionally NOT destructured/consulted: the Web
+  // Speech voice exposes no live amplitude, so the gesture intensity is driven
+  // by the `speaking` window instead (see useFrame).
   getLoudness?: () => number;
   reducedMotion?: boolean;
 }) {
@@ -201,13 +213,12 @@ function Avatar({
   // Multiplies every bone oscillation so the gesture fades in/out with no snap;
   // at amount == 0 the bones sit at their captured rest rotation exactly.
   const gestureRef = useRef(0);
-  // Smoothed per-frame amplitude multiplier driven by live audio loudness while
-  // speaking. Mirrors how ChefScene's jaw prefers the real AnalyserNode RMS over
-  // its sine fallback: when getLoudness() returns a usable value we scale the
-  // gesture between GESTURE_LOUDNESS_FLOOR (so the coach still clearly gestures
-  // on quiet passages / when loudness is unavailable) and 1 (loud passages
-  // gesture bigger). It stays bounded to <= 1 so the per-bone amplitudes never
-  // exceed their clip-safe caps, and it is only consulted while `speaking`.
+  // Smoothed per-frame amplitude multiplier driven by the `speaking` window.
+  // With the Web Speech voice there is no live loudness (getLoudness() === 0),
+  // so the intensity is authored from `speaking` alone: it eases toward 1 while
+  // speaking so the gesture clearly swells, and relaxes back to
+  // GESTURE_LOUDNESS_FLOOR when silent (a subtle between-reply motion). Bounded
+  // to <= 1 so the per-bone amplitudes never exceed their clip-safe caps.
   const loudnessAmpRef = useRef(GESTURE_LOUDNESS_FLOOR);
 
   // Clone the GLB scene with SkeletonUtils so each SkinnedMesh's skeleton is
@@ -334,29 +345,21 @@ function Avatar({
     const kGesture = 1 - Math.exp(-delta * 6);
     gestureRef.current += (gTarget - gestureRef.current) * kGesture;
 
-    // Loudness-driven amplitude. While speaking (and NOT under reduced motion),
-    // prefer the live AnalyserNode RMS: scale the gesture between the floor and
-    // 1 so louder passages gesture bigger while quiet passages / missing audio
-    // still read as a clear gesture. When not speaking the target relaxes back
-    // to the floor. Smoothed framerate-independently so intensity swells and
-    // settles with the audio instead of jittering per frame. Reduced motion
-    // keeps this off the critical path since `amt` is already driven to 0 below.
-    let loudTarget = GESTURE_LOUDNESS_FLOOR;
-    if (speaking && !reducedMotion) {
-      const loud = getLoudness ? getLoudness() : 0;
-      if (loud > 0.01) {
-        loudTarget = Math.min(
-          1,
-          GESTURE_LOUDNESS_FLOOR + (1 - GESTURE_LOUDNESS_FLOOR) * Math.min(1, loud)
-        );
-      }
-    }
+    // Speaking-driven amplitude. The Web Speech voice exposes no live loudness
+    // (getLoudness() === 0), so the intensity is driven by the `speaking` window
+    // itself: while speaking (and NOT under reduced motion) the target rises to
+    // 1 so the gesture clearly swells; when silent it relaxes back to the floor
+    // for a subtle between-reply motion. Smoothed framerate-independently so the
+    // swell/settle is gradual instead of snapping. Reduced motion keeps this off
+    // the critical path since `amt` is already driven to 0 below.
+    const loudTarget =
+      speaking && !reducedMotion ? 1 : GESTURE_LOUDNESS_FLOOR;
     const kLoud = 1 - Math.exp(-delta * 10);
     loudnessAmpRef.current += (loudTarget - loudnessAmpRef.current) * kLoud;
 
     // Final gesture multiplier: the speaking-gated fade-in (gestureRef) times the
-    // loudness amplitude. At rest (gestureRef == 0) this is 0 so the bones sit at
-    // their exact captured rest rotation; while speaking it rides the audio.
+    // speaking-driven amplitude. At rest (gestureRef == 0) this is 0 so the bones
+    // sit at their exact captured rest rotation; while speaking it swells to 1.
     const amt = gestureRef.current * loudnessAmpRef.current;
 
     // A very subtle always-on idle sway so the astronaut is never perfectly
@@ -470,6 +473,37 @@ function Avatar({
       0.03 * Math.sin(t * 2.7),
       0.012 * Math.sin(t * 1.5 + 0.2)
     );
+
+    // TALKING "MOUTH" APPROXIMATION (item 3). This astronaut (an Avaturn-style
+    // export) has a BAKED-TEXTURE face: it carries ZERO morph targets / blend
+    // shapes and NO jaw / mouth / eye / eyelid bones on ANY mesh — its only
+    // head-region bones are "Head" and "Neck". A real lip-sync (viseme morphs)
+    // or a jaw-bone mouth open is therefore IMPOSSIBLE on this model, and we do
+    // NOT float a fake mouth/eye mesh over the baked face (it cannot be placed
+    // reliably and would miss the face). The honest approximation is a subtle
+    // "talking" HEAD cadence: a small, quicker nod (pitch) with a faint
+    // side-tilt (roll) layered ADDITIVELY on the Head bone ONLY while speaking,
+    // so the coach reads as actively talking-to-you rather than a frozen face.
+    // It is gated by the SAME speaking window as every other gesture: headTalk
+    // rides gestureRef (eases 0 while silent -> 1 while speaking) so it fades in
+    // and out with speech and sits at exactly the rest pose when silent, and it
+    // is fully suppressed under reduced motion (gestureRef is driven to 0 by the
+    // reducedMotion target above — no parallel engine state, no ambient timer).
+    // Amplitudes are tiny (<= ~0.05 rad) so the tight head-and-torso framing and
+    // the head never clip. Real mouth+eye ARTICULATION would require a
+    // face-rigged / morph-target avatar (a VRM with visemes+blink blendshapes,
+    // or a ReadyPlayerMe/Avaturn export WITH ARKit blendshapes) — see docs.
+    const headBone = bones.head;
+    const headBase = bases.head;
+    if (headBone && headBase && !reducedMotion) {
+      const talk = gestureRef.current; // 0..1 speaking-driven, eased
+      // A quicker speech-cadence nod (pitch) + a smaller counter-tilt (roll),
+      // layered on TOP of the base + gesture rotation already written above.
+      const nod = 0.05 * (0.5 + 0.5 * Math.sin(t * 8.5)) * talk;
+      const tilt = 0.02 * Math.sin(t * 6.2) * talk;
+      headBone.rotation.x += nod;
+      headBone.rotation.z += tilt;
+    }
   });
 
   // On unmount, dispose ONLY the resources this component owns. SkeletonUtils
@@ -824,7 +858,7 @@ export default function CoachScene({
       // react-three-fiber forwards unknown props to the underlying <canvas>, so
       // these give assistive tech a text alternative for the avatar stage.
       role="img"
-      aria-label="Animated 3D astronaut gym coach that gestures with its arms while giving workout advice"
+      aria-label="Animated 3D astronaut gym coach that gestures with its arms and nods its head as if talking while giving workout advice"
       onCreated={({ gl, camera }) => {
         // Tone mapping unchanged (ACESFilmic): the astronaut GLB's suit renders
         // fine under the near-neutral rig below with no blow-out, so per

@@ -96,6 +96,15 @@ the GLB's PBR materials; loader-owned resources are intentionally not disposed
 
 ## PART C — Voices: recorded MP3 playback with real loudness
 
+> **ROLLED BACK (later fix).** The recorded-MP3 playback described in this
+> section was reverted back to the browser Web Speech API. `chef-voice.mp3` and
+> `personal-trainer.mp3` were removed from `public/audio/`, and the two voice
+> wrappers were restored to their prior `SpeechSynthesis` implementation
+> (`getLoudness()` returns 0; the chef jaw uses its sine fallback and the coach
+> gesture intensity is driven by the `speaking` window). See
+> `docs/fixes/VOICE-ROLLBACK-PET-TRAINER.md`. The text below is retained as the
+> historical record of the MP3 approach.
+
 `lib/chef/chefVoice.ts` (`ChefVoice`) and `lib/coach/coachVoice.ts`
 (`CoachVoice`) were rewritten to replace the Web Speech API with playback of the
 recorded MP3s over a lazily-created `HTMLAudioElement`:
