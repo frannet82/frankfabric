@@ -1,0 +1,7 @@
+{
+  "task_id": "task-mobile-accessibility",
+  "task_description": "Workstream 4 (Mobile and Accessibility) for the whole frankfabric site: make the landing page and all four 3D demos usable at 390x844 with no horizontal scroll and the controls panel never covering the canvas; provide a full keyboard path with visible focus through chat composer/chips/send, pet buttons/naming, wardrobe menu, and the shared QualityToggle (plus keyboard/AT-reachable equivalents for WS3 clickable 3D props); honor prefers-reduced-motion via a shared hook to gate/scale camera nudges, idle/ambient motion, wardrobe autoRotate, and landing-page CSS animations; and give each canvas a meaningful text alternative. Gate is npm run lint (one expected font warning) + a clean static-export npm run build. Preserve WS1/WS2/WS3 wins. Work on branch a11y/mobile-accessibility; do not push.",
+  "status": "in_progress",
+  "feature_order": ["FEAT-001", "FEAT-002", "FEAT-003"],
+  "blocked_reason": null
+}

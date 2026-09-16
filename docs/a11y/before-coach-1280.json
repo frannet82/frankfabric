@@ -1,0 +1,16 @@
+{
+  "label": "before-coach",
+  "route": "/projects/coach-trainer/",
+  "url": "http://localhost:5198/frankfabric/projects/coach-trainer/",
+  "basePath": "/frankfabric",
+  "width": 1280,
+  "height": 900,
+  "hasCanvas": true,
+  "ready": true,
+  "scrollWidth": 1280,
+  "innerWidth": 1280,
+  "clientWidth": 1280,
+  "noHorizontalScroll": true,
+  "screenshot": "/projects/sandbox/frankfabric/docs/a11y/before-coach-1280.png",
+  "measuredAt": "2026-09-16T06:08:25.001Z"
+}
