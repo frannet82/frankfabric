@@ -51,8 +51,10 @@
 // the async 'voiceschanged' event fires, so if no preferred voice exists yet we
 // speak with the default and still fire onStart/onEnd. We also listen for
 // 'voiceschanged' to refresh the cached pick so a later-loaded Italian/male
-// voice is used on subsequent replies. The old-man timbre comes from the
-// utterance params: a low pitch (0.7) and a slightly slow rate (0.9).
+// voice is used on subsequent replies. The mature-but-natural timbre comes from
+// the utterance params: a near-natural pitch (0.95) and rate (0.97). (These
+// replaced an earlier extreme-low pitch/slow rate that read as robotic — see
+// the utter.rate/utter.pitch note in speak().)
 //
 // MOUTH MOTION: SpeechSynthesis does not expose an audio-amplitude stream, so
 // there is no live loudness to drive the jaw. getLoudness() therefore always
@@ -378,7 +380,7 @@ export class ChefVoice {
     this.current = utter;
 
     // Estimate a generous upper bound on the utterance's duration (~150 wpm at
-    // rate 0.9) and arm a watchdog: if neither onend nor onerror fires within
+    // rate 0.97) and arm a watchdog: if neither onend nor onerror fires within
     // that bound (a silently-dropped utterance), force-finish so state resets
     // and the next reply can speak.
     const words = trimmed.split(/\s+/).length;
