@@ -5,14 +5,14 @@
   "basePath": "/frankfabric",
   "reducedMotion": "not-emulated",
   "screenshotAnimations": "disabled",
-  "width": 1280,
-  "height": 900,
+  "width": 390,
+  "height": 844,
   "hasCanvas": true,
   "ready": true,
-  "scrollWidth": 1280,
-  "innerWidth": 1280,
-  "clientWidth": 1280,
+  "scrollWidth": 390,
+  "innerWidth": 390,
+  "clientWidth": 390,
   "noHorizontalScroll": true,
-  "screenshot": "/projects/sandbox/frankfabric/docs/fixes/after-coach-1280.png",
-  "measuredAt": "2026-09-16T09:28:03.460Z"
+  "screenshot": "/projects/sandbox/frankfabric/docs/fixes/after-coach-390.png",
+  "measuredAt": "2026-09-16T09:27:58.166Z"
 }
