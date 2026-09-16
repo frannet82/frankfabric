@@ -1,7 +1,7 @@
 {
-  "label": "after-pet",
-  "route": "/projects/virtual-pet/",
-  "url": "http://localhost:5198/frankfabric/projects/virtual-pet/",
+  "label": "after-trainer",
+  "route": "/projects/coach-trainer/",
+  "url": "http://localhost:5198/frankfabric/projects/coach-trainer/",
   "basePath": "/frankfabric",
   "reducedMotion": "not-emulated",
   "screenshotAnimations": "disabled",
@@ -13,6 +13,6 @@
   "innerWidth": 390,
   "clientWidth": 390,
   "noHorizontalScroll": true,
-  "screenshot": "/projects/sandbox/frankfabric/docs/fixes/after-pet-390.png",
-  "measuredAt": "2026-09-16T11:50:38.208Z"
+  "screenshot": "/projects/sandbox/frankfabric/docs/fixes/after-trainer-390.png",
+  "measuredAt": "2026-09-16T11:47:44.868Z"
 }

@@ -19,10 +19,11 @@
 //
 // TEXTURES: three's FBXLoader does NOT auto-load this model's maps (they are
 // authored as 3dsMax map slots FBXLoader skips), and the four textures ship as
-// SEPARATE PNGs beside the FBX. We therefore load them manually with
-// THREE.TextureLoader and build a fresh matte MeshStandardMaterial per skinned
-// mesh carrying them: Base_color as .map (sRGB), Normal_DirectX as .normalMap,
-// Roughness as .roughnessMap (linear), Mixed_AO as .aoMap (linear). The aoMap
+// SEPARATE image files beside the FBX (all four WebP now — see TEX_BASE_COLOR).
+// We therefore load them manually with THREE.TextureLoader and build a fresh
+// matte MeshStandardMaterial per skinned mesh carrying them: Base_color as .map
+// (sRGB), Normal_DirectX as .normalMap, Roughness as .roughnessMap (linear),
+// Mixed_AO as .aoMap (linear). The aoMap
 // needs a uv2 channel; the FBX meshes only carry uv0, so we copy geometry.uv
 // into uv2. Lights stay near-neutral (WS2) and tone mapping stays ACESFilmic so
 // nothing blows out.
@@ -69,14 +70,23 @@ import {
 // production. Never hardcode a bare "/models/..." path — it would 404 on
 // GitHub Pages.
 const MODEL_URL = asset("/models/characters/chicken/chicken.fbx");
+// BASE COLOR / ALBEDO. This is the ONLY map that carries the chicken's actual
+// colors. It was previously the WRONG texture: the source zip
+// (chicken-character.zip) ships TWO textures/DefaultMaterial_Base_color.png at
+// different sizes (981902 B and 72788 B), and the committed 72 KB one was the
+// near-WHITE low-detail duplicate (mean RGB ~220,215,208; only ~1.7% colorful
+// pixels), so the chicken rendered flat grey/white even though the map was
+// wired correctly onto every mesh. It is now the correct DETAILED albedo (the
+// 981902 B entry: warm brown/tan, ~70% colorful pixels), WebP-compressed to
+// ~96 KB (three's TextureLoader decodes image/webp natively). Loaded as sRGB.
 const TEX_BASE_COLOR = asset(
-  "/models/characters/chicken/DefaultMaterial_Base_color.png"
+  "/models/characters/chicken/DefaultMaterial_Base_color.webp"
 );
 // The normal / roughness / AO data maps are WebP-compressed by
 // scripts/compress-assets.mjs (the loose-texture pass): the normal map stays
 // near-lossless to keep its vectors clean, the linear roughness/AO maps are
 // more aggressive. three's TextureLoader decodes image/webp natively, so no
-// runtime decoder is needed. The small sRGB base-color map stays a PNG.
+// runtime decoder is needed. The sRGB base-color map is likewise WebP now.
 const TEX_NORMAL = asset(
   "/models/characters/chicken/DefaultMaterial_Normal_DirectX.webp"
 );
@@ -231,21 +241,21 @@ function Pet({
       // reads with true PBR color and no blow-out under the near-neutral warm
       // rig (WS2). color stays white so the material never tints the map.
       //
-      // COLOR FIX (diagnosed): the base-color map, uv0 and SRGBColorSpace are
-      // all correct and the map assigns to every skinned mesh (verified with an
-      // offline UV/material probe: head_+_body_retop, eye_l, eye_r all carry uv
-      // and receive the map) — the maps also serve 200 from out/, not 404. The
-      // real cause the bird read as flat washed-out grey is that its albedo is
-      // GENUINELY a pale cream (measured avg RGB ~220/215/208, avg saturation
-      // ~0.08, only ~7% meaningfully colorful pixels) AND roughness was pinned
-      // at 1.0 — a perfectly matte surface returns only flat diffuse, so the
-      // faint tonal/color variation in the feathers, beak and comb never gets
-      // any light-direction shaping and averages out to grey. Dropping to a
-      // modest 0.72 roughness (still matte, not glossy) lets the key/fill rig
-      // shape the surface so the cream and its warm tints actually read, and a
-      // slightly stronger normal map deepens the feather relief. We keep the
-      // texture as the sole color source (no solid tint, colorSpace unchanged)
-      // and keep metalness 0 + ACESFilmic tone mapping so nothing blows out.
+      // COLOR FIX (TRUE root cause, evidence-backed): the wiring here was always
+      // correct — the base-color map assigns to every skinned mesh, uv0 exists
+      // (copied to uv2 for AO), colorSpace is sRGB with needsUpdate, and the
+      // file serves 200. The bird read flat grey/white because the COMMITTED
+      // albedo FILE was the WRONG one. chicken-character.zip ships TWO
+      // textures/DefaultMaterial_Base_color.png (981902 B and 72788 B); the
+      // committed 72 KB copy was the near-white low-detail duplicate (pixel
+      // probe: mean RGB ~220,215,208, only ~1.7% colorful pixels), so no map
+      // fix, roughness tweak or lighting change could ever restore color — there
+      // was simply no color IN the texture. The correct 981902 B albedo (warm
+      // brown/tan, ~70% colorful pixels, pixel-probed) is now committed as
+      // DefaultMaterial_Base_color.webp and wired here. We keep the texture as
+      // the sole color source (no solid tint), a modest 0.72 roughness (matte,
+      // not glossy) and metalness 0 + ACESFilmic tone mapping so nothing blows
+      // out under the near-neutral warm rig (WS2).
       const materials = Array.isArray(mesh.material)
         ? mesh.material
         : [mesh.material];
