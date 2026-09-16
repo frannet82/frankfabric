@@ -1,7 +1,7 @@
 "use client";
 
 // ---------------------------------------------------------------------------
-// Virtual pet — composed widget (3D schnauzer stage + Tamagotchi game UI).
+// Virtual pet — composed widget (3D chicken stage + Tamagotchi game UI).
 //
 // The 3D scene (components/pet/PetScene.tsx) touches WebGL/DOM, so it is
 // imported here via next/dynamic { ssr:false } with a themed loading fallback,
@@ -57,7 +57,7 @@ const PetScene = dynamic(() => import("@/components/pet/PetScene"), {
       <div className="flex flex-col items-center gap-3">
         <span className="w-7 h-7 rounded-full border-2 border-pet-accentSoft border-t-pet-accent animate-spin" />
         <span className="font-mono text-[11px] tracking-widest uppercase">
-          Waking the pup…
+          Waking the chicken…
         </span>
       </div>
     </div>
@@ -218,7 +218,7 @@ function VirtualPetInner() {
   };
   const mood = state ? moodFor(stats) : "content";
   const wellbeing = state ? overallWellbeing(stats) : 0;
-  const petName = state?.name?.trim() || "Your pup";
+  const petName = state?.name?.trim() || "Your chicken";
 
   return (
     <div className="absolute inset-0 z-[5] flex flex-col md:flex-row bg-pet-cream">

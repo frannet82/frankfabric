@@ -1,19 +1,249 @@
 {
   "label": "after-pet",
+  "dir": "/projects/sandbox/frankfabric/out",
   "route": "/projects/virtual-pet/",
-  "url": "http://localhost:5198/frankfabric/projects/virtual-pet/",
   "basePath": "/frankfabric",
-  "reducedMotion": "not-emulated",
-  "screenshotAnimations": "disabled",
-  "widths": [
+  "url": "http://localhost:5199/frankfabric/projects/virtual-pet/",
+  "ready": true,
+  "hasCanvas": true,
+  "quality": null,
+  "unresolvedFailures": [],
+  "errors": [
+    "Failed to load resource: the server responded with a status of 404 (Not Found)",
+    "requestfailed /frankfabric/: net::ERR_ABORTED",
+    "requestfailed /frankfabric/__next._index.txt?_rsc=D7Z0tAUSXYB1Wr8c: net::ERR_ABORTED",
+    "requestfailed /frankfabric/__next._head.txt?_rsc=pdnkD_mCCEH8LfcJ: net::ERR_ABORTED"
+  ],
+  "viewport": {
+    "width": 1280,
+    "height": 900
+  },
+  "totalBytes": 10326955,
+  "totalMB": 10.327,
+  "byType": {
+    ".css": 44527,
+    "[document]": 22014,
+    ".js": 1558186,
+    "[stylesheet]": 26134,
+    ".woff2": 97596,
+    "[fetch]": 96173,
+    ".txt": 50498,
+    ".fbx": 4621472,
+    "[image]": 3342769,
+    ".png": 72788,
+    ".webp": 394798
+  },
+  "resources": [
     {
-      "width": 1280,
-      "height": 900,
-      "scrollWidth": 1280,
-      "innerWidth": 1280,
-      "noHorizontalScroll": true
+      "url": "/frankfabric/models/characters/chicken/chicken.fbx",
+      "bytes": 4621472,
+      "status": 200,
+      "type": "fetch"
+    },
+    {
+      "url": "blob:/597984b4-4143-4587-92e9-7d6efb1818f7",
+      "bytes": 1430348,
+      "status": 200,
+      "type": "image"
+    },
+    {
+      "url": "blob:/bae05d8a-fbfe-4a75-af97-57efc30f6425",
+      "bytes": 983351,
+      "status": 200,
+      "type": "image"
+    },
+    {
+      "url": "/frankfabric/_next/static/chunks/1yx85t65gvlto.js",
+      "bytes": 924185,
+      "status": 200,
+      "type": "script"
+    },
+    {
+      "url": "blob:/3a815e33-46f6-4c68-b3e1-594b2f87f9ea",
+      "bytes": 479109,
+      "status": 200,
+      "type": "image"
+    },
+    {
+      "url": "blob:/faab48cf-29e4-47a3-8a29-befb8d41230f",
+      "bytes": 377056,
+      "status": 200,
+      "type": "image"
+    },
+    {
+      "url": "/frankfabric/models/characters/chicken/DefaultMaterial_Normal_DirectX.webp",
+      "bytes": 299250,
+      "status": 200,
+      "type": "image"
+    },
+    {
+      "url": "/frankfabric/_next/static/chunks/3jh1u-s3k0bkk.js",
+      "bytes": 203384,
+      "status": 200,
+      "type": "script"
+    },
+    {
+      "url": "/frankfabric/_next/static/chunks/0ymgnzqzlow_2.js",
+      "bytes": 146512,
+      "status": 200,
+      "type": "script"
+    },
+    {
+      "url": "/frankfabric/",
+      "bytes": 96173,
+      "status": 200,
+      "type": "fetch"
+    },
+    {
+      "url": "blob:/9ddc59d3-6130-48d6-b68b-05a6d48450b2",
+      "bytes": 72905,
+      "status": 200,
+      "type": "image"
+    },
+    {
+      "url": "/frankfabric/models/characters/chicken/DefaultMaterial_Base_color.png",
+      "bytes": 72788,
+      "status": 200,
+      "type": "image"
+    },
+    {
+      "url": "/frankfabric/_next/static/chunks/18ssrtck1btqj.js",
+      "bytes": 71702,
+      "status": 200,
+      "type": "script"
+    },
+    {
+      "url": "/frankfabric/models/characters/chicken/DefaultMaterial_Mixed_AO.webp",
+      "bytes": 63246,
+      "status": 200,
+      "type": "image"
+    },
+    {
+      "url": "/frankfabric/_next/static/chunks/14mrh2-p_w84d.js",
+      "bytes": 54646,
+      "status": 200,
+      "type": "script"
+    },
+    {
+      "url": "/frankfabric/_next/static/chunks/2kqrbujyxigm8.js",
+      "bytes": 50234,
+      "status": 200,
+      "type": "script"
+    },
+    {
+      "url": "/frankfabric/__next.__PAGE__.txt?_rsc=JlNrowfuEzYW_GtS",
+      "bytes": 46128,
+      "status": 200,
+      "type": "fetch"
+    },
+    {
+      "url": "https://fonts.gstatic.com/s/ibmplexsans/v23/zYXzKVElMYYaJe8bpLHnCwDKr932-G7dytD-Dmu1syxeKYY.woff2",
+      "bytes": 45712,
+      "status": 200,
+      "type": "font"
+    },
+    {
+      "url": "/frankfabric/_next/static/chunks/0eoiwfb__ejn3.css",
+      "bytes": 44527,
+      "status": 200,
+      "type": "stylesheet"
+    },
+    {
+      "url": "/frankfabric/models/characters/chicken/DefaultMaterial_Roughness.webp",
+      "bytes": 32302,
+      "status": 200,
+      "type": "image"
+    },
+    {
+      "url": "https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=IBM+Plex+Sans:wght@300;400;500;600&family=IBM+Plex+Mono:wght@400;500&family=Cormorant+Garamond:wght@500;600&family=Jost:wght@300;400;500;600&display=swap",
+      "bytes": 26134,
+      "status": 200,
+      "type": "stylesheet"
+    },
+    {
+      "url": "/frankfabric/_next/static/chunks/41vhus88_a-zp.js",
+      "bytes": 24045,
+      "status": 200,
+      "type": "script"
+    },
+    {
+      "url": "https://fonts.gstatic.com/s/spacegrotesk/v22/V8mDoQDjQSkFtoMM3T6r8E7mPbF4Cw.woff2",
+      "bytes": 22288,
+      "status": 200,
+      "type": "font"
+    },
+    {
+      "url": "/frankfabric/projects/virtual-pet/",
+      "bytes": 22014,
+      "status": 200,
+      "type": "document"
+    },
+    {
+      "url": "/frankfabric/_next/static/chunks/14bmvgmyz9hfb.js",
+      "bytes": 21754,
+      "status": 200,
+      "type": "script"
+    },
+    {
+      "url": "/frankfabric/_next/static/chunks/09pdu24jezzy8.js",
+      "bytes": 20201,
+      "status": 200,
+      "type": "script"
+    },
+    {
+      "url": "/frankfabric/_next/static/chunks/3c5j0r8jrjzad.js",
+      "bytes": 18659,
+      "status": 200,
+      "type": "script"
+    },
+    {
+      "url": "https://fonts.gstatic.com/s/ibmplexmono/v20/-F6qfjptAgt5VM-kVkqdyU8n3twJwlBFgg.woff2",
+      "bytes": 14888,
+      "status": 200,
+      "type": "font"
+    },
+    {
+      "url": "https://fonts.gstatic.com/s/ibmplexmono/v20/-F63fjptAgt5VM-kVkqdyU8n1i8q1w.woff2",
+      "bytes": 14708,
+      "status": 200,
+      "type": "font"
+    },
+    {
+      "url": "/frankfabric/_next/static/chunks/turbopack-3dytf-owzyd28.js",
+      "bytes": 10625,
+      "status": 200,
+      "type": "script"
+    },
+    {
+      "url": "/frankfabric/_next/static/chunks/2u0aye_hoi9_-.js",
+      "bytes": 8862,
+      "status": 200,
+      "type": "script"
+    },
+    {
+      "url": "/frankfabric/_next/static/chunks/05-c3ty_6dwfk.js",
+      "bytes": 3377,
+      "status": 200,
+      "type": "script"
+    },
+    {
+      "url": "/frankfabric/__next._index.txt?_rsc=D7Z0tAUSXYB1Wr8c",
+      "bytes": 2826,
+      "status": 200,
+      "type": "fetch"
+    },
+    {
+      "url": "/frankfabric/__next._head.txt?_rsc=pdnkD_mCCEH8LfcJ",
+      "bytes": 1040,
+      "status": 200,
+      "type": "fetch"
+    },
+    {
+      "url": "/frankfabric/__next._tree.txt?_rsc=G8N4N8ep-ksS8yoP",
+      "bytes": 504,
+      "status": 200,
+      "type": "fetch"
     }
   ],
-  "allNoHorizontalScroll": true,
-  "measuredAt": "2026-09-16T07:10:54.962Z"
+  "measuredAt": "2026-09-16T09:36:36.025Z"
 }

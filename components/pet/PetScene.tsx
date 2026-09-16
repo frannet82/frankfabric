@@ -1,28 +1,46 @@
 "use client";
 
 // ---------------------------------------------------------------------------
-// Virtual pet — interactive 3D schnauzer scene.
+// Virtual pet — interactive 3D chicken scene (RIGGED FBX + AnimationMixer).
 //
-// This renders the scanned schnauzer as a STATIC, UNRIGGED mesh loaded from a
-// self-contained glTF-binary (public/models/characters/schnauzer/schnauzer.glb).
-// FEAT-001 confirmed the .glb EMBEDS its albedo texture inside the binary
-// buffer (images[0] has no uri; single material 'MAT_RETOPO'), so useGLTF /
-// GLTFLoader loads the texture automatically — we do NOT manually wire
-// RETOPO_COL_2k_0.png. We only ensure any color map is sampled in sRGB.
+// This renders a RIGGED chicken loaded from an FBX
+// (public/models/characters/chicken/chicken.fbx). Unlike the old, unrigged
+// schnauzer .glb, this model ships a 50-bone skeleton, three skinned meshes and
+// ONE baked skeletal animation clip ("Take 001", ~2.67s) — a real idle. We
+// drive that clip with a THREE.AnimationMixer so the pet has genuine skeletal
+// motion (a breathing/settling idle), advanced each frame with
+// mixer.update(delta) in useFrame.
 //
-// Because the mesh has NO skeleton (a dog scanned on all fours), ALL pet
-// reactions are whole-group transforms in useFrame, similar to
-// components/coach/CoachScene.tsx. The animated group's rest is identity, so
-// each frame writes ABSOLUTE bob / sway / lean offsets to group.position /
-// group.rotation (nothing accumulates); the recenter offset lives on the inner
-// <primitive>, not the animated group. Offsets are scaled by a
-// framerate-independent smoothed energy (1 - Math.exp(-delta*k)). Mood drives
-// the always-on ambience; a transient `action` (re-armed via `actionNonce` so
-// repeats still fire) triggers a ~1s one-shot reaction.
+// CLONING: the FBX contains SkinnedMeshes bound to the skeleton. A plain
+// Object3D.clone(true) does NOT rebind the cloned skin to the cloned bones, so
+// the skinned mesh renders collapsed/invisible (the "empty container" bug). We
+// clone with SkeletonUtils.clone (same pattern as components/chef/ChefScene.tsx),
+// which duplicates skinned meshes and rebinds their skeletons.
 //
-// A dog is WIDE and LOW (not tall like the coach), so we scale off the model's
-// LARGEST bound and aim the camera at roughly its mid-body height so it reads
-// centered on all fours.
+// TEXTURES: three's FBXLoader does NOT auto-load this model's maps (they are
+// authored as 3dsMax map slots FBXLoader skips), and the four textures ship as
+// SEPARATE PNGs beside the FBX. We therefore load them manually with
+// THREE.TextureLoader and build a fresh matte MeshStandardMaterial per skinned
+// mesh carrying them: Base_color as .map (sRGB), Normal_DirectX as .normalMap,
+// Roughness as .roughnessMap (linear), Mixed_AO as .aoMap (linear). The aoMap
+// needs a uv2 channel; the FBX meshes only carry uv0, so we copy geometry.uv
+// into uv2. Lights stay near-neutral (WS2) and tone mapping stays ACESFilmic so
+// nothing blows out.
+//
+// ORIENTATION / FRAMING: probed FBX bounds are X[-2.06,2.15] Y[-0.27,9.47]
+// Z[-3.63,3.04], so Y is up and the chicken stands UPRIGHT (Y is the tallest
+// axis at ~9.75, depth Z ~6.68 > width X ~4.21). We scale off the TALLEST bound
+// (very different from the wide/low dog), yaw the body to face front/three-
+// quarter toward the fixed camera (which looks down -Z), then recenter with a
+// fresh Box3 AFTER the yaw so the whole body + head read centered.
+//
+// The Tamagotchi contract is preserved verbatim: mood drives an always-on
+// liveliness (mixer timeScale + a subtle whole-group ambience), a transient
+// `action` (re-armed via `actionNonce`) fires a ~1s one-shot reaction, and
+// interactions still route ONLY through lib/pet state via VirtualPet.doAction.
+// There is NO parallel state machine here. When reducedMotion is true the mixer
+// is frozen at frame 0 and all ambient/camera motion is gated, exactly as
+// before.
 //
 // Every asset URL is routed through lib/asset.ts so it resolves under the
 // /frankfabric/ base path in production. This component touches WebGL/DOM, so
@@ -31,10 +49,12 @@
 // ---------------------------------------------------------------------------
 
 import { Suspense, useEffect, useMemo, useRef, useState } from "react";
-import { Canvas, useFrame, type ThreeEvent } from "@react-three/fiber";
-import { ContactShadows, useCursor, useGLTF } from "@react-three/drei";
+import { Canvas, useFrame, useLoader, type ThreeEvent } from "@react-three/fiber";
+import { ContactShadows, useCursor } from "@react-three/drei";
 import { damp3 } from "maath/easing";
 import * as THREE from "three";
+import { FBXLoader } from "three/examples/jsm/loaders/FBXLoader.js";
+import { clone as cloneSkeleton } from "three/examples/jsm/utils/SkeletonUtils.js";
 import { asset } from "@/lib/asset";
 import type { PetAction } from "@/lib/pet/petState";
 import SceneLoader from "@/components/three/SceneLoader";
@@ -44,41 +64,54 @@ import {
   type Quality,
 } from "@/components/three/quality";
 
-// The self-contained schnauzer .glb. Base-path-prefixed via asset() so it
-// resolves to /frankfabric/models/... in production. Never hardcode a bare
-// "/models/..." path — it would 404 on GitHub Pages.
-const MODEL_URL = asset("/models/characters/schnauzer/schnauzer.glb");
+// The rigged chicken FBX and its four SEPARATE textures. Every path is
+// base-path-prefixed via asset() so it resolves to /frankfabric/models/... in
+// production. Never hardcode a bare "/models/..." path — it would 404 on
+// GitHub Pages.
+const MODEL_URL = asset("/models/characters/chicken/chicken.fbx");
+const TEX_BASE_COLOR = asset(
+  "/models/characters/chicken/DefaultMaterial_Base_color.png"
+);
+// The normal / roughness / AO data maps are WebP-compressed by
+// scripts/compress-assets.mjs (the loose-texture pass): the normal map stays
+// near-lossless to keep its vectors clean, the linear roughness/AO maps are
+// more aggressive. three's TextureLoader decodes image/webp natively, so no
+// runtime decoder is needed. The small sRGB base-color map stays a PNG.
+const TEX_NORMAL = asset(
+  "/models/characters/chicken/DefaultMaterial_Normal_DirectX.webp"
+);
+const TEX_ROUGHNESS = asset(
+  "/models/characters/chicken/DefaultMaterial_Roughness.webp"
+);
+const TEX_AO = asset(
+  "/models/characters/chicken/DefaultMaterial_Mixed_AO.webp"
+);
 
-// Preload at module scope so the model starts fetching as soon as the scene
-// chunk is imported (through the ssr:false dynamic import).
-useGLTF.preload(MODEL_URL);
+// The chicken is UPRIGHT (Y is its tallest axis), so we scale off the TALLEST
+// bound to a consistent on-screen size that frames the whole bird head-to-foot.
+const MODEL_TARGET_SIZE = 1.9;
 
-// A dog is wide/low, so we scale off the LARGEST bound to a consistent
-// on-screen size that frames the whole animal in an aspect-video-ish stage.
-const MODEL_TARGET_SIZE = 1.8;
+// World-space height the camera aims at (roughly the chicken's mid-body so the
+// whole standing bird — feet through head/comb — reads centered). The model is
+// recentered so this point sits at frame center.
+const AIM_HEIGHT = 0.95;
+// How far back the fixed camera sits from the aim point. An upright bird needs
+// a touch more distance than the low dog so its full height fits the frame.
+const CAMERA_DISTANCE = 3.15;
 
-// World-space height the camera aims at (roughly the dog's mid-body while it
-// stands on all fours). The model is recentered so this point reads centered.
-// Raised slightly (from 0.55) so the aim point sits nearer the shoulders/head
-// now that the dog faces the camera and its head is the feature we frame.
-const AIM_HEIGHT = 0.62;
-// How far back the fixed camera sits from the aim point.
-const CAMERA_DISTANCE = 2.9;
-
-// FRAMING FIX (issue 1): the schnauzer.glb long axis (nose-to-tail) runs along
-// X and its narrow width along Z, but the fixed camera looks down -Z, so by
-// default it faces the dog's flank (head turned away, tail toward camera). We
-// rotate the INNER recenter root about Y so the nose faces +Z toward the
-// camera, then recompute the recenter Box3 AFTER the rotation so the rotated
-// model stays centered on the aim point. The sign was determined EMPIRICALLY
-// with an after-pet screenshot: +PI/2 turns the head toward the camera (mass is
-// shifted toward -X, the denser head end). A small extra yaw gives a friendlier
-// three-quarter view rather than a flat, dead-on face.
-const BODY_YAW = Math.PI / 2 + THREE.MathUtils.degToRad(8);
+// ORIENTATION FIX: the fixed camera looks down -Z (from +Z toward the origin).
+// The FBX's raw front axis does not face +Z by default, so we yaw the INNER
+// recenter root about Y to turn the chicken toward the camera in a friendly
+// three-quarter view, then recompute the recenter Box3 AFTER the yaw so the
+// rotated model stays centered on the aim point. The value was chosen so the
+// bird's chest/head face the camera (verified empirically with an after-pet
+// screenshot); the small extra offset gives a lively three-quarter angle rather
+// than a flat dead-on pose.
+const BODY_YAW = THREE.MathUtils.degToRad(35);
 
 type SceneProps = {
   // Current discrete mood (from moodFor): 'happy'|'content'|'hungry'|'tired'|
-  // 'dirty'|'sad'. Drives the always-on ambient motion.
+  // 'dirty'|'sad'. Drives the always-on ambient motion + idle playback speed.
   mood: string;
   // Transient one-shot trigger set for ~1s when the visitor takes an action.
   action?: PetAction | null;
@@ -91,23 +124,23 @@ type SceneProps = {
   // Canvas shadows, dpr, shadow-map resolution, soft shadows and the heavier
   // fill/bounce lights + ground backdrop. Defaults to High.
   quality?: Quality;
-  // Called on pointer-down on the clickable dog mesh. VirtualPet wires this to
-  // its EXISTING doAction(action) (decayForElapsed + applyAction from
+  // Called on pointer-down on the clickable chicken mesh. VirtualPet wires this
+  // to its EXISTING doAction(action) (decayForElapsed + applyAction from
   // lib/pet/petState.ts, then persist), so the click raises a REAL PetAction
   // exactly like the on-screen action buttons. This scene NEVER mutates stats.
   onPetClick?: () => void;
   // When true (user prefers reduced motion), all AMBIENT/IDLE + one-shot
-  // reaction motion is gated: the camera nudge holds the pinned framing, the
-  // whole-group breathing/bob/wiggle/droop and the feed/play/sleep/clean hop
-  // are frozen to rest, and the dust motes are skipped. The click still raises
-  // a REAL PetAction through lib/pet state — only the MOTION response is
-  // damped. Defaults to false so behaviour is identical to today.
+  // reaction motion is gated: the baked idle mixer is frozen at frame 0, the
+  // camera nudge holds the pinned framing, the whole-group breathing/bob and
+  // the feed/play/sleep/clean hop are frozen to rest, and the dust motes are
+  // skipped. The click still raises a REAL PetAction through lib/pet state —
+  // only the MOTION response is damped. Defaults to false so behaviour is
+  // identical to today.
   reducedMotion?: boolean;
 };
 
-// Loads the schnauzer and drives the whole-group mood/action motion. The model
-// is unrigged, so ALL motion is applied to the group transform in useFrame —
-// never to bones.
+// Loads the rigged chicken FBX + its four textures, drives the baked idle via a
+// THREE.AnimationMixer, and layers the whole-group mood/action reaction on top.
 function Pet({
   mood,
   action,
@@ -116,9 +149,13 @@ function Pet({
   onPetClick,
   reducedMotion = false,
 }: SceneProps) {
-  const { scene } = useGLTF(MODEL_URL);
+  const fbx = useLoader(FBXLoader, MODEL_URL);
+  const baseColorTex = useLoader(THREE.TextureLoader, TEX_BASE_COLOR);
+  const normalTex = useLoader(THREE.TextureLoader, TEX_NORMAL);
+  const roughnessTex = useLoader(THREE.TextureLoader, TEX_ROUGHNESS);
+  const aoTex = useLoader(THREE.TextureLoader, TEX_AO);
 
-  // Hover affordance on the clickable dog mesh (drei useCursor sets the CSS
+  // Hover affordance on the clickable chicken mesh (drei useCursor sets the CSS
   // cursor to pointer while hovered). The click raises a REAL action through
   // VirtualPet.doAction — the scene never mutates stats itself.
   const [hovered, setHovered] = useState(false);
@@ -127,6 +164,10 @@ function Pet({
   // The group we animate. Its rest is identity (position 0 / rotation 0); every
   // frame writes ABSOLUTE offsets to it (see useFrame), so nothing accumulates.
   const groupRef = useRef<THREE.Group | null>(null);
+
+  // The AnimationMixer + its idle action, resolved once the model is built.
+  const mixerRef = useRef<THREE.AnimationMixer | null>(null);
+  const idleActionRef = useRef<THREE.AnimationAction | null>(null);
 
   // Smoothed 0..1 "energy" for the always-on liveliness (eased toward a mood
   // target) and a separate 0..1 envelope for the one-shot action reaction.
@@ -137,13 +178,32 @@ function Pet({
   const activeActionRef = useRef<SceneProps["action"]>(null);
   const actionTimeRef = useRef(0);
 
-  // Clone the loaded scene so we never mutate the loader-cached object across
-  // React strict-mode remounts, and clone each material + its color map so the
-  // textures we mark sRGB and later dispose are uniquely owned. Then
-  // recenter/scale with a fresh Box3 so the fixed camera reliably frames the
-  // dog on all fours.
+  // Clone the FBX with SkeletonUtils so each SkinnedMesh's skeleton is correctly
+  // rebound to the cloned bones (a plain Object3D.clone collapses/hides the
+  // skinned mesh — the "empty container" bug). We then wire the four textures
+  // onto a fresh matte MeshStandardMaterial per mesh, scale off the tallest
+  // bound, yaw to face the camera, and recenter with a fresh Box3.
   const model = useMemo(() => {
-    const root = scene.clone(true);
+    const root = cloneSkeleton(fbx);
+
+    // --- Prepare the four maps (cloned so we uniquely own + can dispose them).
+    // Base color / albedo is the only sRGB map; roughness / normal / AO are
+    // linear data maps.
+    const map = baseColorTex.clone();
+    map.colorSpace = THREE.SRGBColorSpace;
+    map.needsUpdate = true;
+
+    const normalMap = normalTex.clone();
+    normalMap.colorSpace = THREE.LinearSRGBColorSpace;
+    normalMap.needsUpdate = true;
+
+    const roughnessMap = roughnessTex.clone();
+    roughnessMap.colorSpace = THREE.LinearSRGBColorSpace;
+    roughnessMap.needsUpdate = true;
+
+    const aoMap = aoTex.clone();
+    aoMap.colorSpace = THREE.LinearSRGBColorSpace;
+    aoMap.needsUpdate = true;
 
     root.traverse((node) => {
       node.frustumCulled = false;
@@ -151,48 +211,64 @@ function Pet({
       if (!mesh.isMesh) return;
       mesh.castShadow = true;
       mesh.receiveShadow = true;
-      const src = Array.isArray(mesh.material) ? mesh.material : [mesh.material];
-      const cloned = src.map((raw) => {
-        const mat = (raw as THREE.Material).clone() as THREE.MeshStandardMaterial;
-        // The embedded baseColor/albedo map must be sampled in sRGB so the
-        // scan reads with its true colors. Clone the map too so disposal is
-        // safe (uniquely owned by this component).
-        const withMap = mat as unknown as { map?: THREE.Texture | null };
-        if (withMap.map) {
-          const tex = withMap.map.clone();
-          tex.colorSpace = THREE.SRGBColorSpace;
-          tex.needsUpdate = true;
-          withMap.map = tex;
-        }
-        mat.needsUpdate = true;
-        return mat;
+
+      // aoMap samples uv channel 1 (uv2). These FBX meshes carry only uv0, so
+      // reuse it: copy geometry.attributes.uv into a uv2 attribute. Without a
+      // uv2 the aoMap would be ignored by three; reusing uv0 gives correct AO
+      // since the maps share the same UV layout.
+      const geom = mesh.geometry as THREE.BufferGeometry;
+      if (geom && geom.attributes.uv && !geom.attributes.uv2) {
+        geom.setAttribute("uv2", geom.attributes.uv);
+      }
+      const hasUv2 = !!(geom && geom.attributes.uv2);
+
+      // Swap to a matte MeshStandardMaterial carrying the four maps so the
+      // chicken reads with true PBR color and no blow-out under the near-neutral
+      // warm rig (WS2). color stays white so the material never tints the map.
+      const materials = Array.isArray(mesh.material)
+        ? mesh.material
+        : [mesh.material];
+      const replaced = materials.map((raw) => {
+        const std = new THREE.MeshStandardMaterial({
+          map,
+          normalMap,
+          roughnessMap,
+          aoMap: hasUv2 ? aoMap : null,
+          aoMapIntensity: hasUv2 ? 1 : 0,
+          color: new THREE.Color(0xffffff),
+          roughness: 1,
+          metalness: 0,
+        });
+        std.needsUpdate = true;
+        const src = raw as THREE.Material | undefined;
+        if (src && "name" in src && src.name) std.name = src.name;
+        return std;
       });
-      mesh.material = Array.isArray(mesh.material) ? cloned : cloned[0];
+      mesh.material = Array.isArray(mesh.material) ? replaced : replaced[0];
     });
 
-    // Scale to a consistent on-screen size off the model's LARGEST bound (a dog
-    // is wide/low, so height alone would make it tiny in frame).
+    // Scale to a consistent on-screen size off the model's TALLEST bound (the
+    // chicken is upright, so its Y extent is what we frame head-to-foot).
     root.updateMatrixWorld(true);
     const preBox = new THREE.Box3().setFromObject(root);
     if (!preBox.isEmpty()) {
       const preSize = new THREE.Vector3();
       preBox.getSize(preSize);
-      const largest = Math.max(preSize.x, preSize.y, preSize.z);
-      if (largest > 0) root.scale.setScalar(MODEL_TARGET_SIZE / largest);
+      const tallest = Math.max(preSize.x, preSize.y, preSize.z);
+      if (tallest > 0) root.scale.setScalar(MODEL_TARGET_SIZE / tallest);
     }
 
-    // Turn the dog to face the camera. The model's forward/nose axis runs along
-    // X; a +PI/2 (plus a ~20deg yaw) rotation about Y swings the nose toward +Z
-    // (the camera) for a friendly three-quarter view. Applied to this INNER
-    // recenter root ONLY — the animated groupRef stays at identity rest so the
-    // useFrame ABSOLUTE-offset math and the CameraRig PINNED_CAM/PINNED_LOOK
-    // additive math remain valid. We recompute the recenter Box3 BELOW, AFTER
-    // this rotation, so the rotated model stays centered on the aim point.
+    // Turn the chicken to face the camera (camera looks down -Z). Applied to
+    // this INNER recenter root ONLY — the animated groupRef stays at identity
+    // rest so the useFrame ABSOLUTE-offset math and the CameraRig
+    // PINNED_CAM/PINNED_LOOK additive math remain valid. We recompute the
+    // recenter Box3 BELOW, AFTER this yaw, so the rotated model stays centered.
     root.rotation.y = BODY_YAW;
 
     // Recenter deterministically off a fresh Box3 of the SCALED + ROTATED model
-    // so the fixed camera reliably frames the dog. Center it horizontally/in
-    // depth and lift it so its vertical center sits at AIM_HEIGHT (mid-body).
+    // so the fixed camera reliably frames the whole bird. Center it
+    // horizontally/in depth and lift it so its vertical center sits at
+    // AIM_HEIGHT (mid-body).
     root.updateMatrixWorld(true);
     const box = new THREE.Box3().setFromObject(root);
     if (!box.isEmpty()) {
@@ -205,12 +281,37 @@ function Pet({
       );
     }
     return root;
-  }, [scene]);
+  }, [fbx, baseColorTex, normalTex, roughnessTex, aoTex]);
 
-  // On unmount, dispose ONLY the resources this component owns. scene.clone(true)
-  // reuses geometry by reference from the loader-cached glTF, so we do NOT
-  // dispose geometry (useGLTF manages it). The materials and their color maps
-  // WERE freshly cloned above and are uniquely owned, so dispose both.
+  // Build the AnimationMixer on the cloned model and start the baked idle clip
+  // ("Take 001") looping. Done in an effect so we never touch refs during
+  // render. If the FBX ships no clip we degrade gracefully (no idle, ambience
+  // still runs).
+  useEffect(() => {
+    const clips = fbx.animations ?? [];
+    if (!clips.length) {
+      console.warn("[PetScene] chicken FBX has no baked clip; idle disabled.");
+      return;
+    }
+    const mixer = new THREE.AnimationMixer(model);
+    const clipAction = mixer.clipAction(clips[0]);
+    clipAction.setLoop(THREE.LoopRepeat, Infinity);
+    clipAction.play();
+    mixerRef.current = mixer;
+    idleActionRef.current = clipAction;
+    return () => {
+      clipAction.stop();
+      mixer.stopAllAction();
+      mixer.uncacheRoot(model);
+      mixerRef.current = null;
+      idleActionRef.current = null;
+    };
+  }, [fbx, model]);
+
+  // On unmount, dispose ONLY the resources this component owns. SkeletonUtils
+  // .clone reuses geometry by reference from the loader-cached fbx, so we do
+  // NOT dispose geometry. The materials + their four maps WERE freshly created
+  // above and are uniquely owned, so dispose them.
   useEffect(() => {
     return () => {
       model.traverse((node) => {
@@ -220,8 +321,11 @@ function Pet({
           ? mesh.material
           : [mesh.material];
         mats.forEach((raw) => {
-          const mat = raw as THREE.Material & { map?: THREE.Texture | null };
+          const mat = raw as THREE.MeshStandardMaterial | undefined;
           mat?.map?.dispose();
+          mat?.normalMap?.dispose();
+          mat?.roughnessMap?.dispose();
+          mat?.aoMap?.dispose();
           mat?.dispose();
         });
       });
@@ -240,21 +344,26 @@ function Pet({
     }
   }, [action, actionNonce]);
 
-  // Drive the whole-group mood/action motion each frame. Unrigged model, so NO
-  // bone lookups — we transform the group itself. Each frame writes ABSOLUTE
-  // values to group.position / group.rotation (the group's rest is identity),
-  // so nothing accumulates frame-to-frame; the inner <primitive> alone carries
-  // the recenter offset.
+  // Drive the baked idle mixer + the whole-group mood/action reaction each
+  // frame. The mixer plays the REAL skeletal idle; the group transform adds a
+  // subtle whole-body ambience + one-shot reaction on top. Each frame writes
+  // ABSOLUTE values to group.position / group.rotation (the group's rest is
+  // identity), so nothing accumulates frame-to-frame.
   useFrame((state, delta) => {
     const group = groupRef.current;
+    const mixer = mixerRef.current;
+    const idle = idleActionRef.current;
     if (!group) return;
 
-    // Reduced motion: hold the pet at its rest transform (identity). Every
-    // frame normally writes ABSOLUTE offsets to this group, so zeroing them =
-    // the exact rest pose (the inner model keeps its own recenter offset; no
-    // pinned constant is touched). Freeze the energy/action envelopes too so
-    // nothing lingers, and skip the per-frame offset math entirely.
+    // Reduced motion: freeze the baked idle at frame 0 and hold the pet at its
+    // rest transform (identity). We pause the action and reset its time to 0 so
+    // the skeleton holds a still pose, and zero every whole-group offset.
     if (reducedMotion) {
+      if (idle) {
+        idle.paused = true;
+        idle.time = 0;
+      }
+      if (mixer) mixer.update(0); // flush the frame-0 pose to the skeleton.
       energyRef.current = 0;
       actionEnvRef.current = 0;
       group.position.set(0, 0, 0);
@@ -302,12 +411,27 @@ function Pet({
     const at = actionTimeRef.current;
     const activeAction = activeActionRef.current;
 
-    // --- Always-on ambience ------------------------------------------------
+    // Advance the baked idle. Its playback speed (timeScale) tracks liveliness:
+    // a happy/lively chicken idles a touch faster, a tired one slower, and a
+    // feed/play/clean impulse briefly speeds it up so the reaction reads on the
+    // skeleton too. ALL of this is driven by mood/action props (lib/pet state),
+    // never a parallel state machine.
+    if (idle) idle.paused = false;
+    let timeScale = 0.7 + 0.6 * energy; // ~0.7..1.3 by mood/wellbeing.
+    if (env > 0.001 && activeAction && activeAction !== "sleep") {
+      timeScale += 0.9 * env; // livelier idle during feed/play/clean.
+    } else if (env > 0.001 && activeAction === "sleep") {
+      timeScale *= 1 - 0.6 * env; // settle: slow the idle right down.
+    }
+    if (idle) idle.setEffectiveTimeScale(timeScale);
+    if (mixer) mixer.update(dt);
+
+    // --- Always-on ambience (whole group) ----------------------------------
     // Gentle breathing bob so the pet is never perfectly static.
     const breathe = 0.008 * Math.sin(t * 1.5);
-    // Livelier bob scaled by energy (a happy dog bounces a bit more).
+    // Livelier bob scaled by energy (a happy chicken bounces a bit more).
     const liveBob = energy * 0.03 * (0.5 + 0.5 * Math.sin(t * 3.4));
-    // Small side-to-side wiggle / sway (reads as a tail-end wiggle).
+    // Small side-to-side sway (reads as a happy waddle).
     const wiggleX = energy * 0.02 * Math.sin(t * 2.6);
     const wiggleRotY = energy * 0.05 * Math.sin(t * 2.1);
 
@@ -317,7 +441,7 @@ function Pet({
     const droopY = -0.03 * droop;
     const droopLean = 0.06 * droop;
 
-    // --- One-shot action reaction -----------------------------------------
+    // --- One-shot action reaction (whole group) ----------------------------
     // feed/play => an excited hop + quick wiggle. clean => a shimmy. sleep =>
     // a settle-down (sink + gentle nod), no hop. Enveloped so it eases out.
     let hopY = 0;
@@ -346,8 +470,9 @@ function Pet({
     group.rotation.x = droopLean + actionRotX;
   });
 
-  // Pointer-down on the dog raises the action through the callback (which calls
-  // VirtualPet.doAction). stopPropagation so the whole mesh reads as one target.
+  // Pointer-down on the chicken raises the action through the callback (which
+  // calls VirtualPet.doAction). stopPropagation so the whole mesh reads as one
+  // target.
   const handleDown = (e: ThreeEvent<PointerEvent>) => {
     e.stopPropagation();
     onPetClick?.();
@@ -368,11 +493,12 @@ function Pet({
   );
 }
 
-// A subtle procedural ground plane so the dog reads as sitting ON something
-// rather than floating over only the ContactShadows. A matte disc at y=0 with a
-// soft radial vignette baked into a small in-memory canvas texture (no external
-// asset, nothing added to the cold-load budget), fading out at the rim. Gated
-// to High; on Fast the dog keeps only its ContactShadows, exactly like today.
+// A subtle procedural ground plane so the chicken reads as standing ON
+// something rather than floating over only the ContactShadows. A matte disc at
+// y=0 with a soft radial vignette baked into a small in-memory canvas texture
+// (no external asset, nothing added to the cold-load budget), fading out at the
+// rim. Gated to High; on Fast the chicken keeps only its ContactShadows,
+// exactly like today.
 function GroundBackdrop() {
   const texture = useMemo(() => {
     const size = 256;
@@ -443,7 +569,7 @@ function petActionPose(action: PetAction | null | undefined): {
   switch (action) {
     case "feed":
     case "play":
-      // Quick playful push-in toward the pup.
+      // Quick playful push-in toward the chicken.
       return {
         posOffset: new THREE.Vector3(0, -0.03, -0.2),
         lookOffset: new THREE.Vector3(0, -0.03, 0),
@@ -619,8 +745,8 @@ function DustMotes({ high }: { high: boolean }) {
   );
 }
 
-// Mood + transient action + wellbeing drive the whole-group motion in <Pet />.
-// The mesh is unrigged, so there is no bone-animation prop.
+// Mood + transient action + wellbeing drive the baked idle timeScale and the
+// whole-group reaction in <Pet />.
 export default function PetScene({
   mood,
   action,
@@ -641,13 +767,15 @@ export default function PetScene({
       // react-three-fiber forwards unknown props to the underlying <canvas>, so
       // these give assistive tech a text alternative for the pet stage.
       role="img"
-      aria-label="Animated 3D schnauzer dog that reacts to feeding, play, sleep and cleaning"
+      aria-label="Animated 3D chicken that reacts to feeding, play, sleep and cleaning"
       onCreated={({ gl, camera }) => {
-        // Tone mapping unchanged (ACESFilmic): the scan renders fine under the
-        // near-neutral warm rig below, so per CONSTRAINT #2 we leave it.
+        // Tone mapping unchanged (ACESFilmic): the chicken's PBR maps read fine
+        // under the near-neutral warm rig below, so per CONSTRAINT #2 we leave
+        // it.
         gl.toneMapping = THREE.ACESFilmicToneMapping;
-        // Fixed, front-facing framing: aim slightly down at the dog's mid-body
-        // so it reads centered on all fours. No OrbitControls, no zoom.
+        // Fixed, front-facing framing: aim at the upright chicken's mid-body so
+        // the whole bird (feet through head/comb) reads centered. No
+        // OrbitControls, no zoom.
         camera.lookAt(0, AIM_HEIGHT, 0);
       }}
     >
@@ -655,8 +783,8 @@ export default function PetScene({
           we keep ONE consistent soft approach across all four scenes — higher
           shadow-map res on High + tuned ContactShadows blur. */}
 
-      {/* Warm, cozy lighting kept near-neutral so the scan's texture shows its
-          true colors — now a proper key/fill/bounce rig (only the key casts
+      {/* Warm, cozy lighting kept near-neutral so the chicken's PBR maps show
+          their true colors — a proper key/fill/bounce rig (only the key casts
           shadows). */}
       <ambientLight intensity={0.8} color="#fff6ea" />
       {/* KEY: front-right; the only shadow caster. Shadow-map res scales with
@@ -713,7 +841,8 @@ export default function PetScene({
         {isHigh ? <GroundBackdrop /> : null}
       </Suspense>
 
-      {/* Kept ContactShadows so the dog never floats; softened blur on High. */}
+      {/* Kept ContactShadows so the chicken never floats; softened blur on
+          High. */}
       <ContactShadows
         position={[0, 0, 0]}
         opacity={0.32}

@@ -223,20 +223,30 @@ grounded in a small, **self-authored** workout knowledge base
 Speech API (`lib/coach/coachVoice.ts`) with an energetic English voice, so
 nothing is downloaded and there is nothing to license for the audio.
 
-The 3D coach is a **static, unrigged OBJ** mesh bundled at
-`public/models/characters/coach/` (`coach.obj` + `coach.mtl` and two PNG
-textures). Because it has no skeleton, the whole model group is animated (a
-gentle bob, sway, and lean while speaking) rather than bone-driven. Its source
-is [frannet82/assets](https://github.com/frannet82/assets) (`coach.zip`) — the
-**project owner's own repository** — bundled here with their permission, so
-there is no third-party redistribution concern. The Coach trainer adds **no new**
+The 3D coach is a **rigged astronaut GLB** ("Ed Stronaut") bundled at
+`public/models/characters/astronaut/astronaut.glb`. It is self-contained (its
+14 textures are embedded, so `GLTFLoader` decodes them automatically) and ships
+a real humanoid skeleton (1 skin, 52 joints, 4 skinned meshes) but **no baked
+animation clips**, so the trainer's limb motion is **procedural**: the arm chain
+(`Left/Right Arm/ForeArm/Hand`) plus the spine and head/neck bones are resolved
+by name, their rest rotations captured once, and bounded per-bone sine offsets
+are added on top while `speaking` (easing back to rest when silent, frozen under
+reduced motion) — the same gesturing approach the chef uses. Its source is
+[frannet82/assets](https://github.com/frannet82/assets)
+(`ed-stronaut-astronaut-extraordinaire.zip`) — the **project owner's own
+repository** — bundled here with their permission, so there is no third-party
+redistribution concern. The Coach trainer adds **no new**
 open-source library or external dataset; it reuses the three.js /
 `@react-three/fiber` / `@react-three/drei` stack already bundled for the other
 projects. As with the chef, the WebGL scene (`components/coach/CoachScene.tsx`)
 is isolated behind `next/dynamic { ssr:false }` in
 `components/coach/CoachChatbot.tsx` so three.js never runs during static
 generation, and every asset URL is wrapped in `asset()` for the `/frankfabric/`
-base path. The whole coach UI is themed with the Smart Fit `sf` Tailwind tokens
+base path. Cloning uses `SkeletonUtils.clone` so the skinned meshes rebind
+correctly, tone mapping stays ACESFilmic under a near-neutral light rig (the
+suit reads its true colors with no blow-out), and the resources owned by the
+loader cache are left for it to manage on unmount. The whole coach UI is themed
+with the Smart Fit `sf` Tailwind tokens
 (bold yellow/black with magenta accents).
 
 On the home-page project gallery, the coach preview occupies the slot that

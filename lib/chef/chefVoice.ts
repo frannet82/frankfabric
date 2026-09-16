@@ -1,122 +1,80 @@
 // ---------------------------------------------------------------------------
-// Chef voice — reads the reply text aloud with the browser Web Speech API.
+// Chef voice — plays a recorded MP3 voice line while the reply is displayed.
 //
-// AUDIO SOURCE / LICENSE: There is NO audio file and no server-side TTS. The
-// speech is produced entirely in the browser by the Web Speech API
-// (window.speechSynthesis + SpeechSynthesisUtterance), so nothing ships as a
-// binary asset, nothing is downloaded, and there is nothing to license. This is
-// fully client-side and static-export safe. Because speak() is only ever called
-// from the user's send gesture, browser autoplay/gesture policies do not block
-// it.
+// AUDIO SOURCE: the chef's voice is a fixed recording shipped as a static
+// asset, public/audio/chef-voice.mp3 (resolved through asset() so it carries
+// the GitHub Pages base path). Playback goes through a single HTMLAudioElement
+// created lazily on the client. This replaces the previous Web Speech API
+// (window.speechSynthesis) approach.
 //
-// speak(text) utters the ACTUAL reply words. Any previous utterance is canceled
-// first so replies never overlap. When muted, nothing is spoken and any ongoing
-// utterance is canceled.
+// FIXED-RECORDING TRADEOFF: because the MP3 is one fixed recording, speak(text)
+// does NOT synthesize the reply words — it plays the SAME recorded line every
+// time. The `text` argument is used only to decide WHETHER to play (a non-empty
+// reply opens the speaking window); it is never spoken. The speaking window is
+// therefore driven by the REAL audio duration, opening on actual playback start
+// and closing on 'ended'/'error'/cancel/stop. So "speaks the actual words"
+// becomes "plays the recorded voice line while the reply is displayed".
 //
-// STUCK-ENGINE BUG ("only the first reply is spoken"): Chrome's SpeechSynthesis
-// can be left in a paused/stuck state so that subsequent speak() calls are
-// queued but never spoken. This wrapper applies several mitigations so EVERY
-// reply is spoken and onStart/onEnd fire every time (the mouth + hand motion
-// depend on that):
-//   1. stop() only calls cancel() when the synth is actually speaking/pending —
-//      an unconditional cancel() on an idle engine can itself wedge it — and
-//      calls resume() afterwards because cancel() can leave Chrome paused.
-//   2. speak() defers the synth.speak(utter) to a 0-timeout after the cancel so
-//      the cancel fully settles before the new utterance is enqueued (enqueuing
-//      in the same tick as a cancel is a known trigger of the stuck state), and
-//      calls resume() defensively before speaking in case the engine was paused.
-//   3. The in-flight utterance is retained on this.current (not just a local
-//      that could be GC'd mid-speech — a dropped utterance fires no onend and
-//      wedges the queue), and a single-shot finish() handler (onend + onerror,
-//      including Chrome's benign 'canceled'/'interrupted' errors) always resets
-//      state so the next reply can speak.
-//   4. A watchdog timer force-finishes the utterance if neither onend nor
-//      onerror fires within a generous bound, so a silently-dropped utterance
-//      can never permanently wedge the queue.
+// LIVE LOUDNESS: unlike SpeechSynthesis (which exposes no amplitude), the
+// MediaElement is routed through a Web Audio graph
+// (AudioContext -> MediaElementAudioSourceNode(audioEl) -> AnalyserNode ->
+// destination) so getLoudness() returns a REAL smoothed 0..1 RMS amplitude
+// while the clip plays. This lets the chef's jaw track the actual voice (the
+// scene already prefers loudness over its sine fallback). getLoudness() returns
+// 0 when idle or muted. If AudioContext is unavailable the audio still plays and
+// getLoudness() falls back to 0 (the scene then uses its sine wobble).
 //
-// VOICE CHARACTER: the chef should sound like an OLD MAN speaking English,
-// ideally with an ITALIAN accent. The reply text is always English and is
-// NEVER translated. We get the Italian-accent effect by preferring an Italian
-// (it-IT) SpeechSynthesis voice to read the English words. Voice selection
-// priority (see pickVoice):
-//   1. an Italian voice — lang it-IT / it, or a name hinting at a common
-//      Italian voice (Luca, Alice, Giorgio, Paolo, Federica, Cosimo, Elsa) —
-//      reading English text yields the Italian accent we want;
-//   2. a MALE English voice (name hints: Daniel, Alex, Fred, Google UK English
-//      Male, Microsoft David/George/Guy/Mark, or an en-* voice with a
-//      male-sounding name);
-//   3. any en-* voice;
-//   4. the platform default (utter.voice left unset).
-// We NEVER gate speaking on voice availability: getVoices() can be empty until
-// the async 'voiceschanged' event fires, so if no preferred voice exists yet we
-// speak with the default and still fire onStart/onEnd. We also listen for
-// 'voiceschanged' to refresh the cached pick so a later-loaded Italian/male
-// voice is used on subsequent replies. The mature-but-natural timbre comes from
-// the utterance params: a near-natural pitch (0.95) and rate (0.97). (These
-// replaced an earlier extreme-low pitch/slow rate that read as robotic — see
-// the utter.rate/utter.pitch note in speak().)
+// ROBUSTNESS (kept in spirit from the old wrapper): anti-overlap (a new clip
+// stops the previous one first), a single-shot finish() so onEnd fires exactly
+// once per play, and a caught play() promise rejection routed through onEnd so a
+// blocked autoplay never wedges the speaking window. speak() is only ever called
+// from the user's send gesture, so browser autoplay policy allows playback; we
+// resume() the AudioContext inside that gesture as well.
 //
-// MOUTH MOTION: SpeechSynthesis does not expose an audio-amplitude stream, so
-// there is no live loudness to drive the jaw. getLoudness() therefore always
-// returns 0 and the 3D scene falls back to its smooth sine wobble while
-// speaking. The "speaking window" is driven by real utterance start/end events
-// via the onStart/onEnd callbacks passed to speak(), so the mouth moves exactly
-// while the words are spoken and stops the instant speech ends. On browsers
-// lacking SpeechSynthesis we still open a short timed speaking window (estimated
-// from word count) so the jaw animates and no error is thrown.
+// All of this is fully client-side and static-export safe: nothing touches
+// window/Audio at module load — the element and audio graph are created lazily
+// on first speak() (guarded by typeof window / typeof Audio).
 // ---------------------------------------------------------------------------
 
+import { asset } from "@/lib/asset";
+
 type SpeakCallbacks = {
-  // Fired when speech actually begins (mouth-motion window opens).
+  // Fired when playback actually begins (mouth-motion window opens).
   onStart?: () => void;
-  // Fired when speech ends, is canceled, or errors (mouth-motion window closes).
+  // Fired when playback ends, is canceled, or errors (mouth-motion window closes).
   onEnd?: () => void;
 };
 
+const CHEF_VOICE_SRC = "/audio/chef-voice.mp3";
+
 export class ChefVoice {
   private muted = false;
-  // The utterance currently in flight, so we can detach handlers if superseded.
-  private current: SpeechSynthesisUtterance | null = null;
-  // Fallback timer id when SpeechSynthesis is unavailable.
-  private fallbackTimer: ReturnType<typeof setTimeout> | null = null;
-  // Deferred-speak timer: after cancel() we enqueue the next utterance on a
-  // 0-timeout so the cancel fully settles first (Chrome stuck-engine bug).
-  private speakTimer: ReturnType<typeof setTimeout> | null = null;
-  // Safety timer: if neither onend nor onerror fires for the in-flight utterance
-  // within a bound (some engines silently drop an utterance and never fire an
-  // end event, wedging the queue), we force-finish so the next reply can speak.
-  private watchdogTimer: ReturnType<typeof setTimeout> | null = null;
-  // Cached preferred voice, refreshed when 'voiceschanged' fires so a
-  // later-loaded Italian/male voice is picked up on subsequent replies.
-  private pickedVoice: SpeechSynthesisVoice | null = null;
-  // The 'voiceschanged' listener we attached, kept so dispose() can detach it.
-  private voicesChangedHandler: (() => void) | null = null;
+  // The HTMLAudioElement, created lazily on the client on first speak().
+  private audio: HTMLAudioElement | null = null;
+  // Web Audio graph for real loudness. Created lazily alongside the element.
+  private audioCtx: AudioContext | null = null;
+  private sourceNode: MediaElementAudioSourceNode | null = null;
+  private analyser: AnalyserNode | null = null;
+  private timeData: Uint8Array<ArrayBuffer> | null = null;
+  // True once the analyser graph could not be built, so we stop retrying and
+  // just play the audio with getLoudness() -> 0.
+  private analyserUnavailable = false;
+  // Smoothed loudness, eased toward the raw RMS each read for a stable jaw.
+  private smoothedLoudness = 0;
+  // Whether a clip is currently playing (gates getLoudness()).
+  private playing = false;
+  // finish() bound to the in-flight play, so a superseding play can detach it.
+  private currentFinish: (() => void) | null = null;
 
   constructor() {
-    // Prime the voice cache and keep it fresh. getVoices() is often empty on
-    // first call and only populates after the async 'voiceschanged' event, so
-    // we (re)pick on that event. Guard for environments without the API /
-    // addEventListener (SSR, older browsers) — never throw.
-    const synth = this.synth;
-    if (synth) {
-      this.pickedVoice = this.pickVoice();
-      if (typeof synth.addEventListener === "function") {
-        this.voicesChangedHandler = () => {
-          this.pickedVoice = this.pickVoice();
-        };
-        synth.addEventListener("voiceschanged", this.voicesChangedHandler);
-      }
-    }
+    // Nothing to prime — the element and audio graph are created lazily on the
+    // first speak() call (which happens inside a user gesture), keeping module
+    // load side-effect free and static-export / SSR safe.
   }
 
   /** Whether audio is currently muted. */
   get isMuted(): boolean {
     return this.muted;
-  }
-
-  private get synth(): SpeechSynthesis | null {
-    if (typeof window === "undefined") return null;
-    return window.speechSynthesis ?? null;
   }
 
   setMuted(muted: boolean): void {
@@ -128,301 +86,248 @@ export class ChefVoice {
   }
 
   /**
-   * Cancel any in-flight speech/timers and close the mouth-motion window.
-   *
-   * STUCK-ENGINE MITIGATION: Chrome can be left in a paused/stuck state if
-   * cancel() is called when nothing is actually speaking, or if a new speak()
-   * follows a cancel() in the same tick — after which subsequent utterances are
-   * queued but never spoken (the "only the first reply is heard" bug). So we
-   * only call cancel() when the synth is genuinely speaking or has a pending
-   * utterance, and we call resume() afterwards because cancel() can leave the
-   * engine paused.
+   * Lazily create the HTMLAudioElement pointing at the recorded MP3. Guards
+   * typeof window / typeof Audio so it never runs during SSR / static export.
+   * Returns null when audio is unavailable (the caller then no-ops gracefully).
+   */
+  private ensureAudio(): HTMLAudioElement | null {
+    if (this.audio) return this.audio;
+    if (typeof window === "undefined" || typeof Audio === "undefined") {
+      return null;
+    }
+    const el = new Audio(asset(CHEF_VOICE_SRC));
+    // Same-origin static file, so no crossOrigin needed. Preload metadata so the
+    // clip is ready to start promptly on the send gesture.
+    el.preload = "auto";
+    this.audio = el;
+    return el;
+  }
+
+  /**
+   * Lazily build the Web Audio graph so getLoudness() can read real amplitude:
+   * AudioContext -> MediaElementAudioSourceNode(audioEl) -> AnalyserNode ->
+   * destination (the destination hop keeps the audio audible). If the API is
+   * missing or graph creation throws, mark it unavailable and let the audio play
+   * with getLoudness() -> 0.
+   */
+  private ensureAnalyser(el: HTMLAudioElement): void {
+    if (this.analyser || this.analyserUnavailable) return;
+    if (typeof window === "undefined") {
+      this.analyserUnavailable = true;
+      return;
+    }
+    const Ctx =
+      window.AudioContext ??
+      (window as unknown as { webkitAudioContext?: typeof AudioContext })
+        .webkitAudioContext;
+    if (!Ctx) {
+      this.analyserUnavailable = true;
+      return;
+    }
+    try {
+      const ctx = new Ctx();
+      // A MediaElementAudioSourceNode can only be created once per element; the
+      // element is reused for every play, so this graph is built exactly once.
+      const source = ctx.createMediaElementSource(el);
+      const analyser = ctx.createAnalyser();
+      analyser.fftSize = 1024;
+      analyser.smoothingTimeConstant = 0.8;
+      source.connect(analyser);
+      analyser.connect(ctx.destination);
+      this.audioCtx = ctx;
+      this.sourceNode = source;
+      this.analyser = analyser;
+      this.timeData = new Uint8Array(new ArrayBuffer(analyser.fftSize));
+    } catch {
+      // Some browsers throw if the element is tainted / already sourced. Fall
+      // back to silent-loudness but keep audio playing.
+      this.analyserUnavailable = true;
+      this.analyser = null;
+      this.timeData = null;
+    }
+  }
+
+  /**
+   * Stop any in-flight playback and close the mouth-motion window. Pauses the
+   * element, resets to the start, detaches the in-flight finish handler, and
+   * clears the playing flag / smoothed loudness. Does NOT fire onEnd itself
+   * unless a finish handler is still attached (so an explicit stop closes the
+   * window exactly once).
    */
   private stop(): void {
-    if (this.fallbackTimer) {
-      clearTimeout(this.fallbackTimer);
-      this.fallbackTimer = null;
-    }
-    if (this.speakTimer) {
-      clearTimeout(this.speakTimer);
-      this.speakTimer = null;
-    }
-    if (this.watchdogTimer) {
-      clearTimeout(this.watchdogTimer);
-      this.watchdogTimer = null;
-    }
-    if (this.current) {
-      // Detach so the cancel's onend does not re-fire the caller's onEnd twice.
-      this.current.onstart = null;
-      this.current.onend = null;
-      this.current.onerror = null;
-      this.current = null;
-    }
-    const synth = this.synth;
-    if (!synth) return;
-    // Only cancel when there's actually something to cancel — an unconditional
-    // cancel() on an idle engine is one trigger of Chrome's stuck state.
-    if (synth.speaking || synth.pending) {
-      synth.cancel();
-      // cancel() can leave the engine paused on Chrome; nudge it back to ready
-      // so the NEXT speak() is not silently swallowed.
-      synth.resume();
-    }
-  }
-
-  /**
-   * Pick the best available voice for an OLD MAN reading English, ideally with
-   * an Italian accent. Priority: (1) an Italian voice (it-* lang or an Italian
-   * voice-name hint) — reading the English reply gives the Italian accent;
-   * (2) a male English voice (male name hint); (3) any en-* voice; (4) null so
-   * the utterance uses the platform default. Never gate speaking on this:
-   * getVoices() can be empty until the async 'voiceschanged' event fires, in
-   * which case this returns null and the default voice is used.
-   */
-  private pickVoice(): SpeechSynthesisVoice | null {
-    const synth = this.synth;
-    if (!synth) return null;
-    const voices = synth.getVoices();
-    if (!voices || voices.length === 0) return null;
-
-    const nameHas = (v: SpeechSynthesisVoice, hints: string[]) => {
-      const name = (v.name ?? "").toLowerCase();
-      return hints.some((h) => name.includes(h));
-    };
-    const isItalianLang = (v: SpeechSynthesisVoice) =>
-      (v.lang ?? "").toLowerCase().startsWith("it");
-    const isEnglishLang = (v: SpeechSynthesisVoice) =>
-      (v.lang ?? "").toLowerCase().startsWith("en");
-
-    // QUALITY PREFERENCE (issue 3): among any candidate set, prefer the most
-    // natural-sounding voice and AVOID the lowest-quality fallback. Higher
-    // score = better. We reward names hinting at enhanced/cloud/neural engines
-    // ('google','natural','enhanced','premium','neural', plus well-known
-    // high-quality OS voices) and reward remote voices (localService === false,
-    // which on most browsers are the higher-quality cloud voices). This is
-    // robust across browsers: when none of these signals exist the scores tie
-    // and we keep the first candidate (today's behaviour).
-    const qualityNameHints = [
-      "google",
-      "natural",
-      "enhanced",
-      "premium",
-      "neural",
-      "siri",
-      "wavenet",
-      "eloquence",
-    ];
-    const qualityScore = (v: SpeechSynthesisVoice) => {
-      let score = 0;
-      // Remote/cloud voices are typically the higher-quality ones.
-      if (v.localService === false) score += 2;
-      if (nameHas(v, qualityNameHints)) score += 3;
-      return score;
-    };
-    // Return the highest-scoring voice from a candidate list, preserving list
-    // order on ties (so an explicit priority order still wins when quality is
-    // equal). null when the list is empty.
-    const best = (
-      candidates: SpeechSynthesisVoice[]
-    ): SpeechSynthesisVoice | null => {
-      let chosen: SpeechSynthesisVoice | null = null;
-      let bestScore = -Infinity;
-      for (const v of candidates) {
-        const s = qualityScore(v);
-        if (s > bestScore) {
-          bestScore = s;
-          chosen = v;
-        }
+    const finish = this.currentFinish;
+    this.currentFinish = null;
+    const el = this.audio;
+    if (el) {
+      el.onplaying = null;
+      el.onended = null;
+      el.onerror = null;
+      try {
+        el.pause();
+        el.currentTime = 0;
+      } catch {
+        /* ignore */
       }
-      return chosen;
-    };
-
-    // Common Italian SpeechSynthesis voice-name hints (macOS/iOS/Windows).
-    const italianNameHints = [
-      "luca",
-      "alice",
-      "giorgio",
-      "paolo",
-      "federica",
-      "cosimo",
-      "elsa",
-      "italian",
-      "italiano",
-    ];
-    // Common male-English voice-name hints across platforms.
-    const maleNameHints = [
-      "daniel",
-      "alex",
-      "fred",
-      "george",
-      "guy",
-      "mark",
-      "david",
-      "male",
-      "uk english male",
-      "us english male",
-    ];
-
-    // (1) Italian-accent: an it-* voice, or a voice named like a known Italian
-    // one. An Italian voice reading English text speaks with an Italian accent.
-    // Prefer the highest-QUALITY Italian voice among those available.
-    const italianCandidates = voices.filter(
-      (v) => isItalianLang(v) || nameHas(v, italianNameHints)
-    );
-    const italian = best(italianCandidates);
-    if (italian) return italian;
-
-    // (2) A male English voice by name hint — highest-quality among them.
-    const maleEnglish = best(
-      voices.filter((v) => isEnglishLang(v) && nameHas(v, maleNameHints))
-    );
-    if (maleEnglish) return maleEnglish;
-
-    // (3) Any English voice — prefer the highest-quality one (so we never fall
-    // to the lowest-quality en-* voice when a natural/cloud one exists).
-    const anyEnglish = best(voices.filter(isEnglishLang));
-    if (anyEnglish) return anyEnglish;
-
-    // (4) Platform default.
-    return null;
+    }
+    this.playing = false;
+    this.smoothedLoudness = 0;
+    // Fire the pending onEnd exactly once so the speaking window closes.
+    if (finish) finish();
   }
 
   /**
-   * Speak the reply text aloud. Cancels any in-progress utterance first, then
-   * reads `text` with the browser SpeechSynthesis voice. Fires onStart when
-   * speech begins and onEnd when it finishes (or errors / is canceled), so the
-   * caller can open/close the mouth-motion window against the REAL speech
-   * duration. Does nothing (and does not fire callbacks) when muted.
+   * Play the recorded chef voice line while the reply is displayed. If muted,
+   * no-op (fires no callbacks). Otherwise stops any currently-playing clip first
+   * (anti-overlap), then plays the MP3 from the start. onStart fires on real
+   * playback start ('playing'); onEnd fires on 'ended'/'error'/cancel/stop.
+   *
+   * NOTE: `text` is NOT synthesized — the MP3 is a fixed recording. `text` only
+   * gates playback: a non-empty reply plays the line; an empty one does nothing.
    */
   speak(text: string, callbacks: SpeakCallbacks = {}): void {
     if (this.muted) return;
     const trimmed = text.trim();
     if (!trimmed) return;
 
-    // Never overlap replies.
+    // Never overlap: stop the previous clip and close its window first.
     this.stop();
 
+    const el = this.ensureAudio();
     const { onStart, onEnd } = callbacks;
-    const synth = this.synth;
 
-    // Graceful degradation: no SpeechSynthesis (e.g. some older browsers). Open
-    // a short timed window estimated from word count (~180 wpm) so the jaw still
-    // animates, and never throw.
-    if (
-      !synth ||
-      typeof window === "undefined" ||
-      typeof SpeechSynthesisUtterance === "undefined"
-    ) {
-      const words = trimmed.split(/\s+/).length;
-      const ms = Math.max(900, Math.min(6000, (words / 180) * 60000));
+    // Graceful degradation: no HTMLAudioElement (SSR / very old browser). Open a
+    // short timed window so the avatar still animates, and never throw.
+    if (!el) {
       onStart?.();
-      this.fallbackTimer = setTimeout(() => {
-        this.fallbackTimer = null;
+      let fallbackTimer: ReturnType<typeof setTimeout> | null = null;
+      const finishFallback = () => {
+        if (fallbackTimer) {
+          clearTimeout(fallbackTimer);
+          fallbackTimer = null;
+        }
+      };
+      fallbackTimer = setTimeout(() => {
+        fallbackTimer = null;
+        if (this.currentFinish === finishFallback) this.currentFinish = null;
         onEnd?.();
-      }, ms);
+      }, 1200);
+      this.currentFinish = finishFallback;
       return;
     }
 
-    const utter = new SpeechSynthesisUtterance(trimmed);
-    // NATURAL timbre (issue 3): the previous extreme low pitch (0.7) was the
-    // primary cause of the "robot" complaint. Move pitch to a natural,
-    // slightly-warm value and keep the rate near natural so the chef reads as a
-    // real, mature-sounding voice rather than a synthetic drone. Combined with
-    // the higher-quality voice preference in pickVoice(), this removes the
-    // robotic character. (True neural TTS is not achievable within Web Speech +
-    // static export without a new dependency — see FEAT-002 findings.)
-    utter.rate = 0.97;
-    utter.pitch = 0.95;
-    utter.volume = 1;
-    // Re-pick in case voices loaded since construction; fall back to the cached
-    // pick. Never gate on availability — null just means "use the default".
-    const voice = this.pickVoice() ?? this.pickedVoice;
-    if (voice) {
-      this.pickedVoice = voice;
-      utter.voice = voice;
-      // Match the utterance language to the chosen voice so the engine reads the
-      // (still English) text with that voice/accent. Safe even for it-* voices:
-      // the WORDS stay English, only the accent changes.
-      if (voice.lang) utter.lang = voice.lang;
+    // Wire the real-loudness graph (best effort) before playing.
+    this.ensureAnalyser(el);
+    // Resume the AudioContext inside this user gesture (autoplay policy).
+    if (this.audioCtx && this.audioCtx.state === "suspended") {
+      void this.audioCtx.resume().catch(() => {});
     }
 
-    // finish() runs exactly once per utterance, whether it ends normally, is
-    // canceled/interrupted, or errors. It clears the in-flight reference and
-    // fires onEnd so the mouth + hand motion window closes and — crucially — so
-    // the wrapper is never left in a state where the NEXT speak() no-ops. Note
-    // Chrome fires a benign 'canceled'/'interrupted' onerror when cancel() runs;
-    // routing that through finish() (rather than leaving state dangling) is what
-    // lets the second, third, … reply speak.
+    // finish() runs exactly once per play: closes the window, resets flags, and
+    // fires onEnd. Detaching happens via currentFinish so a superseding play or
+    // an explicit stop() cannot double-fire it.
     let finished = false;
     const finish = () => {
       if (finished) return;
       finished = true;
-      if (this.watchdogTimer) {
-        clearTimeout(this.watchdogTimer);
-        this.watchdogTimer = null;
-      }
-      // Only clear the reference if this utterance is still the current one, so
-      // a superseding speak() (which already set a new this.current) is untouched.
-      if (this.current === utter) this.current = null;
+      if (this.currentFinish === finish) this.currentFinish = null;
+      this.playing = false;
+      this.smoothedLoudness = 0;
+      el.onplaying = null;
+      el.onended = null;
+      el.onerror = null;
       onEnd?.();
     };
+    this.currentFinish = finish;
 
-    utter.onstart = () => {
+    el.onplaying = () => {
+      this.playing = true;
       onStart?.();
     };
-    utter.onend = finish;
-    utter.onerror = finish;
+    el.onended = finish;
+    el.onerror = finish;
 
-    // Retain a reference to the in-flight utterance for the whole call. Keeping
-    // it on `this.current` (not just as a local that could be GC'd mid-speech,
-    // which some engines treat as a dropped utterance that fires no onend and
-    // wedges the queue) holds it alive until onend/onerror actually fires.
-    this.current = utter;
+    try {
+      el.currentTime = 0;
+    } catch {
+      /* ignore */
+    }
 
-    // Estimate a generous upper bound on the utterance's duration (~150 wpm at
-    // rate 0.97) and arm a watchdog: if neither onend nor onerror fires within
-    // that bound (a silently-dropped utterance), force-finish so state resets
-    // and the next reply can speak.
-    const words = trimmed.split(/\s+/).length;
-    const estMs = Math.max(1500, Math.min(20000, (words / 150) * 60000));
-    this.watchdogTimer = setTimeout(finish, estMs + 4000);
-
-    // Defensive resume(): if the engine was left paused (by a prior cancel or
-    // an OS media event), speak() alone won't produce audio. resume() first.
-    synth.resume();
-
-    // Defer the actual enqueue to the next tick so any cancel() issued in stop()
-    // above has fully settled before we speak — enqueuing in the SAME tick as a
-    // cancel is a known trigger of Chrome's "queued but never spoken" state.
-    this.speakTimer = setTimeout(() => {
-      this.speakTimer = null;
-      // If a newer speak() or stop() superseded this utterance before the tick
-      // elapsed, don't enqueue the stale one.
-      if (this.current !== utter) return;
-      synth.resume();
-      synth.speak(utter);
-    }, 0);
+    // play() returns a promise that rejects if the browser blocks playback.
+    // Route the rejection through finish() so a blocked play never wedges the
+    // speaking window.
+    const playPromise = el.play();
+    if (playPromise && typeof playPromise.then === "function") {
+      playPromise.catch(() => finish());
+    }
   }
 
   /**
-   * SpeechSynthesis exposes no live amplitude, so loudness is always 0 and the
-   * 3D scene falls back to a sine-wobble jaw while speaking. Kept for API
-   * compatibility with the scene's optional getLoudness prop.
+   * Real smoothed 0..1 loudness from the AnalyserNode's time-domain data while a
+   * clip plays. Returns 0 when idle, muted, or when the Web Audio graph is
+   * unavailable (the scene then uses its sine fallback).
    */
   getLoudness(): number {
-    return 0;
+    if (this.muted || !this.playing) return 0;
+    const analyser = this.analyser;
+    const data = this.timeData;
+    if (!analyser || !data) return 0;
+    analyser.getByteTimeDomainData(data);
+    // RMS around the 128 mid-point, normalized to ~0..1.
+    let sumSquares = 0;
+    for (let i = 0; i < data.length; i++) {
+      const v = (data[i] - 128) / 128;
+      sumSquares += v * v;
+    }
+    const rms = Math.sqrt(sumSquares / data.length);
+    // Scale up a touch so speech (which rarely hits full-scale) drives a lively
+    // jaw, and clamp to 0..1.
+    const level = Math.min(1, rms * 2.2);
+    // Ease toward the new level for a stable, non-jittery motion.
+    this.smoothedLoudness += (level - this.smoothedLoudness) * 0.5;
+    return this.smoothedLoudness;
   }
 
+  /**
+   * Stop playback, tear down the audio graph and listeners, close the
+   * AudioContext, and release the element. Safe to call multiple times.
+   */
   dispose(): void {
     this.stop();
-    const synth = this.synth;
-    if (
-      synth &&
-      this.voicesChangedHandler &&
-      typeof synth.removeEventListener === "function"
-    ) {
-      synth.removeEventListener("voiceschanged", this.voicesChangedHandler);
+    const el = this.audio;
+    if (el) {
+      el.onplaying = null;
+      el.onended = null;
+      el.onerror = null;
+      try {
+        el.pause();
+      } catch {
+        /* ignore */
+      }
+      // Drop the source so the element can be GC'd.
+      try {
+        el.removeAttribute("src");
+        el.load();
+      } catch {
+        /* ignore */
+      }
     }
-    this.voicesChangedHandler = null;
+    try {
+      this.sourceNode?.disconnect();
+    } catch {
+      /* ignore */
+    }
+    try {
+      this.analyser?.disconnect();
+    } catch {
+      /* ignore */
+    }
+    if (this.audioCtx && this.audioCtx.state !== "closed") {
+      void this.audioCtx.close().catch(() => {});
+    }
+    this.audio = null;
+    this.sourceNode = null;
+    this.analyser = null;
+    this.timeData = null;
+    this.audioCtx = null;
   }
 }
