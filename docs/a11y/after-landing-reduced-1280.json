@@ -1,10 +1,10 @@
 {
-  "label": "after-landing",
+  "label": "after-landing-reduced",
   "route": "/",
   "url": "http://localhost:5198/frankfabric/",
   "basePath": "/frankfabric",
-  "reducedMotion": "not-emulated",
-  "screenshotAnimations": "disabled",
+  "reducedMotion": "reduce",
+  "screenshotAnimations": "allow",
   "width": 1280,
   "height": 900,
   "hasCanvas": false,
@@ -13,6 +13,6 @@
   "innerWidth": 1280,
   "clientWidth": 1280,
   "noHorizontalScroll": true,
-  "screenshot": "/projects/sandbox/frankfabric/docs/a11y/after-landing-1280.png",
-  "measuredAt": "2026-09-16T06:29:17.324Z"
+  "screenshot": "/projects/sandbox/frankfabric/docs/a11y/after-landing-reduced-1280.png",
+  "measuredAt": "2026-09-16T06:31:56.981Z"
 }

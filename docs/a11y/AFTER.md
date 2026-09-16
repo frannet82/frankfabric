@@ -1,7 +1,10 @@
-# WS4 Mobile & Accessibility — AFTER (FEAT-002)
+# WS4 Mobile & Accessibility — AFTER (FEAT-002 implementation + FEAT-003 evidence)
 
-Machine/runtime: Node v22.23.2 via `/opt/toolchains`; Chromium via `/usr/local/bin/chrome`
-(playwright chromium), headless, `--use-gl=angle --use-angle=swiftshader --no-sandbox`.
+Machine/runtime: Node v22.23.2 via `/opt/toolchains/.nvm/versions/node/v22.23.2/bin`; browser is
+Chromium via `CHROME_PATH=/usr/local/bin/chrome` (the bundled Playwright chromium, driven through
+`playwright-core`), headless, launched with `--no-sandbox --use-gl=angle --use-angle=swiftshader
+--ignore-gpu-blocklist`. Evidence produced by `scripts/measure-viewports.mjs` against the built
+static export in `out/` (served under base path `/frankfabric`). Network mode: OPEN_INTERNET.
 
 Gate (verbatim expectation):
 - `npm run lint` → exactly ONE pre-existing warning `@next/next/no-page-custom-font` in
@@ -38,6 +41,48 @@ CSS animations (landing page + spinners): global rule in `app/globals.css`
 `@media (prefers-reduced-motion: reduce)` neutralizes ALL `animation-*`/`transition-*` (so
 animate-scan/ticker/marquee/emberPulse/ringSpin/floatY + SceneLoader spinners + hover translate
 are stilled) without deleting keyframes; content still renders at its start position.
+
+Motion returns when OFF: the hook reports `false` (server snapshot and no-preference client), the
+`reducedMotion` prop is `false`, every gate branch falls through to the existing per-frame code, and
+`autoRotate = !reducedMotion && animation === 'rest'` re-enables the turntable — so behaviour is
+byte-for-byte identical to before WS4 when the OS preference is "no preference". A mid-session OS
+toggle is honoured live because the hook subscribes to the `MediaQueryList` `change` event.
+
+### Reduced-motion demonstration (emulated media: reduce vs no-preference)
+
+The harness gained a `--reduced-motion <reduce|no-preference>` flag that calls
+`page.emulateMedia({ reducedMotion })` BEFORE navigating, plus `--animations <disabled|allow>` for
+the screenshot call. Emulating the media feature is what the shared `useReducedMotion()` hook reads
+(`window.matchMedia('(prefers-reduced-motion: reduce)')`), so the emulation drives the SAME gate the
+real OS preference would. Each JSON records `reducedMotion` and `screenshotAnimations`.
+
+Evidence stills (1280x900, `animations: 'allow'` so a running CSS-animation frame is captured):
+
+| pair | reduce | no-preference |
+|---|---|---|
+| Landing (CSS animations) | `after-landing-reduced-1280.png` (`reducedMotion:"reduce"`) | `after-landing-motion-1280.png` (`reducedMotion:"no-preference"`) |
+| Virtual pet (WebGL idle motion + dust motes) | `after-pet-reduced-1280.png` | `after-pet-motion-1280.png` |
+
+What the stills show and how to read them honestly:
+- LANDING: clearest visual proof. In the no-preference still the top status ticker and the
+  "CORE STACK & PLATFORMS" marquee rail are captured MID-SCROLL (rail translated, e.g. the marquee
+  reads "...ing  Next.js  AWS  Adobe Experience Manager..."). In the reduce still the same rails are
+  pinned at their START position (marquee reads "AWS  Adobe Experience Manager  Databricks  Python
+  Machine Learning  Next.js" from the left edge, ticker at a fresh offset) because the global
+  `@media (prefers-reduced-motion: reduce)` rule collapsed `animation-duration` to `0.001ms`,
+  neutralizing animate-scan/ticker/marquee/emberPulse/ringSpin/floatY. No content is lost — the rails
+  still render, just static.
+- PET: both files are deterministic single frames, so a still can only hint at the difference; the
+  authoritative proof is that `after-pet-reduced-1280.json` records `reducedMotion:"reduce"`, which
+  flips the hook and therefore GATES the JS-driven per-frame WebGL motion. The exact gated code paths
+  (verified in source) are: `components/pet/PetScene.tsx` Pet `useFrame` early-returns at
+  `if (reducedMotion) { energyRef.current = 0; … return; }` (freezes breathing bob / wiggle / droop
+  AND the feed/play/sleep/clean one-shot hop), CameraRig pulse is forced to 0 (holds the pinned
+  camera), and `DustMotes` is not rendered (`{reducedMotion ? null : <DustMotes high={isHigh} />}`).
+  Because the existing harness screenshots freeze CSS animations and a WebGL frame is a single
+  instant, per-frame ambient WebGL motion cannot be shown as a diff in a static PNG; we document the
+  gated branch + cite that emulateMedia toggled the hook, per the honest-evidence guidance. The
+  landing pair supplies the visual proof of the CSS side.
 
 ## (D) Canvas text alternatives (final aria-labels, role="img")
 

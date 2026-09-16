@@ -3,6 +3,8 @@
   "route": "/projects/digital-wardrobe/",
   "url": "http://localhost:5198/frankfabric/projects/digital-wardrobe/",
   "basePath": "/frankfabric",
+  "reducedMotion": "not-emulated",
+  "screenshotAnimations": "disabled",
   "width": 1280,
   "height": 900,
   "hasCanvas": true,
@@ -12,5 +14,5 @@
   "clientWidth": 1280,
   "noHorizontalScroll": true,
   "screenshot": "/projects/sandbox/frankfabric/docs/a11y/after-wardrobe-1280.png",
-  "measuredAt": "2026-09-16T06:22:51.711Z"
+  "measuredAt": "2026-09-16T06:29:52.727Z"
 }

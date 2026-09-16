@@ -1,18 +1,11 @@
 {
-  "label": "after-landing",
+  "label": "after-landing-reduced",
   "route": "/",
   "url": "http://localhost:5198/frankfabric/",
   "basePath": "/frankfabric",
-  "reducedMotion": "not-emulated",
-  "screenshotAnimations": "disabled",
+  "reducedMotion": "reduce",
+  "screenshotAnimations": "allow",
   "widths": [
-    {
-      "width": 390,
-      "height": 844,
-      "scrollWidth": 390,
-      "innerWidth": 390,
-      "noHorizontalScroll": true
-    },
     {
       "width": 1280,
       "height": 900,
@@ -22,5 +15,5 @@
     }
   ],
   "allNoHorizontalScroll": true,
-  "measuredAt": "2026-09-16T06:29:17.346Z"
+  "measuredAt": "2026-09-16T06:31:56.991Z"
 }

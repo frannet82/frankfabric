@@ -3,6 +3,8 @@
   "route": "/projects/coach-trainer/",
   "url": "http://localhost:5198/frankfabric/projects/coach-trainer/",
   "basePath": "/frankfabric",
+  "reducedMotion": "not-emulated",
+  "screenshotAnimations": "disabled",
   "widths": [
     {
       "width": 390,
@@ -20,5 +22,5 @@
     }
   ],
   "allNoHorizontalScroll": true,
-  "measuredAt": "2026-09-16T06:22:35.204Z"
+  "measuredAt": "2026-09-16T06:29:40.322Z"
 }

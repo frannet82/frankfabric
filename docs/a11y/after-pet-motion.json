@@ -1,18 +1,11 @@
 {
-  "label": "after-pet",
+  "label": "after-pet-motion",
   "route": "/projects/virtual-pet/",
   "url": "http://localhost:5198/frankfabric/projects/virtual-pet/",
   "basePath": "/frankfabric",
-  "reducedMotion": "not-emulated",
-  "screenshotAnimations": "disabled",
+  "reducedMotion": "no-preference",
+  "screenshotAnimations": "allow",
   "widths": [
-    {
-      "width": 390,
-      "height": 844,
-      "scrollWidth": 390,
-      "innerWidth": 390,
-      "noHorizontalScroll": true
-    },
     {
       "width": 1280,
       "height": 900,
@@ -22,5 +15,5 @@
     }
   ],
   "allNoHorizontalScroll": true,
-  "measuredAt": "2026-09-16T06:30:07.516Z"
+  "measuredAt": "2026-09-16T06:32:05.633Z"
 }

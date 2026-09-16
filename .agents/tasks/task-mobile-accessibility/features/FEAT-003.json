@@ -2,7 +2,7 @@
   "id": "FEAT-003",
   "type": "docs",
   "description": "Capture AFTER evidence proving the WS4 acceptance criteria and write the walkthrough the orchestrator needs for the PR description. Uses the FEAT-001 harness against the FEAT-002 build. Depends on FEAT-002.",
-  "status": "pending",
+  "status": "in_progress",
   "steps": [
     "Rebuild: export PATH=\"/opt/toolchains/.nvm/versions/node/v22.23.2/bin:$PATH\" && npm run build.",
     "Run the viewport harness for all five routes at BOTH 390x844 and 1280x900 against the built out/, writing PNG + JSON under docs/a11y/after-*. Confirm every JSON reports noHorizontalScroll:true (scrollWidth<=innerWidth) at both widths.",

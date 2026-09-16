@@ -27,6 +27,26 @@
 // Exit code is 0 only when every measured width has noHorizontalScroll === true
 // (and the expected canvas/ load was reached); otherwise 2, so the harness can
 // gate a "no horizontal scroll" assertion in CI or a script.
+//
+// REDUCED-MOTION EVIDENCE FLAGS (added for WS4 FEAT-003):
+//   --reduced-motion <reduce|no-preference>  (alias --emulate)
+//       Calls page.emulateMedia({ reducedMotion: <value> }) BEFORE navigating so
+//       the shared useReducedMotion() hook (matchMedia) reports that preference
+//       and the WebGL scene motion + the @media (prefers-reduced-motion:reduce)
+//       CSS rule are captured in the corresponding state. The value is recorded
+//       in every JSON as `reducedMotion`.
+//   --animations <disabled|allow>            (default disabled)
+//       Passed to page.screenshot({ animations }). The default 'disabled' freezes
+//       CSS animations for a deterministic still (used for the scroll-assertion
+//       shots). Use 'allow' when you want the screenshot to capture a running CSS
+//       animation frame for a visual reduce-vs-motion comparison.
+//   --widths <csv>   e.g. --widths 1280  to capture a single width.
+//
+// Examples (reduced-motion proof, one 3D demo + landing at desktop width):
+//   node scripts/measure-viewports.mjs --route /projects/virtual-pet/ \
+//     --label after-pet-reduced --reduced-motion reduce --animations allow --widths 1280
+//   node scripts/measure-viewports.mjs --route /projects/virtual-pet/ \
+//     --label after-pet-motion  --reduced-motion no-preference --animations allow --widths 1280
 
 import { createServer } from 'node:http';
 import { readFile, mkdir, writeFile, stat } from 'node:fs/promises';
@@ -43,6 +63,17 @@ const LABEL = args.get('label') || 'viewport';
 const OUT = resolve(args.get('out') || 'docs/a11y');
 const PORT = Number(args.get('port') || 5198);
 
+// Reduced-motion emulation (WS4 FEAT-003). --reduced-motion / --emulate accepts
+// 'reduce' or 'no-preference'; anything else (or unset) means "do not emulate"
+// (Playwright default, which follows no-preference). Recorded in the JSON.
+const RM_RAW = args.get('reduced-motion') ?? args.get('emulate') ?? null;
+const REDUCED_MOTION =
+  RM_RAW === 'reduce' || RM_RAW === 'no-preference' ? RM_RAW : null;
+
+// Screenshot animation handling: 'disabled' (default, deterministic still) or
+// 'allow' (capture a running CSS-animation frame for a visual comparison).
+const ANIMATIONS = args.get('animations') === 'allow' ? 'allow' : 'disabled';
+
 // The base path the production static export is served under on GitHub Pages.
 // The HTML references /frankfabric/... asset URLs, so the server mounts out/
 // at this prefix (identical to measure-load.mjs). Overridable for a root domain.
@@ -51,10 +82,18 @@ const BASE_PATH = (args.get('base') ?? '/frankfabric').replace(/\/$/, '');
 const CHROME_PATH = process.env.CHROME_PATH || '/usr/local/bin/chrome';
 
 // The two viewport sizes to capture: a phone portrait width and a desktop width.
-const VIEWPORTS = [
+// --widths <csv> narrows this (e.g. --widths 1280 for a single desktop shot).
+const ALL_VIEWPORTS = [
   { width: 390, height: 844 },
   { width: 1280, height: 900 },
 ];
+const WIDTH_FILTER = (args.get('widths') || '')
+  .split(',')
+  .map((s) => Number(s.trim()))
+  .filter((n) => Number.isFinite(n) && n > 0);
+const VIEWPORTS = WIDTH_FILTER.length
+  ? ALL_VIEWPORTS.filter((v) => WIDTH_FILTER.includes(v.width))
+  : ALL_VIEWPORTS;
 
 const MIME = {
   '.html': 'text/html',
@@ -169,6 +208,13 @@ async function main() {
     });
     const page = await context.newPage();
 
+    // Emulate the OS reduced-motion preference BEFORE navigating so the shared
+    // useReducedMotion() hook (matchMedia) reports it at first render and the
+    // WebGL scene motion gate + the CSS @media rule are captured accordingly.
+    if (REDUCED_MOTION) {
+      await page.emulateMedia({ reducedMotion: REDUCED_MOTION });
+    }
+
     await page.goto(target, { waitUntil: 'load' });
 
     // Wait for the scene <canvas> (client-only via next/dynamic). The landing
@@ -192,13 +238,15 @@ async function main() {
     if (!noHorizontalScroll || !ready) allOk = false;
 
     const shot = join(OUT, `${LABEL}-${vp.width}.png`);
-    await page.screenshot({ path: shot, animations: 'disabled', fullPage: true });
+    await page.screenshot({ path: shot, animations: ANIMATIONS, fullPage: true });
 
     const widthReport = {
       label: LABEL,
       route: routePath,
       url: target,
       basePath: BASE_PATH,
+      reducedMotion: REDUCED_MOTION ?? 'not-emulated',
+      screenshotAnimations: ANIMATIONS,
       width: vp.width,
       height: vp.height,
       hasCanvas,
@@ -226,6 +274,8 @@ async function main() {
     route: routePath,
     url: target,
     basePath: BASE_PATH,
+    reducedMotion: REDUCED_MOTION ?? 'not-emulated',
+    screenshotAnimations: ANIMATIONS,
     widths: perWidth.map((w) => ({
       width: w.width,
       height: w.height,
