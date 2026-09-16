@@ -95,9 +95,14 @@ const MODEL_TARGET_SIZE = 1.9;
 // whole standing bird — feet through head/comb — reads centered). The model is
 // recentered so this point sits at frame center.
 const AIM_HEIGHT = 0.95;
-// How far back the fixed camera sits from the aim point. An upright bird needs
-// a touch more distance than the low dog so its full height fits the frame.
-const CAMERA_DISTANCE = 3.15;
+// How far back the fixed camera sits from the aim point. Pulled back so the
+// WHOLE upright bird sits in frame with clear headroom above the comb and
+// margin below the feet (the user reported the view was "too close": at the
+// old 3.15 the model's top/bottom projected to NDC |y|~1.34, i.e. the comb and
+// feet were ~34% off-screen). Measured via an offline projection probe that
+// replicated the scale/yaw/recenter below: at 4.5 the whole AABB projects to
+// NDC |y|~0.86, leaving ~14% vertical margin, still centered and head-visible.
+const CAMERA_DISTANCE = 4.5;
 
 // ORIENTATION FIX: the fixed camera looks down -Z (from +Z toward the origin).
 // The FBX's raw front axis does not face +Z by default, so we yaw the INNER
@@ -222,9 +227,25 @@ function Pet({
       }
       const hasUv2 = !!(geom && geom.attributes.uv2);
 
-      // Swap to a matte MeshStandardMaterial carrying the four maps so the
-      // chicken reads with true PBR color and no blow-out under the near-neutral
-      // warm rig (WS2). color stays white so the material never tints the map.
+      // Swap to a MeshStandardMaterial carrying the four maps so the chicken
+      // reads with true PBR color and no blow-out under the near-neutral warm
+      // rig (WS2). color stays white so the material never tints the map.
+      //
+      // COLOR FIX (diagnosed): the base-color map, uv0 and SRGBColorSpace are
+      // all correct and the map assigns to every skinned mesh (verified with an
+      // offline UV/material probe: head_+_body_retop, eye_l, eye_r all carry uv
+      // and receive the map) — the maps also serve 200 from out/, not 404. The
+      // real cause the bird read as flat washed-out grey is that its albedo is
+      // GENUINELY a pale cream (measured avg RGB ~220/215/208, avg saturation
+      // ~0.08, only ~7% meaningfully colorful pixels) AND roughness was pinned
+      // at 1.0 — a perfectly matte surface returns only flat diffuse, so the
+      // faint tonal/color variation in the feathers, beak and comb never gets
+      // any light-direction shaping and averages out to grey. Dropping to a
+      // modest 0.72 roughness (still matte, not glossy) lets the key/fill rig
+      // shape the surface so the cream and its warm tints actually read, and a
+      // slightly stronger normal map deepens the feather relief. We keep the
+      // texture as the sole color source (no solid tint, colorSpace unchanged)
+      // and keep metalness 0 + ACESFilmic tone mapping so nothing blows out.
       const materials = Array.isArray(mesh.material)
         ? mesh.material
         : [mesh.material];
@@ -232,11 +253,12 @@ function Pet({
         const std = new THREE.MeshStandardMaterial({
           map,
           normalMap,
+          normalScale: new THREE.Vector2(1.15, 1.15),
           roughnessMap,
           aoMap: hasUv2 ? aoMap : null,
           aoMapIntensity: hasUv2 ? 1 : 0,
           color: new THREE.Color(0xffffff),
-          roughness: 1,
+          roughness: 0.72,
           metalness: 0,
         });
         std.needsUpdate = true;
