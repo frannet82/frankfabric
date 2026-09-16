@@ -1,15 +1,31 @@
 // compress-assets.mjs — repeatable asset compressor for the frankfabric VRMs
-// and any other embedded-texture GLBs.
+// compress-assets.mjs — repeatable asset compressor for the frankfabric VRMs,
+// embedded-texture GLBs, and loose character texture PNGs.
 //
 // WHAT IT DOES
-//   Shrinks the weight of every drophunter avatar/garment VRM
-//   (public/models/characters/drophunter/**) and any other GLB/VRM with
-//   EMBEDDED textures under public/models/** by re-encoding those textures:
-//   each image is decoded, resized to a sane per-material
-//   cap, and re-encoded as WebP. Nothing else in the file is touched —
-//   geometry, morph targets, skeletons and every VRM extension (VRMC_vrm,
-//   VRMC_springBone, VRMC_materials_mtoon, KHR_materials_unlit,
-//   KHR_texture_transform, ...) survive byte-for-byte.
+//   1. EMBEDDED-TEXTURE GLB/VRM PASS. Shrinks the weight of every drophunter
+//      avatar/garment VRM (public/models/characters/drophunter/**), the coach
+//      astronaut GLB (public/models/characters/astronaut/astronaut.glb — a
+//      self-contained GLB with 14 embedded textures) and any other GLB/VRM
+//      with EMBEDDED textures under public/models/** by re-encoding those
+//      textures: each image is decoded, resized to a sane per-material cap, and
+//      re-encoded as WebP. Nothing else in the file is touched — geometry,
+//      morph targets, skeletons and every VRM extension (VRMC_vrm,
+//      VRMC_springBone, VRMC_materials_mtoon, KHR_materials_unlit,
+//      KHR_texture_transform, ...) survive byte-for-byte.
+//   2. LOOSE TEXTURE PASS. The virtual-pet chicken is a rigged FBX whose PBR
+//      maps ship as SEPARATE PNGs beside it
+//      (public/models/characters/chicken/DefaultMaterial_*.png), which the GLB
+//      pass cannot reach. This pass re-encodes those loose image files to WebP
+//      with the SAME per-map policy (normal maps near-lossless, data maps more
+//      aggressive) and writes DefaultMaterial_*.webp next to the source. The
+//      pet scene references the .webp copies via asset(). three's TextureLoader
+//      decodes image/webp natively, so no runtime decoder / new dependency is
+//      needed. The (already tiny, 72KB) sRGB base-color PNG is left untouched.
+//
+//   NOTE: the removed schnauzer GLB and the removed unrigged coach OBJ are no
+//   longer part of the asset set (replaced by the chicken FBX and astronaut GLB
+//   in FEAT-002/FEAT-003), so they are intentionally absent here.
 //
 // WHY A CHUNK-LEVEL REWRITE (and not gltf-transform's NodeIO)
 //   gltf-transform's default IO does not know the VRM extensions and SILENTLY
@@ -44,7 +60,8 @@
 //   node scripts/compress-assets.mjs --dry-run       # report sizes, write nothing
 //
 // It is safe to run repeatedly: it always reads the untouched source tree, so
-// output never feeds back into input.
+// output never feeds back into input. Both passes (embedded-texture GLB/VRM
+// and loose PNG->WebP) read from assets-src/ and write to public/.
 
 import { readFile, writeFile, mkdir, cp, stat, readdir } from 'node:fs/promises';
 import { join, dirname, relative, basename } from 'node:path';
@@ -282,6 +299,50 @@ function isAsset(path) {
   return /\.(vrm|glb)$/i.test(path);
 }
 
+// ---- loose texture (PNG/JPG) compressor -----------------------------------
+// The chicken FBX ships its PBR maps as SEPARATE image files, which the GLB
+// container pass above cannot reach. Re-encode the large data/normal maps to
+// WebP with the SAME per-map policy used for embedded textures. The base-color
+// (albedo, sRGB) PNG is already tiny, so leave it untouched. Match is by
+// filename so the pet scene can predictably reference the .webp copies.
+const LOOSE_TEXTURE = /\.(png|jpe?g)$/i;
+// Only re-encode these loose maps; the small sRGB base-color map is skipped so
+// the albedo stays a lossless PNG (it is already ~72KB).
+const LOOSE_INCLUDE = /(_normal_|_roughness|_mixed_ao)/i;
+
+function looseTexturePolicy(name) {
+  const n = name || '';
+  if (NORMAL_MAP.test(n)) return POLICY.normal; // near-lossless, keep vectors clean
+  return POLICY.standard; // roughness / AO are linear data maps
+}
+
+/** Re-encode a single loose image file to WebP; returns {before, after, out}. */
+async function compressLooseTexture(srcPath, outDir) {
+  const src = await readFile(srcPath);
+  let meta;
+  try {
+    meta = await sharp(src).metadata();
+  } catch {
+    return { skipped: 'not an image', before: src.length };
+  }
+  const w = meta.width || 0;
+  const h = meta.height || 0;
+  const pol = looseTexturePolicy(basename(srcPath));
+  let pipeline = sharp(src);
+  if (Math.max(w, h) > pol.max) {
+    pipeline = pipeline.resize({
+      width: w >= h ? pol.max : null,
+      height: h > w ? pol.max : null,
+      fit: 'inside',
+      withoutEnlargement: true,
+    });
+  }
+  const encoded = await pipeline.webp({ quality: pol.quality, effort: 6 }).toBuffer();
+  const outName = basename(srcPath).replace(LOOSE_TEXTURE, '.webp');
+  const outPath = join(outDir, outName);
+  return { before: src.length, after: encoded.length, buf: encoded, outPath, outName };
+}
+
 async function exists(path) {
   try {
     await stat(path);
@@ -345,9 +406,53 @@ async function main() {
   }
 
   console.log(
-    `\ntotal: ${(totalBefore / 1e6).toFixed(2)}MB -> ${(totalAfter / 1e6).toFixed(2)}MB` +
+    `\ntotal (glb/vrm): ${(totalBefore / 1e6).toFixed(2)}MB -> ${(totalAfter / 1e6).toFixed(2)}MB` +
       ` (-${Math.round((1 - totalAfter / totalBefore) * 100)}%)${DRY ? '  [dry-run: nothing written]' : ''}`,
   );
+
+  // ---- loose texture pass -------------------------------------------------
+  const looseFiles = [];
+  for await (const f of walk(SRC)) {
+    if (LOOSE_TEXTURE.test(f) && LOOSE_INCLUDE.test(basename(f))) looseFiles.push(f);
+  }
+  looseFiles.sort();
+  if (looseFiles.length) {
+    console.log(`\ncompressing ${looseFiles.length} loose textures -> WebP\n`);
+    let looseBefore = 0;
+    let looseAfter = 0;
+    for (const srcPath of looseFiles) {
+      const rel = relative(SRC, srcPath);
+      const outDir = join(OUT, dirname(rel));
+      let res;
+      try {
+        res = await compressLooseTexture(srcPath, outDir);
+      } catch (err) {
+        console.error(`  ! ${rel}: ${err.message}`);
+        process.exitCode = 1;
+        continue;
+      }
+      if (res.skipped) {
+        console.log(`  ${rel.padEnd(52)} unchanged (${res.skipped})`);
+        continue;
+      }
+      looseBefore += res.before;
+      looseAfter += res.after;
+      const pct = res.before ? Math.round((1 - res.after / res.before) * 100) : 0;
+      console.log(
+        `  ${rel.padEnd(52)} ${(res.before / 1e6).toFixed(2)}MB -> ${(res.after / 1e6).toFixed(2)}MB (-${pct}%) => ${res.outName}`,
+      );
+      if (!DRY) {
+        await mkdir(outDir, { recursive: true });
+        await writeFile(res.outPath, res.buf);
+      }
+    }
+    if (looseBefore) {
+      console.log(
+        `\ntotal (loose textures): ${(looseBefore / 1e6).toFixed(2)}MB -> ${(looseAfter / 1e6).toFixed(2)}MB` +
+          ` (-${Math.round((1 - looseAfter / looseBefore) * 100)}%)${DRY ? '  [dry-run: nothing written]' : ''}`,
+      );
+    }
+  }
 }
 
 main();

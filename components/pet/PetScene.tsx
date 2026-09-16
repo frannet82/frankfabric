@@ -72,13 +72,20 @@ const MODEL_URL = asset("/models/characters/chicken/chicken.fbx");
 const TEX_BASE_COLOR = asset(
   "/models/characters/chicken/DefaultMaterial_Base_color.png"
 );
+// The normal / roughness / AO data maps are WebP-compressed by
+// scripts/compress-assets.mjs (the loose-texture pass): the normal map stays
+// near-lossless to keep its vectors clean, the linear roughness/AO maps are
+// more aggressive. three's TextureLoader decodes image/webp natively, so no
+// runtime decoder is needed. The small sRGB base-color map stays a PNG.
 const TEX_NORMAL = asset(
-  "/models/characters/chicken/DefaultMaterial_Normal_DirectX.png"
+  "/models/characters/chicken/DefaultMaterial_Normal_DirectX.webp"
 );
 const TEX_ROUGHNESS = asset(
-  "/models/characters/chicken/DefaultMaterial_Roughness.png"
+  "/models/characters/chicken/DefaultMaterial_Roughness.webp"
 );
-const TEX_AO = asset("/models/characters/chicken/DefaultMaterial_Mixed_AO.png");
+const TEX_AO = asset(
+  "/models/characters/chicken/DefaultMaterial_Mixed_AO.webp"
+);
 
 // The chicken is UPRIGHT (Y is its tallest axis), so we scale off the TALLEST
 // bound to a consistent on-screen size that frames the whole bird head-to-foot.

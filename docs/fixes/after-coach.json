@@ -1,26 +1,274 @@
 {
   "label": "after-coach",
+  "dir": "/projects/sandbox/frankfabric/out",
   "route": "/projects/coach-trainer/",
-  "url": "http://localhost:5198/frankfabric/projects/coach-trainer/",
   "basePath": "/frankfabric",
-  "reducedMotion": "not-emulated",
-  "screenshotAnimations": "disabled",
-  "widths": [
+  "url": "http://localhost:5199/frankfabric/projects/coach-trainer/",
+  "ready": true,
+  "hasCanvas": true,
+  "quality": null,
+  "unresolvedFailures": [],
+  "errors": [
+    "Failed to load resource: the server responded with a status of 404 (Not Found)",
+    "requestfailed /frankfabric/: net::ERR_ABORTED"
+  ],
+  "viewport": {
+    "width": 1280,
+    "height": 900
+  },
+  "totalBytes": 3995364,
+  "totalMB": 3.995,
+  "byType": {
+    "[document]": 19680,
+    ".css": 44527,
+    ".js": 1550243,
+    "[stylesheet]": 26134,
+    ".woff2": 97596,
+    "[fetch]": 96173,
+    ".txt": 50503,
+    ".glb": 2110508
+  },
+  "resources": [
     {
-      "width": 390,
-      "height": 844,
-      "scrollWidth": 390,
-      "innerWidth": 390,
-      "noHorizontalScroll": true
+      "url": "/frankfabric/models/characters/astronaut/astronaut.glb",
+      "bytes": 2110508,
+      "status": 200,
+      "type": "fetch"
     },
     {
-      "width": 1280,
-      "height": 900,
-      "scrollWidth": 1280,
-      "innerWidth": 1280,
-      "noHorizontalScroll": true
+      "url": "/frankfabric/_next/static/chunks/0j38rt3t48gnw.js",
+      "bytes": 924185,
+      "status": 200,
+      "type": "script"
+    },
+    {
+      "url": "/frankfabric/_next/static/chunks/3jh1u-s3k0bkk.js",
+      "bytes": 203384,
+      "status": 200,
+      "type": "script"
+    },
+    {
+      "url": "/frankfabric/_next/static/chunks/0ymgnzqzlow_2.js",
+      "bytes": 146512,
+      "status": 200,
+      "type": "script"
+    },
+    {
+      "url": "/frankfabric/",
+      "bytes": 96173,
+      "status": 200,
+      "type": "fetch"
+    },
+    {
+      "url": "/frankfabric/_next/static/chunks/14mrh2-p_w84d.js",
+      "bytes": 54646,
+      "status": 200,
+      "type": "script"
+    },
+    {
+      "url": "/frankfabric/_next/static/chunks/2kqrbujyxigm8.js",
+      "bytes": 50234,
+      "status": 200,
+      "type": "script"
+    },
+    {
+      "url": "/frankfabric/__next.__PAGE__.txt?_rsc=ECqn6OdjRmv0D-EL",
+      "bytes": 46128,
+      "status": 200,
+      "type": "fetch"
+    },
+    {
+      "url": "/frankfabric/_next/static/chunks/0wrhxaoxa4t_w.js",
+      "bytes": 46014,
+      "status": 200,
+      "type": "script"
+    },
+    {
+      "url": "https://fonts.gstatic.com/s/ibmplexsans/v23/zYXzKVElMYYaJe8bpLHnCwDKr932-G7dytD-Dmu1syxeKYY.woff2",
+      "bytes": 45712,
+      "status": 200,
+      "type": "font"
+    },
+    {
+      "url": "/frankfabric/_next/static/chunks/0eoiwfb__ejn3.css",
+      "bytes": 44527,
+      "status": 200,
+      "type": "stylesheet"
+    },
+    {
+      "url": "/frankfabric/_next/static/chunks/2pznovca0pdav.js",
+      "bytes": 37113,
+      "status": 200,
+      "type": "script"
+    },
+    {
+      "url": "https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=IBM+Plex+Sans:wght@300;400;500;600&family=IBM+Plex+Mono:wght@400;500&family=Cormorant+Garamond:wght@500;600&family=Jost:wght@300;400;500;600&display=swap",
+      "bytes": 26134,
+      "status": 200,
+      "type": "stylesheet"
+    },
+    {
+      "url": "/frankfabric/_next/static/chunks/41vhus88_a-zp.js",
+      "bytes": 24045,
+      "status": 200,
+      "type": "script"
+    },
+    {
+      "url": "https://fonts.gstatic.com/s/spacegrotesk/v22/V8mDoQDjQSkFtoMM3T6r8E7mPbF4Cw.woff2",
+      "bytes": 22288,
+      "status": 200,
+      "type": "font"
+    },
+    {
+      "url": "/frankfabric/_next/static/chunks/14bmvgmyz9hfb.js",
+      "bytes": 21754,
+      "status": 200,
+      "type": "script"
+    },
+    {
+      "url": "/frankfabric/_next/static/chunks/09pdu24jezzy8.js",
+      "bytes": 20201,
+      "status": 200,
+      "type": "script"
+    },
+    {
+      "url": "/frankfabric/projects/coach-trainer/",
+      "bytes": 19680,
+      "status": 200,
+      "type": "document"
+    },
+    {
+      "url": "https://fonts.gstatic.com/s/ibmplexmono/v20/-F6qfjptAgt5VM-kVkqdyU8n3twJwlBFgg.woff2",
+      "bytes": 14888,
+      "status": 200,
+      "type": "font"
+    },
+    {
+      "url": "https://fonts.gstatic.com/s/ibmplexmono/v20/-F63fjptAgt5VM-kVkqdyU8n1i8q1w.woff2",
+      "bytes": 14708,
+      "status": 200,
+      "type": "font"
+    },
+    {
+      "url": "/frankfabric/_next/static/chunks/turbopack-3dytf-owzyd28.js",
+      "bytes": 10625,
+      "status": 200,
+      "type": "script"
+    },
+    {
+      "url": "/frankfabric/_next/static/chunks/074ujdlkqf57x.js",
+      "bytes": 8153,
+      "status": 200,
+      "type": "script"
+    },
+    {
+      "url": "/frankfabric/_next/static/chunks/05-c3ty_6dwfk.js",
+      "bytes": 3377,
+      "status": 200,
+      "type": "script"
+    },
+    {
+      "url": "/frankfabric/__next._index.txt?_rsc=rYB_qtrP0IVCnqx-",
+      "bytes": 2826,
+      "status": 200,
+      "type": "fetch"
+    },
+    {
+      "url": "/frankfabric/__next._head.txt?_rsc=JYoAfo0rLcI1loRv",
+      "bytes": 1045,
+      "status": 200,
+      "type": "fetch"
+    },
+    {
+      "url": "/frankfabric/__next._tree.txt?_rsc=oLyWj3a44yCATXkS",
+      "bytes": 504,
+      "status": 200,
+      "type": "fetch"
+    },
+    {
+      "url": "blob:/7768c223-e1d7-4c6b-8779-5d25e0bfcfbc",
+      "bytes": 0,
+      "status": 200,
+      "type": "fetch"
+    },
+    {
+      "url": "blob:/d101133d-c22e-4938-8c83-3aba1e852283",
+      "bytes": 0,
+      "status": 200,
+      "type": "fetch"
+    },
+    {
+      "url": "blob:/3b6172a7-a006-48f0-a42a-1efb3aff2fd5",
+      "bytes": 0,
+      "status": 200,
+      "type": "fetch"
+    },
+    {
+      "url": "blob:/45e2e7f7-da5e-4444-b2f9-0259c5ebc04b",
+      "bytes": 0,
+      "status": 200,
+      "type": "fetch"
+    },
+    {
+      "url": "blob:/372404e6-6463-47cc-9705-e8aebd201102",
+      "bytes": 0,
+      "status": 200,
+      "type": "fetch"
+    },
+    {
+      "url": "blob:/7a4f65c7-44d5-48e9-9a59-decab75583e2",
+      "bytes": 0,
+      "status": 200,
+      "type": "fetch"
+    },
+    {
+      "url": "blob:/187c6e3c-693c-45d6-8ccd-9da18771883b",
+      "bytes": 0,
+      "status": 200,
+      "type": "fetch"
+    },
+    {
+      "url": "blob:/3328cf90-c1a9-4fcb-a9b1-a90e928ffe17",
+      "bytes": 0,
+      "status": 200,
+      "type": "fetch"
+    },
+    {
+      "url": "blob:/8c0e7275-8695-4266-bc6a-095575c83942",
+      "bytes": 0,
+      "status": 200,
+      "type": "fetch"
+    },
+    {
+      "url": "blob:/db2a4ee1-8c10-4771-ba4b-0564bf055da2",
+      "bytes": 0,
+      "status": 200,
+      "type": "fetch"
+    },
+    {
+      "url": "blob:/e2ec17d1-5039-4292-921a-6821d730ed10",
+      "bytes": 0,
+      "status": 200,
+      "type": "fetch"
+    },
+    {
+      "url": "blob:/72163ff3-9063-4c64-9ca8-1f53b8de885d",
+      "bytes": 0,
+      "status": 200,
+      "type": "fetch"
+    },
+    {
+      "url": "blob:/d73d0aa7-b67c-400d-9a2c-e0c9600285ab",
+      "bytes": 0,
+      "status": 200,
+      "type": "fetch"
+    },
+    {
+      "url": "blob:/d3f4cce3-81c6-4659-b02e-24decd15e5ff",
+      "bytes": 0,
+      "status": 200,
+      "type": "fetch"
     }
   ],
-  "allNoHorizontalScroll": true,
-  "measuredAt": "2026-09-16T09:28:03.479Z"
+  "measuredAt": "2026-09-16T09:36:41.735Z"
 }
