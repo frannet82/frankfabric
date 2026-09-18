@@ -296,7 +296,7 @@ export default function Home() {
               className="group relative flex flex-col rounded border border-white/[0.08] bg-gradient-to-br from-white/[0.045] to-white/[0.015] backdrop-blur-md overflow-hidden transition-all hover:border-cloud-blue/55 hover:shadow-[0_0_0_1px_rgba(63,169,255,0.3),0_24px_70px_rgba(155,107,255,0.22)] hover:-translate-y-1"
             >
               <span className="absolute top-0 left-0 right-0 h-[2px] z-20 bg-gradient-to-r from-cloud-blue to-cloud-violet" />
-              {/* Masked architecture diagram preview */}
+              {/* Architecture diagram preview */}
               <div className="relative aspect-[16/10] bg-[#0a0e1a] overflow-hidden border-b border-white/[0.06]">
                 <Image
                   src={asset(c.image)}

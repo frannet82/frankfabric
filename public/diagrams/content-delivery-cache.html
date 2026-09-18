@@ -5246,8 +5246,8 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
         <text data-detail="fine" x="374" y="454" class="t-cloud" font-size="7" text-anchor="middle">public edge</text>
         </g>
 
-        <g id="node-dispatcher" data-node-id="dispatcher" data-node-label="Dispatcher" tabindex="0" role="button" aria-label="Focus Dispatcher, Apache cache pool, Publish / Dispatcher tier" aria-pressed="false" data-node-kind="cloud" data-node-sublabel="Apache cache pool" data-node-tag="masked IPs" data-node-context="Publish / Dispatcher tier">
-          <title>Dispatcher · Apache cache pool · Publish / Dispatcher tier · masked IPs</title>
+        <g id="node-dispatcher" data-node-id="dispatcher" data-node-label="Dispatcher" tabindex="0" role="button" aria-label="Focus Dispatcher, Apache cache pool, Publish / Dispatcher tier" aria-pressed="false" data-node-kind="cloud" data-node-sublabel="Apache cache pool" data-node-context="Publish / Dispatcher tier">
+          <title>Dispatcher · Apache cache pool · Publish / Dispatcher tier</title>
           <rect x="560" y="400" width="148" height="62" rx="6" class="c-mask"/>
           <rect x="560" y="400" width="148" height="62" rx="6" class="c-cloud" stroke-width="1.5"/>
           <g aria-hidden="true" data-semantic-sigil="cloud" class="semantic-sigil s-cloud" transform="translate(566 406) scale(0.6875)">
@@ -5255,7 +5255,6 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
           </g>
           <text data-node-label="" data-detail-anchor="" x="634" y="429" class="t-primary" font-size="11" font-weight="600" text-anchor="middle">Dispatcher</text>
         <text data-detail="context" x="634" y="445" class="t-muted" font-size="9" text-anchor="middle">Apache cache pool</text>
-        <text data-detail="fine" x="634" y="454" class="t-cloud" font-size="7" text-anchor="middle">masked IPs</text>
         </g>
 
         <g id="node-publish" data-node-id="publish" data-node-label="AEM Publish" tabindex="0" role="button" aria-label="Focus AEM Publish, Sling / rendered pages, Publish / Dispatcher tier" aria-pressed="false" data-node-kind="backend" data-node-sublabel="Sling / rendered pages" data-node-context="Publish / Dispatcher tier">
@@ -5568,12 +5567,12 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
       <div class="card">
         <div class="card-header">
           <div class="card-dot rose"></div>
-          <h3>Masked For Publication</h3>
+          <h3>Resilience</h3>
         </div>
         <ul>
-          <li>&bull; Dispatcher host IPs replaced with placeholders</li>
-          <li>&bull; CDN + edge purge endpoints genericized</li>
-          <li>&bull; No credentials or tokens shown (kept in JCR)</li>
+          <li>&bull; Delay lets replication settle before purge</li>
+          <li>&bull; Priority path shortens the window to 1 min</li>
+          <li>&bull; Dynamic-media renditions flushed in step</li>
         </ul>
       </div>
     </div>

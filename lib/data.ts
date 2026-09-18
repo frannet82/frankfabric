@@ -6,7 +6,7 @@ export type Case = {
   title: string;
   desc: string;
   tags: string[];
-  // Preview thumbnail rendered on the card (a masked architecture diagram).
+  // Preview thumbnail rendered on the card (an architecture diagram).
   image: string;
   // Route to the case-study detail page with the interactive diagram.
   href: string;
@@ -14,10 +14,8 @@ export type Case = {
   diagram: string;
 };
 
-// Architecture case studies. Each one links to a detail page that embeds a
-// masked, interactive architecture diagram generated with Archify from a real
-// enterprise AEM platform. All internal hosts, IPs, account IDs, and secrets
-// were genericized before publication.
+// Architecture case studies. Each one links to a detail page that embeds an
+// interactive architecture diagram generated with Archify.
 export const cases: Case[] = [
   {
     num: "01",
@@ -58,6 +56,26 @@ export const cases: Case[] = [
     image: "/images/case-studies/external-integrations.png",
     href: "/case-studies/external-integrations",
     diagram: "/diagrams/external-integrations.html",
+  },
+  {
+    num: "05",
+    slug: "s3-glacier-archiving",
+    title: "Asset Archiving to AWS S3 Glacier",
+    desc: "An OSGi-driven workflow that streams DAM originals to S3 Glacier, preserves searchable metadata, and restores on demand.",
+    tags: ["AEM", "AWS S3", "Glacier"],
+    image: "/images/case-studies/s3-glacier-archiving.png",
+    href: "/case-studies/s3-glacier-archiving",
+    diagram: "/diagrams/s3-glacier-archiving.html",
+  },
+  {
+    num: "06",
+    slug: "graphql-endpoint",
+    title: "Universal GraphQL Endpoint in AEM",
+    desc: "An OSGi service that projects DAM asset metadata into Content Fragments, exposing a cacheable, headless-ready GraphQL layer.",
+    tags: ["AEM", "GraphQL", "Headless"],
+    image: "/images/case-studies/graphql-endpoint.png",
+    href: "/case-studies/graphql-endpoint",
+    diagram: "/diagrams/graphql-endpoint.html",
   },
 ];
 

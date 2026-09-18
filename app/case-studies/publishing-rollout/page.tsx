@@ -12,7 +12,7 @@ export default function Page() {
   return (
     <CaseStudy
       study={study}
-      intro="A masked view of the AEM publishing workflow. An author triggers a priority replication servlet that drives a Multi-Site Manager rollout, localizes the language master into per-locale live copies, exports expiration and tag metadata, and activates content to the publish tier. Publishing also emits e-mail notifications and writes a record back to the content metadata store."
+      intro="A view of the AEM publishing workflow. An author triggers a priority replication servlet that drives a Multi-Site Manager rollout, localizes the language master into per-locale live copies, exports expiration and tag metadata, and activates content to the publish tier. Publishing also emits e-mail notifications and writes a record back to the content metadata store."
       highlights={[
         {
           title: "MSM rollout",
@@ -23,8 +23,8 @@ export default function Page() {
           body: "Each publish exports expiration dates and tags, notifies stakeholders over SMTP, and syncs a metadata record for downstream reporting.",
         },
         {
-          title: "Masked for publication",
-          body: "Author and publish hostnames, the data source name, and notification recipients were genericized so no internal infrastructure is exposed.",
+          title: "Content lifecycle",
+          body: "Exported expiration dates and tags travel with the content, giving downstream systems a governed, reportable record of every publish.",
         },
       ]}
     />

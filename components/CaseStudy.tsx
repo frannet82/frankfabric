@@ -61,7 +61,7 @@ export default function CaseStudy({
         </div>
       </section>
 
-      {/* Interactive, masked architecture diagram */}
+      {/* Interactive architecture diagram */}
       <section className="max-w-[1180px] mx-auto px-6 pt-6 pb-4">
         <div className="rounded-xl border border-white/[0.1] overflow-hidden bg-[#0a0e1a] shadow-[0_24px_70px_rgba(5,6,12,0.6)]">
           <div className="flex items-center justify-between gap-3 px-4 py-2.5 border-b border-white/[0.08] bg-white/[0.02]">
@@ -85,7 +85,6 @@ export default function CaseStudy({
           />
         </div>
         <p className="text-[12.5px] text-[#6b7286] font-light mt-3">
-          All internal hostnames, IP addresses, account IDs, and credentials have been masked or genericized.
           Explore the map: switch themes, search nodes, trace routes, and play the guided views inside the frame.
         </p>
       </section>

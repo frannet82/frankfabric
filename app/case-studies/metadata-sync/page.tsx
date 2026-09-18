@@ -12,7 +12,7 @@ export default function Page() {
   return (
     <CaseStudy
       study={study}
-      intro="A masked map of how AEM content metadata is projected into an external relational database. A scheduled service (with an on-demand servlet trigger) runs a content-sync service that scans site pages and DAM assets with QueryBuilder, maps each hit into a report value object, and writes rows in JDBC batches through a named data source pool into an external RDBMS."
+      intro="A map of how AEM content metadata is projected into an external relational database. A scheduled service (with an on-demand servlet trigger) runs a content-sync service that scans site pages and DAM assets with QueryBuilder, maps each hit into a report value object, and writes rows in JDBC batches through a named data source pool into an external RDBMS."
       highlights={[
         {
           title: "Two triggers, one path",
@@ -23,8 +23,8 @@ export default function Page() {
           body: "Pages and DAM assets are scanned with QueryBuilder and upserted in JDBC batches of a thousand rows, keeping the sync efficient at scale.",
         },
         {
-          title: "Masked for publication",
-          body: "The data source pool name is generic, and the JDBC URL, driver, and credentials — supplied externally via OSGi config — are never shown.",
+          title: "Decoupled store",
+          body: "The database is reached through a named data source pool configured via OSGi, so the external RDBMS can change without touching code.",
         },
       ]}
     />
