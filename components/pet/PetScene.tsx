@@ -253,16 +253,52 @@ function Pet({
         : [mesh.material];
 
       if (isEyeMesh(mesh)) {
-        // EYES: a believable cartoon/animal eye is a dark, WET/glossy sphere
-        // that catches a small highlight. The eyeball is small and set deep in
-        // a large socket, so a flat matte near-black read as an empty hollow.
-        // We fix that with: a very low roughness (0.08) so it reads glossy/wet
-        // and picks up a clear specular glint from the rig; a faint self-lit
-        // emissive so the eyeball never fully sinks into the socket's cast
-        // shadow (it stays visibly present from any angle); a dark brown color
-        // just above black so it reads as an eye rather than a void. No
-        // metalness and NONE of the body maps. Freshly created and uniquely
-        // owned, so disposed alongside the body materials on unmount.
+        // EYES — TWO fixes, both needed for the eyes to actually read:
+        //
+        // 1) MATERIAL. The original bug was that this traversal painted the
+        //    BODY's feather PBR maps onto the eye meshes, so the eyes were
+        //    feather-brown and invisible. Give each eye its OWN dark, WET/glossy
+        //    material instead: a dark brown just above black, very low roughness
+        //    (0.08) for a clear specular glint, a faint self-lit emissive so the
+        //    eyeball never sinks into the socket's cast shadow, no metalness and
+        //    NONE of the body maps.
+        //
+        // 2) GEOMETRY SCALE. The real reason the eyes still "didn't render" from
+        //    the front: the eyeball meshes are small spheres seated on the SIDES
+        //    of the head, deep at the inner/back wall of two large forward-facing
+        //    sockets (probed world centers ~(+/-0.83, 7.77, 0.89), size ~1.2 in a
+        //    head ~4.2 wide). From the app's front three-quarter camera the
+        //    eyeballs are hidden behind the socket rims, so both sockets read as
+        //    empty craters. Scaling each eyeball ~1.25x about its OWN bbox center
+        //    (never translating — translation shoves it out the side of the head)
+        //    swells it forward just enough to fill the socket opening and be
+        //    clearly visible from the front, while staying well-seated in side
+        //    profile. Verified empirically at 1.25 (1.4 bulged out; 1.0 stayed
+        //    hidden). SkeletonUtils.clone shares geometry BY REFERENCE from the
+        //    loader-cached fbx, so we CLONE the eye geometry before mutating it —
+        //    otherwise we would corrupt the cached model for every future mount.
+        const EYE_GROW = 1.25;
+        const srcGeom = mesh.geometry as THREE.BufferGeometry;
+        const geom = srcGeom.clone();
+        geom.computeBoundingBox();
+        const eyeCenter = new THREE.Vector3();
+        geom.boundingBox?.getCenter(eyeCenter);
+        const posAttr = geom.getAttribute("position") as
+          | THREE.BufferAttribute
+          | undefined;
+        if (posAttr) {
+          for (let i = 0; i < posAttr.count; i++) {
+            posAttr.setX(i, eyeCenter.x + (posAttr.getX(i) - eyeCenter.x) * EYE_GROW);
+            posAttr.setY(i, eyeCenter.y + (posAttr.getY(i) - eyeCenter.y) * EYE_GROW);
+            posAttr.setZ(i, eyeCenter.z + (posAttr.getZ(i) - eyeCenter.z) * EYE_GROW);
+          }
+          posAttr.needsUpdate = true;
+          geom.computeVertexNormals();
+          geom.computeBoundingBox();
+          geom.computeBoundingSphere();
+        }
+        mesh.geometry = geom;
+
         const replacedEyes = materials.map((raw) => {
           const std = new THREE.MeshStandardMaterial({
             color: new THREE.Color(0x1a1512),
@@ -393,9 +429,12 @@ function Pet({
   }, [fbx, model]);
 
   // On unmount, dispose ONLY the resources this component owns. SkeletonUtils
-  // .clone reuses geometry by reference from the loader-cached fbx, so we do
-  // NOT dispose geometry. The materials + their four maps WERE freshly created
-  // above and are uniquely owned, so dispose them.
+  // .clone reuses BODY geometry by reference from the loader-cached fbx, so we
+  // do NOT dispose that. The materials + their four maps were freshly created
+  // above and are uniquely owned, so dispose them. The EYE geometries were
+  // CLONED above (to scale them without corrupting the shared cache), so those
+  // clones are uniquely owned too and must be disposed — detect them the same
+  // way the build did, by eye mesh name.
   useEffect(() => {
     return () => {
       model.traverse((node) => {
@@ -412,6 +451,11 @@ function Pet({
           mat?.aoMap?.dispose();
           mat?.dispose();
         });
+        // Dispose the cloned eye geometry (body geometry is shared, so skip it).
+        const name = (mesh.name || "").toLowerCase();
+        if (name === "eye_l" || name === "eye_r" || name.startsWith("eye")) {
+          mesh.geometry?.dispose();
+        }
       });
     };
   }, [model]);
