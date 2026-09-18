@@ -49,6 +49,7 @@ import {
 } from "@/components/three/quality";
 import QualityToggle from "@/components/three/QualityToggle";
 import { useReducedMotion } from "@/components/three/useReducedMotion";
+import { asset } from "@/lib/asset";
 
 const PetScene = dynamic(() => import("@/components/pet/PetScene"), {
   ssr: false,
@@ -63,6 +64,10 @@ const PetScene = dynamic(() => import("@/components/pet/PetScene"), {
     </div>
   ),
 });
+
+// Short chicken cluck played on every interaction (client-only, base-path
+// prefixed via asset() so it resolves under /frankfabric/ in production).
+const CLUCK_SOUND = asset("/sounds/chicken-cluck.wav");
 
 // How often we apply incremental decay + persist (ms).
 const TICK_MS = 4000;
@@ -136,6 +141,35 @@ function VirtualPetInner() {
   // an effect (never during render) to satisfy the react-hooks rules.
   const stateRef = useRef<PetState | null>(null);
   const actionTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  // Cached HTMLAudioElement for the interaction cluck. Lazily created on first
+  // user interaction so nothing is constructed during static prerender (there
+  // is no Audio on the server) and no sound ever plays on page load.
+  const cluckRef = useRef<HTMLAudioElement | null>(null);
+
+  // Play the short chicken cluck on interaction. Client-only and defensive:
+  // lazy-create the element on first use, guard for a missing Audio ctor,
+  // rewind so rapid repeats retrigger, and swallow the autoplay-rejection
+  // promise so a blocked play() never throws.
+  const playCluck = useCallback(() => {
+    if (typeof window === "undefined" || typeof Audio === "undefined") return;
+    let audio = cluckRef.current;
+    if (!audio) {
+      audio = new Audio(CLUCK_SOUND);
+      audio.preload = "auto";
+      cluckRef.current = audio;
+    }
+    try {
+      audio.currentTime = 0;
+    } catch {
+      // Some browsers throw if currentTime is set before metadata loads; ignore.
+    }
+    const played = audio.play();
+    if (played && typeof played.catch === "function") {
+      played.catch(() => {
+        /* autoplay/interaction policy rejection: safe to ignore */
+      });
+    }
+  }, []);
 
   useEffect(() => {
     stateRef.current = state;
@@ -181,6 +215,10 @@ function VirtualPetInner() {
   const doAction = useCallback((action: PetAction) => {
     const current = stateRef.current;
     if (!current) return;
+    // Cluck on every interaction (Feed/Play/Sleep/Clean button and pet click,
+    // which routes through doAction("play")). Fired here so it only ever plays
+    // on a real user interaction, never on load.
+    playCluck();
     const now = Date.now();
     // Decay for elapsed time first, then apply the action so the numbers stay
     // consistent with the clock.
@@ -198,7 +236,7 @@ function VirtualPetInner() {
     actionTimerRef.current = setTimeout(() => {
       setPendingAction(null);
     }, ACTION_HOLD_MS);
-  }, []);
+  }, [playCluck]);
 
   const commitName = useCallback(() => {
     const current = stateRef.current;

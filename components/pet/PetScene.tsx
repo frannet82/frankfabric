@@ -220,6 +220,27 @@ function Pet({
     aoMap.colorSpace = THREE.LinearSRGBColorSpace;
     aoMap.needsUpdate = true;
 
+    // Identify the eye meshes vs the body. The FBX ships exactly three skinned
+    // meshes: the BODY ("head_+_body_retop", material "Material #4") and the two
+    // EYES ("eye_l"/"eye_r", material "Material #3"). Only the BODY should carry
+    // the four DefaultMaterial_* PBR maps (those maps are the body's feather
+    // albedo/normal/roughness/AO) and sampling them through the eye UVs paints
+    // the eyes feather-brown (the "eyes don't render" bug). The eyes get their
+    // OWN dark, slightly glossy material instead (there is no dedicated eye
+    // texture shipped). Match on mesh name and material name so a rename of
+    // either still resolves correctly.
+    const isEyeMesh = (mesh: THREE.Mesh): boolean => {
+      const name = (mesh.name || "").toLowerCase();
+      if (name === "eye_l" || name === "eye_r" || name.startsWith("eye")) {
+        return true;
+      }
+      const mats = Array.isArray(mesh.material) ? mesh.material : [mesh.material];
+      return mats.some((raw) => {
+        const src = raw as THREE.Material | undefined;
+        return !!src && "name" in src && src.name === "Material #3";
+      });
+    };
+
     root.traverse((node) => {
       node.frustumCulled = false;
       const mesh = node as THREE.Mesh;
@@ -227,10 +248,44 @@ function Pet({
       mesh.castShadow = true;
       mesh.receiveShadow = true;
 
-      // aoMap samples uv channel 1 (uv2). These FBX meshes carry only uv0, so
-      // reuse it: copy geometry.attributes.uv into a uv2 attribute. Without a
-      // uv2 the aoMap would be ignored by three; reusing uv0 gives correct AO
-      // since the maps share the same UV layout.
+      const materials = Array.isArray(mesh.material)
+        ? mesh.material
+        : [mesh.material];
+
+      if (isEyeMesh(mesh)) {
+        // EYES: a believable cartoon/animal eye is a dark, WET/glossy sphere
+        // that catches a small highlight. The eyeball is small and set deep in
+        // a large socket, so a flat matte near-black read as an empty hollow.
+        // We fix that with: a very low roughness (0.08) so it reads glossy/wet
+        // and picks up a clear specular glint from the rig; a faint self-lit
+        // emissive so the eyeball never fully sinks into the socket's cast
+        // shadow (it stays visibly present from any angle); a dark brown color
+        // just above black so it reads as an eye rather than a void. No
+        // metalness and NONE of the body maps. Freshly created and uniquely
+        // owned, so disposed alongside the body materials on unmount.
+        const replacedEyes = materials.map((raw) => {
+          const std = new THREE.MeshStandardMaterial({
+            color: new THREE.Color(0x1a1512),
+            roughness: 0.08,
+            metalness: 0,
+            emissive: new THREE.Color(0x140f0c),
+            emissiveIntensity: 0.55,
+          });
+          std.needsUpdate = true;
+          const src = raw as THREE.Material | undefined;
+          if (src && "name" in src && src.name) std.name = src.name;
+          return std;
+        });
+        mesh.material = Array.isArray(mesh.material)
+          ? replacedEyes
+          : replacedEyes[0];
+        return;
+      }
+
+      // BODY: aoMap samples uv channel 1 (uv2). These FBX meshes carry only
+      // uv0, so reuse it: copy geometry.attributes.uv into a uv2 attribute.
+      // Without a uv2 the aoMap would be ignored by three; reusing uv0 gives
+      // correct AO since the maps share the same UV layout.
       const geom = mesh.geometry as THREE.BufferGeometry;
       if (geom && geom.attributes.uv && !geom.attributes.uv2) {
         geom.setAttribute("uv2", geom.attributes.uv);
@@ -242,7 +297,7 @@ function Pet({
       // rig (WS2). color stays white so the material never tints the map.
       //
       // COLOR FIX (TRUE root cause, evidence-backed): the wiring here was always
-      // correct — the base-color map assigns to every skinned mesh, uv0 exists
+      // correct — the base-color map assigns to the body mesh, uv0 exists
       // (copied to uv2 for AO), colorSpace is sRGB with needsUpdate, and the
       // file serves 200. The bird read flat grey/white because the COMMITTED
       // albedo FILE was the WRONG one. chicken-character.zip ships TWO
@@ -256,9 +311,6 @@ function Pet({
       // the sole color source (no solid tint), a modest 0.72 roughness (matte,
       // not glossy) and metalness 0 + ACESFilmic tone mapping so nothing blows
       // out under the near-neutral warm rig (WS2).
-      const materials = Array.isArray(mesh.material)
-        ? mesh.material
-        : [mesh.material];
       const replaced = materials.map((raw) => {
         const std = new THREE.MeshStandardMaterial({
           map,
