@@ -288,35 +288,50 @@ export default function Home() {
             Architecture Case Studies
           </h2>
         </div>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           {cases.map((c) => (
-            <div
+            <Link
               key={c.num}
-              className="group relative p-7 rounded border border-white/[0.08] bg-gradient-to-br from-white/[0.045] to-white/[0.015] backdrop-blur-md overflow-hidden transition-all hover:border-cloud-blue/55 hover:shadow-[0_0_0_1px_rgba(63,169,255,0.3),0_24px_70px_rgba(155,107,255,0.22)] hover:-translate-y-1"
+              href={c.href}
+              className="group relative flex flex-col rounded border border-white/[0.08] bg-gradient-to-br from-white/[0.045] to-white/[0.015] backdrop-blur-md overflow-hidden transition-all hover:border-cloud-blue/55 hover:shadow-[0_0_0_1px_rgba(63,169,255,0.3),0_24px_70px_rgba(155,107,255,0.22)] hover:-translate-y-1"
             >
-              <span className="absolute top-0 left-0 right-0 h-[2px] bg-gradient-to-r from-cloud-blue to-cloud-violet" />
-              <span className="absolute top-[10px] right-[10px] w-3 h-3 border-r border-t border-cloud-blue/50" />
-              <span className="absolute bottom-[10px] left-[10px] w-3 h-3 border-l border-b border-cloud-blue/50" />
-              <div className="flex items-center justify-between mb-5">
-                <span className="font-mono text-xs text-cloud-blue">{c.num}</span>
-                <span className="font-mono text-[10px] tracking-widest text-[#5c6b68]">CASE_STUDY</span>
+              <span className="absolute top-0 left-0 right-0 h-[2px] z-20 bg-gradient-to-r from-cloud-blue to-cloud-violet" />
+              {/* Masked architecture diagram preview */}
+              <div className="relative aspect-[16/10] bg-[#0a0e1a] overflow-hidden border-b border-white/[0.06]">
+                <Image
+                  src={asset(c.image)}
+                  alt={`${c.title} architecture diagram preview`}
+                  fill
+                  className="object-cover object-top opacity-90 transition-transform duration-500 group-hover:scale-[1.03]"
+                />
+                <div
+                  className="absolute inset-0 pointer-events-none"
+                  style={{ background: "linear-gradient(180deg, transparent 55%, rgba(5,6,12,0.65) 100%)" }}
+                />
+                <span className="absolute top-3 left-3 font-mono text-[11px] text-cloud-mist px-[10px] py-[5px] rounded-sm border border-cloud-blue/35 bg-cloud-blue/10">
+                  {c.num} · CASE_STUDY
+                </span>
               </div>
-              <div className="w-[46px] h-[46px] rounded grid place-items-center bg-cloud-blue/10 border border-cloud-blue/20 mb-5">
-                <div className="w-4 h-4 rounded bg-gradient-to-br from-cloud-blue to-cloud-violet shadow-[0_0_12px_rgba(63,169,255,0.5)]" />
-              </div>
-              <h3 className="font-display font-semibold text-xl leading-snug mb-3 text-[#f4f6fb]">{c.title}</h3>
-              <p className="text-[14.5px] leading-relaxed text-[#9198aa] mb-5 font-light">{c.desc}</p>
-              <div className="flex gap-2 flex-wrap">
-                {c.tags.map((t) => (
-                  <span
-                    key={t}
-                    className="font-mono text-[11px] text-[#8b93a7] px-[10px] py-[5px] rounded-sm border border-white/10"
-                  >
-                    {t}
+              <div className="flex flex-col flex-1 p-7">
+                <h3 className="font-display font-semibold text-xl leading-snug mb-3 text-[#f4f6fb]">{c.title}</h3>
+                <p className="text-[14.5px] leading-relaxed text-[#9198aa] mb-5 font-light">{c.desc}</p>
+                <div className="mt-auto flex items-center justify-between gap-3">
+                  <div className="flex gap-2 flex-wrap">
+                    {c.tags.map((t) => (
+                      <span
+                        key={t}
+                        className="font-mono text-[11px] text-[#8b93a7] px-[10px] py-[5px] rounded-sm border border-white/10"
+                      >
+                        {t}
+                      </span>
+                    ))}
+                  </div>
+                  <span className="font-mono text-[11px] tracking-widest uppercase text-[#8b93a7] whitespace-nowrap transition-colors group-hover:text-cloud-blue">
+                    View →
                   </span>
-                ))}
+                </div>
               </div>
-            </div>
+            </Link>
           ))}
         </div>
       </section>

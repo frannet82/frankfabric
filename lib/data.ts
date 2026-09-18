@@ -1,23 +1,63 @@
 export const stack = ["AWS", "Adobe Experience Manager", "Databricks", "Python", "Machine Learning", "Next.js"];
 
-export const cases = [
+export type Case = {
+  num: string;
+  slug: string;
+  title: string;
+  desc: string;
+  tags: string[];
+  // Preview thumbnail rendered on the card (a masked architecture diagram).
+  image: string;
+  // Route to the case-study detail page with the interactive diagram.
+  href: string;
+  // Path to the self-contained interactive Archify diagram (opened in a new tab).
+  diagram: string;
+};
+
+// Architecture case studies. Each one links to a detail page that embeds a
+// masked, interactive architecture diagram generated with Archify from a real
+// enterprise AEM platform. All internal hosts, IPs, account IDs, and secrets
+// were genericized before publication.
+export const cases: Case[] = [
   {
     num: "01",
-    title: "On-Prem to AWS Cloud Migration",
-    desc: "Re-architected a legacy enterprise stack into a resilient, auto-scaling AWS environment with zero-downtime cutover.",
-    tags: ["AWS", "Migration", "IaC"],
+    slug: "content-delivery-cache",
+    title: "Content Delivery & Cache Invalidation",
+    desc: "An enterprise AEM edge: CDN and dispatcher caching with deferred, event-driven purge across the delivery tier.",
+    tags: ["AEM", "CDN", "Caching"],
+    image: "/images/case-studies/content-delivery-cache.png",
+    href: "/case-studies/content-delivery-cache",
+    diagram: "/diagrams/content-delivery-cache.html",
   },
   {
     num: "02",
-    title: "Massive-Scale DAM Automation",
-    desc: "Automated ingestion and processing of millions of digital assets in AEM with ML-driven metadata enrichment.",
-    tags: ["AEM", "Automation", "ML"],
+    slug: "publishing-rollout",
+    title: "Publishing & Rollout Pipeline",
+    desc: "Priority replication driving Multi-Site Manager rollout, localization, metadata export, and publish notifications.",
+    tags: ["AEM", "MSM", "Workflow"],
+    image: "/images/case-studies/publishing-rollout.png",
+    href: "/case-studies/publishing-rollout",
+    diagram: "/diagrams/publishing-rollout.html",
   },
   {
     num: "03",
-    title: "Enterprise AI Chatbot Integration",
-    desc: "Deployed a governed generative-AI assistant grounded in enterprise content with retrieval and guardrails.",
-    tags: ["GenAI", "RAG", "Bedrock"],
+    slug: "metadata-sync",
+    title: "Content Metadata DB Sync",
+    desc: "A scheduled job scans pages and DAM assets, then batch-writes governed metadata into an external relational store.",
+    tags: ["AEM", "JDBC", "Metadata"],
+    image: "/images/case-studies/metadata-sync.png",
+    href: "/case-studies/metadata-sync",
+    diagram: "/diagrams/metadata-sync.html",
+  },
+  {
+    num: "04",
+    slug: "external-integrations",
+    title: "External Service Integrations",
+    desc: "An OAuth-brokered API gateway fronting product, registration, video, and search partners across trust boundaries.",
+    tags: ["OAuth2", "Gateway", "SaaS"],
+    image: "/images/case-studies/external-integrations.png",
+    href: "/case-studies/external-integrations",
+    diagram: "/diagrams/external-integrations.html",
   },
 ];
 
@@ -113,3 +153,10 @@ export const ticker = [
   "IaC drift · none",
   "uptime 99.99%",
 ];
+
+
+export function getCase(slug: string): Case {
+  const found = cases.find((c) => c.slug === slug);
+  if (!found) throw new Error(`Unknown case study: ${slug}`);
+  return found;
+}
