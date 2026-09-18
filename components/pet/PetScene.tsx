@@ -253,16 +253,23 @@ function Pet({
         : [mesh.material];
 
       if (isEyeMesh(mesh)) {
-        // EYES: a believable cartoon/animal eye is a dark, slightly glossy
-        // sphere. Give each eye mesh its OWN MeshStandardMaterial with a very
-        // dark brown/near-black color, low roughness for a small specular
-        // glint, no metalness and NONE of the body maps. Freshly created and
-        // uniquely owned, so disposed alongside the body materials on unmount.
+        // EYES: a believable cartoon/animal eye is a dark, WET/glossy sphere
+        // that catches a small highlight. The eyeball is small and set deep in
+        // a large socket, so a flat matte near-black read as an empty hollow.
+        // We fix that with: a very low roughness (0.08) so it reads glossy/wet
+        // and picks up a clear specular glint from the rig; a faint self-lit
+        // emissive so the eyeball never fully sinks into the socket's cast
+        // shadow (it stays visibly present from any angle); a dark brown color
+        // just above black so it reads as an eye rather than a void. No
+        // metalness and NONE of the body maps. Freshly created and uniquely
+        // owned, so disposed alongside the body materials on unmount.
         const replacedEyes = materials.map((raw) => {
           const std = new THREE.MeshStandardMaterial({
-            color: new THREE.Color(0x141210),
-            roughness: 0.25,
+            color: new THREE.Color(0x1a1512),
+            roughness: 0.08,
             metalness: 0,
+            emissive: new THREE.Color(0x140f0c),
+            emissiveIntensity: 0.55,
           });
           std.needsUpdate = true;
           const src = raw as THREE.Material | undefined;
