@@ -5249,8 +5249,8 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
         <text data-detail="context" x="416" y="595" class="t-muted" font-size="9" text-anchor="middle">JDBC batches of 1000</text>
         </g>
 
-        <g id="node-pool" data-node-id="pool" data-node-label="DataSource Pool" tabindex="0" role="button" aria-label="Focus DataSource Pool, named connection pool, AEM Author (trusted)" aria-pressed="false" data-node-kind="backend" data-node-sublabel="named connection pool" data-node-tag="masked name" data-node-context="AEM Author (trusted)">
-          <title>DataSource Pool · named connection pool · AEM Author (trusted) · masked name</title>
+        <g id="node-pool" data-node-id="pool" data-node-label="DataSource Pool" tabindex="0" role="button" aria-label="Focus DataSource Pool, named connection pool, AEM Author (trusted)" aria-pressed="false" data-node-kind="backend" data-node-sublabel="named connection pool" data-node-context="AEM Author (trusted)">
+          <title>DataSource Pool · named connection pool · AEM Author (trusted)</title>
           <rect x="330" y="730" width="172" height="62" rx="6" class="c-mask"/>
           <rect x="330" y="730" width="172" height="62" rx="6" class="c-backend" stroke-width="1.5"/>
           <g aria-hidden="true" data-semantic-sigil="backend" class="semantic-sigil s-backend" transform="translate(336 736) scale(0.6875)">
@@ -5258,11 +5258,10 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
           </g>
           <text data-node-label="" data-detail-anchor="" x="416" y="759" class="t-primary" font-size="11" font-weight="600" text-anchor="middle">DataSource Pool</text>
         <text data-detail="context" x="416" y="775" class="t-muted" font-size="9" text-anchor="middle">named connection pool</text>
-        <text data-detail="fine" x="416" y="784" class="t-backend" font-size="7" text-anchor="middle">masked name</text>
         </g>
 
-        <g id="node-db" data-node-id="db" data-node-label="Relational Metadata DB" tabindex="0" role="button" aria-label="Focus Relational Metadata DB, external RDBMS, External data store" aria-pressed="false" data-node-kind="database" data-node-sublabel="external RDBMS" data-node-tag="masked DSN" data-node-context="External data store">
-          <title>Relational Metadata DB · external RDBMS · External data store · masked DSN</title>
+        <g id="node-db" data-node-id="db" data-node-label="Relational Metadata DB" tabindex="0" role="button" aria-label="Focus Relational Metadata DB, external RDBMS, External data store" aria-pressed="false" data-node-kind="database" data-node-sublabel="external RDBMS" data-node-context="External data store">
+          <title>Relational Metadata DB · external RDBMS · External data store</title>
           <rect x="620" y="730" width="172" height="62" rx="6" class="c-mask"/>
           <rect x="620" y="730" width="172" height="62" rx="6" class="c-database" stroke-width="1.5"/>
           <g aria-hidden="true" data-semantic-sigil="database" class="semantic-sigil s-database" transform="translate(626 736) scale(0.6875)">
@@ -5271,7 +5270,6 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
           </g>
           <text data-node-label="" data-detail-anchor="" x="706" y="759" class="t-primary" font-size="11" font-weight="600" text-anchor="middle">Relational Metadata DB</text>
         <text data-detail="context" x="706" y="775" class="t-muted" font-size="9" text-anchor="middle">external RDBMS</text>
-        <text data-detail="fine" x="706" y="784" class="t-database" font-size="7" text-anchor="middle">masked DSN</text>
         </g>
 
         <!-- Connection labels -->
@@ -5548,12 +5546,12 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
       <div class="card">
         <div class="card-header">
           <div class="card-dot rose"></div>
-          <h3>Masked For Publication</h3>
+          <h3>Operations</h3>
         </div>
         <ul>
-          <li>&bull; Data source pool name genericized</li>
-          <li>&bull; JDBC URL, driver, and credentials not shown</li>
-          <li>&bull; Supplied externally via OSGi config</li>
+          <li>&bull; Connection pool reused across batches</li>
+          <li>&bull; External RDBMS decoupled via OSGi config</li>
+          <li>&bull; Idempotent upserts keep the store in sync</li>
         </ul>
       </div>
     </div>
