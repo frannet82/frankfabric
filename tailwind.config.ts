@@ -68,6 +68,22 @@ const config: Config = {
           crit: "#e5674e", // stat is low/critical (warm coral red)
           mist: "#efe2c9", // subtle borders / bar track
         },
+        // Pet Puzzles palette: the warm paper/wood ground the two tile games
+        // are drawn on, with the pink of Pet Jump and the leaf green of Pet
+        // Tower Sort as the two mode accents. Kept separate from `cloud`,
+        // `ac`, `sf`, and `pet`, which the rest of the site uses.
+        puz: {
+          cream: "#f4ede3",    // page ground
+          paper: "#fffcf7",    // card/panel surface
+          rim: "#dcc9b2",      // borders, tile edges
+          ink: "#3f342b",      // primary text
+          inkSoft: "#8c7a66",  // secondary text
+          pink: "#ee6e96",     // Pet Jump accent
+          pinkDeep: "#b93c66", // Pet Jump accent, on light
+          leaf: "#2f8f6b",     // Pet Tower Sort accent
+          leafDeep: "#1c6147", // Pet Tower Sort accent, on light
+          sun: "#e0961a",      // completed-tower gold
+        },
       },
       fontFamily: {
         display: ["var(--font-display)", "sans-serif"],

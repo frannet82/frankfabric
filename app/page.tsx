@@ -525,6 +525,55 @@ export default function Home() {
                         </span>
                       </div>
                     </div>
+                  ) : p.href === "/projects/pet-puzzles" ? (
+                    <div className="absolute inset-0 grid place-items-center px-6 text-center bg-gradient-to-b from-puz-cream to-puz-paper">
+                      {/* Three stacked game tiles — pure CSS/SVG poster, no
+                          iframe. Warm paper ground with the pink of Pet Jump
+                          and the leaf green of Pet Tower Sort, so the preview
+                          matches the live games. The whole card links out to
+                          the playable build. */}
+                      <div className="flex flex-col items-center gap-3">
+                        <span className="flex items-end gap-2">
+                          <span className="grid place-items-center w-12 h-12 rounded-[14px] bg-[#e9e5de] shadow-[0_3px_0_#c6c0b6]">
+                            <svg viewBox="0 0 24 24" aria-hidden="true" className="w-8 h-8 text-[#574e44]">
+                              <path d="M5.6 9.4 4.7 4.2 9.3 6.6zM18.4 9.4l.9-5.2-4.6 2.4z" fill="#fffdf9" stroke="currentColor" strokeWidth="1.5" strokeLinejoin="round" />
+                              <ellipse cx="12" cy="13.2" rx="7.1" ry="6.2" fill="#fffdf9" stroke="currentColor" strokeWidth="1.5" />
+                              <circle cx="9.5" cy="12.4" r="1" fill="currentColor" />
+                              <circle cx="14.5" cy="12.4" r="1" fill="currentColor" />
+                              <path d="M10.9 14.6h2.2L12 16z" fill="currentColor" />
+                            </svg>
+                          </span>
+                          <span className="grid place-items-center w-12 h-12 rounded-[14px] bg-[#fad1e0] shadow-[0_3px_0_#e7a4be] -translate-y-2">
+                            <svg viewBox="0 0 24 24" aria-hidden="true" className="w-8 h-8 text-[#a63c69]">
+                              <g fill="#fffdf9" stroke="currentColor" strokeWidth="1.4">
+                                <ellipse cx="12" cy="5.9" rx="2.9" ry="3.3" />
+                                <ellipse cx="17.9" cy="10.2" rx="2.9" ry="3.3" transform="rotate(72 17.9 10.2)" />
+                                <ellipse cx="15.6" cy="17.1" rx="2.9" ry="3.3" transform="rotate(144 15.6 17.1)" />
+                                <ellipse cx="8.4" cy="17.1" rx="2.9" ry="3.3" transform="rotate(216 8.4 17.1)" />
+                                <ellipse cx="6.1" cy="10.2" rx="2.9" ry="3.3" transform="rotate(288 6.1 10.2)" />
+                              </g>
+                              <circle cx="12" cy="11.8" r="2.9" fill="currentColor" />
+                            </svg>
+                          </span>
+                          <span className="grid place-items-center w-12 h-12 rounded-[14px] bg-[#d7efd1] shadow-[0_3px_0_#a4d29a] translate-y-1">
+                            <svg viewBox="0 0 24 24" aria-hidden="true" className="w-8 h-8 text-[#357840]">
+                              <circle cx="12" cy="13.4" r="7.8" fill="#fffdf9" stroke="currentColor" strokeWidth="1.5" />
+                              <g stroke="currentColor" strokeWidth="1.25" fill="none" opacity="0.6">
+                                <path d="M12 5.8c-2.9 2.2-4.4 5-4.4 7.9s1.7 5.5 4.4 7.3" />
+                                <path d="M12 5.8c2.9 2.2 4.4 5 4.4 7.9s-1.7 5.5-4.4 7.3" />
+                                <path d="M4.5 11.6c2.5 1.1 4.9 1.6 7.5 1.6s5-.5 7.5-1.6" />
+                              </g>
+                            </svg>
+                          </span>
+                        </span>
+                        <span className="font-display font-semibold text-[20px] tracking-tight bg-gradient-to-r from-puz-pinkDeep to-puz-leafDeep bg-clip-text text-transparent">
+                          Pet Puzzles
+                        </span>
+                        <span className="font-mono text-[10.5px] tracking-widest uppercase text-puz-ink/80">
+                          Two tile games · click to play
+                        </span>
+                      </div>
+                    </div>
                   ) : p.video ? (
                     <video
                       src={asset(p.video)}

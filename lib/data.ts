@@ -160,6 +160,13 @@ export const projects: Project[] = [
     meta: "Feed, play with, and care for a 3D schnauzer that lives in your browser",
     href: "/projects/virtual-pet",
   },
+  {
+    label: "LIVE DEMO · Two browser puzzle games",
+    tag: "Games",
+    title: "Pet Puzzles Tile & Tower",
+    meta: "Two original tile puzzles with synthesised sound, playable offline",
+    href: "/projects/pet-puzzles",
+  },
 ];
 
 export const ticker = [
