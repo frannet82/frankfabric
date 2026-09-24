@@ -5,7 +5,7 @@ import VirtualPet from "@/components/pet/VirtualPet";
 export const metadata = {
   title: "Fabric Pet Virtual Tamagotchi — Frank Cloud Fabric",
   description:
-    "A client-side 3D virtual pet: feed, play with, and care for a rigged, animated 3D chicken that lives in your browser. Its stats decay over time and it reacts to how you look after it — no server, all in the browser.",
+    "A client-side 3D virtual pet: feed, play with, and care for a rigged, animated 3D Miniature Schnauzer that lives in your browser. Its stats decay over time and it reacts to how you look after it — no server, all in the browser.",
 };
 
 export default function VirtualPetPage() {
@@ -37,10 +37,10 @@ export default function VirtualPetPage() {
           Fabric Pet <span className="text-pet-accent">Virtual Tamagotchi</span>
         </h1>
         <p className="text-[15px] leading-relaxed text-pet-inkSoft max-w-[560px] mx-auto font-light">
-          Meet a rigged, animated 3D chicken that lives entirely in your browser. Feed it, play with it, let it rest, and
-          keep it clean — its hunger, happiness, energy, and cleanliness decay in real time and it reacts to
-          how you care for it. State is saved locally, so your chicken remembers you between visits. No server, no
-          API key, part of the Frank Cloud Fabric portfolio.
+          Meet a rigged, animated 3D Miniature Schnauzer that lives entirely in your browser. Feed it, play with it, let it
+          rest, and keep it clean — its hunger, happiness, energy, and cleanliness decay in real time and it sits, naps,
+          wags, barks and follows your cursor depending on how you care for it. State is saved locally, so your pup
+          remembers you between visits. No server, no API key, part of the Frank Cloud Fabric portfolio.
         </p>
       </section>
 

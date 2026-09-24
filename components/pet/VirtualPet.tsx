@@ -1,7 +1,7 @@
 "use client";
 
 // ---------------------------------------------------------------------------
-// Virtual pet — composed widget (3D chicken stage + Tamagotchi game UI).
+// Virtual pet — composed widget (3D Miniature Schnauzer stage + Tamagotchi game UI).
 //
 // The 3D scene (components/pet/PetScene.tsx) touches WebGL/DOM, so it is
 // imported here via next/dynamic { ssr:false } with a themed loading fallback,
@@ -58,16 +58,17 @@ const PetScene = dynamic(() => import("@/components/pet/PetScene"), {
       <div className="flex flex-col items-center gap-3">
         <span className="w-7 h-7 rounded-full border-2 border-pet-accentSoft border-t-pet-accent animate-spin" />
         <span className="font-mono text-[11px] tracking-widest uppercase">
-          Waking the chicken…
+          Waking the pup…
         </span>
       </div>
     </div>
   ),
 });
 
-// Short chicken cluck played on every interaction (client-only, base-path
+// Short soft "boof" played on every interaction (client-only, base-path
 // prefixed via asset() so it resolves under /frankfabric/ in production).
-const CLUCK_SOUND = asset("/sounds/chicken-cluck.wav");
+// The scene itself plays a sharper bark in sync with the Bark animations.
+const BOOF_SOUND = asset("/sounds/dog-boof.wav");
 
 // How often we apply incremental decay + persist (ms).
 const TICK_MS = 4000;
@@ -141,22 +142,22 @@ function VirtualPetInner() {
   // an effect (never during render) to satisfy the react-hooks rules.
   const stateRef = useRef<PetState | null>(null);
   const actionTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  // Cached HTMLAudioElement for the interaction cluck. Lazily created on first
+  // Cached HTMLAudioElement for the interaction "boof". Lazily created on first
   // user interaction so nothing is constructed during static prerender (there
   // is no Audio on the server) and no sound ever plays on page load.
-  const cluckRef = useRef<HTMLAudioElement | null>(null);
+  const boofRef = useRef<HTMLAudioElement | null>(null);
 
-  // Play the short chicken cluck on interaction. Client-only and defensive:
+  // Play the short "boof" on interaction. Client-only and defensive:
   // lazy-create the element on first use, guard for a missing Audio ctor,
   // rewind so rapid repeats retrigger, and swallow the autoplay-rejection
   // promise so a blocked play() never throws.
-  const playCluck = useCallback(() => {
+  const playBoof = useCallback(() => {
     if (typeof window === "undefined" || typeof Audio === "undefined") return;
-    let audio = cluckRef.current;
+    let audio = boofRef.current;
     if (!audio) {
-      audio = new Audio(CLUCK_SOUND);
+      audio = new Audio(BOOF_SOUND);
       audio.preload = "auto";
-      cluckRef.current = audio;
+      boofRef.current = audio;
     }
     try {
       audio.currentTime = 0;
@@ -215,10 +216,10 @@ function VirtualPetInner() {
   const doAction = useCallback((action: PetAction) => {
     const current = stateRef.current;
     if (!current) return;
-    // Cluck on every interaction (Feed/Play/Sleep/Clean button and pet click,
+    // "Boof" on every interaction (Feed/Play/Sleep/Clean button and pet click,
     // which routes through doAction("play")). Fired here so it only ever plays
     // on a real user interaction, never on load.
-    playCluck();
+    playBoof();
     const now = Date.now();
     // Decay for elapsed time first, then apply the action so the numbers stay
     // consistent with the clock.
@@ -236,7 +237,7 @@ function VirtualPetInner() {
     actionTimerRef.current = setTimeout(() => {
       setPendingAction(null);
     }, ACTION_HOLD_MS);
-  }, [playCluck]);
+  }, [playBoof]);
 
   const commitName = useCallback(() => {
     const current = stateRef.current;
@@ -256,7 +257,7 @@ function VirtualPetInner() {
   };
   const mood = state ? moodFor(stats) : "content";
   const wellbeing = state ? overallWellbeing(stats) : 0;
-  const petName = state?.name?.trim() || "Your chicken";
+  const petName = state?.name?.trim() || "Your schnauzer";
 
   return (
     <div className="absolute inset-0 z-[5] flex flex-col md:flex-row bg-pet-cream">
