@@ -76,6 +76,7 @@ function ChefChatbotInner() {
   const [messages, setMessages] = useState<ChatMessage[]>([
     { role: "assistant", content: GREETING },
   ]);
+  const messagesRef = useRef(messages);
   const [suggestions, setSuggestions] = useState<string[]>(GREETING_SUGGESTIONS);
   const [input, setInput] = useState("");
   // `speaking` opens the mouth-motion window; `muted` gates all audio.
@@ -123,23 +124,16 @@ function ChefChatbotInner() {
       const trimmed = text.trim();
       if (!trimmed) return;
 
-      let reply = "";
-      setMessages((prev) => {
-        const history = prev;
-        const withUser: ChatMessage[] = [
-          ...history,
-          { role: "user", content: trimmed },
-        ];
-        const response = respondToMessage(history, trimmed);
-        reply = response.reply;
-        setSuggestions(response.suggestions ?? []);
-        // Read the engine's branch classification straight off the response and
-        // hand it to the scene (with a fresh nonce so an identical focus still
-        // re-fires the camera nudge). No intent is derived in this component.
-        setFocus(response.focus ?? null);
-        setFocusNonce((n) => n + 1);
-        return [...withUser, { role: "assistant", content: response.reply }];
-      });
+      // Compute once in the event handler: React may defer or replay state updaters.
+      const history = messagesRef.current;
+      const response = respondToMessage(history, trimmed);
+      const reply = response.reply;
+      const next: ChatMessage[] = [...history, { role: "user", content: trimmed }, { role: "assistant", content: reply }];
+      messagesRef.current = next;
+      setMessages(next);
+      setSuggestions(response.suggestions ?? []);
+      setFocus(response.focus ?? null);
+      setFocusNonce(n => n + 1);
 
       setInput("");
 
@@ -168,7 +162,7 @@ function ChefChatbotInner() {
   return (
     <div className="absolute inset-0 z-[5] flex flex-col md:flex-row bg-ac-cream/90 backdrop-blur-[1px]">
       {/* 3D chef stage */}
-      <div className="relative md:w-[42%] w-full h-[38%] md:h-full min-h-[120px] bg-gradient-to-b from-ac-sky/40 to-ac-leaf/25 border-b md:border-b-0 md:border-r border-ac-leaf/40">
+      <div className="relative md:w-[54%] w-full h-[42%] md:h-full min-h-[120px] bg-gradient-to-b from-ac-sky/40 to-ac-leaf/25 border-b md:border-b-0 md:border-r border-ac-leaf/40">
         <ChefScene
           speaking={speaking}
           getLoudness={getLoudness}
@@ -208,7 +202,7 @@ function ChefChatbotInner() {
           role="log"
           aria-live="polite"
           aria-label="Chef conversation"
-          className="flex-1 min-h-0 overflow-y-auto px-3 py-3 flex flex-col gap-2"
+          className="flex-1 min-h-0 overflow-y-auto px-5 py-5 flex flex-col gap-4"
         >
           {messages.map((message, index) => {
             const isUser = message.role === "user";
@@ -222,7 +216,7 @@ function ChefChatbotInner() {
               >
                 <div
                   className={[
-                    "max-w-[85%] rounded-2xl px-3 py-2 text-[12.5px] leading-relaxed whitespace-pre-wrap shadow-sm",
+                    "max-w-[85%] rounded-2xl px-3 py-2 text-[14px] leading-relaxed whitespace-pre-wrap shadow-sm",
                     isUser
                       ? "bg-ac-sun text-ac-brown border border-ac-orange/50 rounded-br-sm"
                       : "bg-white text-ac-brown border border-ac-leaf/40 rounded-bl-sm",
@@ -266,12 +260,12 @@ function ChefChatbotInner() {
             onChange={(event) => setInput(event.target.value)}
             placeholder="Ask about a recipe…"
             autoComplete="off"
-            className="flex-1 min-w-0 rounded-full bg-white border border-ac-leaf/50 px-4 py-2 text-[12.5px] text-ac-brown placeholder:text-ac-brownSoft/70 focus:outline-none focus:border-ac-leafDark focus:ring-2 focus:ring-ac-leafDark/40"
+            className="flex-1 min-w-0 rounded-full bg-white border border-ac-leaf/50 px-4 py-2 text-[14px] text-ac-brown placeholder:text-ac-brownSoft/70 focus:outline-none focus:border-ac-leafDark focus:ring-2 focus:ring-ac-leafDark/40"
           />
           <button
             type="submit"
             disabled={!input.trim()}
-            className="shrink-0 rounded-full bg-ac-leaf text-ac-brown text-[12.5px] font-semibold px-4 py-2 border border-ac-leafDark/50 shadow-[0_4px_14px_rgba(95,168,90,0.35)] hover:-translate-y-0.5 hover:bg-ac-leafDark hover:text-white focus:outline-none focus:ring-2 focus:ring-ac-leafDark transition-all disabled:opacity-40 disabled:hover:translate-y-0"
+            className="shrink-0 rounded-full bg-ac-leaf text-ac-brown text-[14px] font-semibold px-4 py-2 border border-ac-leafDark/50 shadow-[0_4px_14px_rgba(95,168,90,0.35)] hover:-translate-y-0.5 hover:bg-ac-leafDark hover:text-white focus:outline-none focus:ring-2 focus:ring-ac-leafDark transition-all disabled:opacity-40 disabled:hover:translate-y-0"
           >
             Send
           </button>

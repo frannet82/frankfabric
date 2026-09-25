@@ -49,7 +49,6 @@ import {
 } from "@/components/three/quality";
 import QualityToggle from "@/components/three/QualityToggle";
 import { useReducedMotion } from "@/components/three/useReducedMotion";
-import { asset } from "@/lib/asset";
 
 const PetScene = dynamic(() => import("@/components/pet/PetScene"), {
   ssr: false,
@@ -64,11 +63,6 @@ const PetScene = dynamic(() => import("@/components/pet/PetScene"), {
     </div>
   ),
 });
-
-// Short soft "boof" played on every interaction (client-only, base-path
-// prefixed via asset() so it resolves under /frankfabric/ in production).
-// The scene itself plays a sharper bark in sync with the Bark animations.
-const BOOF_SOUND = asset("/sounds/dog-boof.wav");
 
 // How often we apply incremental decay + persist (ms).
 const TICK_MS = 4000;
@@ -142,35 +136,27 @@ function VirtualPetInner() {
   // an effect (never during render) to satisfy the react-hooks rules.
   const stateRef = useRef<PetState | null>(null);
   const actionTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  // Cached HTMLAudioElement for the interaction "boof". Lazily created on first
-  // user interaction so nothing is constructed during static prerender (there
-  // is no Audio on the server) and no sound ever plays on page load.
-  const boofRef = useRef<HTMLAudioElement | null>(null);
-
-  // Play the short "boof" on interaction. Client-only and defensive:
-  // lazy-create the element on first use, guard for a missing Audio ctor,
-  // rewind so rapid repeats retrigger, and swallow the autoplay-rejection
-  // promise so a blocked play() never throws.
-  const playBoof = useCallback(() => {
-    if (typeof window === "undefined" || typeof Audio === "undefined") return;
-    let audio = boofRef.current;
-    if (!audio) {
-      audio = new Audio(BOOF_SOUND);
-      audio.preload = "auto";
-      boofRef.current = audio;
-    }
-    try {
-      audio.currentTime = 0;
-    } catch {
-      // Some browsers throw if currentTime is set before metadata loads; ignore.
-    }
-    const played = audio.play();
-    if (played && typeof played.catch === "function") {
-      played.catch(() => {
-        /* autoplay/interaction policy rejection: safe to ignore */
-      });
-    }
-  }, []);
+  const [soundEnabled, setSoundEnabled] = useState(false);
+  const audioRef = useRef<AudioContext | null>(null);
+  const playFeedback = useCallback(() => {
+    if (!soundEnabled || typeof AudioContext === "undefined") return;
+    const ctx = audioRef.current ?? new AudioContext();
+    audioRef.current = ctx;
+    void ctx.resume().catch(() => {});
+    const oscillator = ctx.createOscillator();
+    const gain = ctx.createGain();
+    oscillator.type = "sine";
+    oscillator.frequency.setValueAtTime(440, ctx.currentTime);
+    oscillator.frequency.exponentialRampToValueAtTime(660, ctx.currentTime + 0.14);
+    gain.gain.setValueAtTime(0, ctx.currentTime);
+    gain.gain.linearRampToValueAtTime(0.045, ctx.currentTime + 0.02);
+    gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.22);
+    oscillator.connect(gain).connect(ctx.destination);
+    oscillator.start();
+    oscillator.stop(ctx.currentTime + 0.24);
+    oscillator.onended = () => { oscillator.disconnect(); gain.disconnect(); };
+  }, [soundEnabled]);
+  useEffect(() => () => { void audioRef.current?.close(); }, []);
 
   useEffect(() => {
     stateRef.current = state;
@@ -216,10 +202,7 @@ function VirtualPetInner() {
   const doAction = useCallback((action: PetAction) => {
     const current = stateRef.current;
     if (!current) return;
-    // "Boof" on every interaction (Feed/Play/Sleep/Clean button and pet click,
-    // which routes through doAction("play")). Fired here so it only ever plays
-    // on a real user interaction, never on load.
-    playBoof();
+    if (action !== "sleep") playFeedback();
     const now = Date.now();
     // Decay for elapsed time first, then apply the action so the numbers stay
     // consistent with the clock.
@@ -237,7 +220,7 @@ function VirtualPetInner() {
     actionTimerRef.current = setTimeout(() => {
       setPendingAction(null);
     }, ACTION_HOLD_MS);
-  }, [playBoof]);
+  }, [playFeedback]);
 
   const commitName = useCallback(() => {
     const current = stateRef.current;
@@ -275,6 +258,7 @@ function VirtualPetInner() {
         {/* Shared High/Fast render-quality control, placed unobtrusively in the
             stage's top-left. Same control across all four scenes. */}
         <QualityToggle className="absolute top-2 left-2 z-10" />
+        <button type="button" aria-pressed={soundEnabled} onClick={() => setSoundEnabled(value => !value)} className="absolute top-2 right-2 z-10 rounded-full bg-white/90 px-3 py-2 text-xs text-pet-ink border border-pet-accentSoft">Sound {soundEnabled ? "on" : "off"}</button>
         <span className="absolute bottom-2 left-0 right-0 text-center font-mono text-[10px] tracking-widest uppercase text-pet-inkSoft pointer-events-none">
           {petName}
         </span>

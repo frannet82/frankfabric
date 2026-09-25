@@ -40,6 +40,7 @@ import { MeshoptDecoder } from "three/examples/jsm/libs/meshopt_decoder.module.j
 import { clone as cloneSkeleton } from "three/examples/jsm/utils/SkeletonUtils.js";
 import { asset } from "@/lib/asset";
 import type { PetAction } from "@/lib/pet/petState";
+import StudioEnvironment from "@/components/three/StudioEnvironment";
 import SceneLoader from "@/components/three/SceneLoader";
 import {
   DEFAULT_QUALITY,
@@ -48,7 +49,7 @@ import {
 } from "@/components/three/quality";
 
 const MODEL_URL = asset("/models/characters/schnauzer/miniature_schnauzer.glb");
-const BARK_SOUND = asset("/sounds/dog-bark.wav");
+
 
 // The GLB is authored in real-world metres (~34 cm at the withers, 46 cm to the
 // top of the head). Scale it up to a comfortable on-stage size.
@@ -152,13 +153,21 @@ function Schnauzer({ mood, action, actionNonce, wellbeing, onPetClick, reducedMo
       mesh.castShadow = true;
       mesh.receiveShadow = true;
       const mats = Array.isArray(mesh.material) ? mesh.material : [mesh.material];
-      mats.forEach((m) => {
+      const ownedMaterials = mats.map(m => m.clone());
+      mesh.material = Array.isArray(mesh.material) ? ownedMaterials : ownedMaterials[0];
+      ownedMaterials.forEach((m) => {
         const std = m as THREE.MeshStandardMaterial;
-        // Fur cards are alpha-tested; alpha-to-coverage (with MSAA) gives soft,
-        // non-aliased strand edges.
+        // Fur is dielectric and matte; the export defaults its body to metallic.
+        if (/Fur/.test(std.name)) {
+          std.metalness = 0;
+          std.roughness = 0.96;
+          std.roughnessMap = null;
+          std.normalScale?.setScalar(0.35);
+          std.color.set('#aaa399');
+        }
         if (std.alphaTest > 0) {
-          std.alphaToCoverage = true;
-          std.alphaTest = 0.3;
+          std.alphaToCoverage = false;
+          std.alphaTest = 0.42;
         }
       });
     });
@@ -167,6 +176,15 @@ function Schnauzer({ mood, action, actionNonce, wellbeing, onPetClick, reducedMo
     root.position.x = MODEL_OFFSET_X;
     return root;
   }, [gltf]);
+
+  useEffect(() => () => {
+    model.traverse(obj => {
+      if (obj instanceof THREE.Mesh) {
+        const materials = Array.isArray(obj.material) ? obj.material : [obj.material];
+        materials.forEach(material => material.dispose());
+      }
+    });
+  }, [model]);
 
   // Scene-graph handles used every frame (filled in the mixer effect; kept in
   // refs so the per-frame mutation happens on ref-held objects).
@@ -188,8 +206,8 @@ function Schnauzer({ mood, action, actionNonce, wellbeing, onPetClick, reducedMo
   const moodRef = useRef(mood);
   const lookRef = useRef(new THREE.Vector2());
   const lookWeightRef = useRef(0);
-  const barkAudioRef = useRef<HTMLAudioElement | null>(null);
-  const pendingBarkRef = useRef<number | null>(null);
+
+
 
   useEffect(() => {
     moodRef.current = mood;
@@ -260,7 +278,6 @@ function Schnauzer({ mood, action, actionNonce, wellbeing, onPetClick, reducedMo
     next.play();
     if (prev && prev !== next) next.crossFadeFrom(prev, FADE, false);
     currentRef.current = next;
-    if (name.startsWith("Bark")) pendingBarkRef.current = clockRef.current + (name === "Bark" ? 0.3 : 0.25);
     return true;
   };
 
@@ -405,21 +422,7 @@ function Schnauzer({ mood, action, actionNonce, wellbeing, onPetClick, reducedMo
       }
     }
 
-    // --- bark sound synced to the jaw
-    if (pendingBarkRef.current !== null && now >= pendingBarkRef.current) {
-      pendingBarkRef.current = null;
-      try {
-        if (!barkAudioRef.current) {
-          barkAudioRef.current = new Audio(BARK_SOUND);
-          barkAudioRef.current.volume = 0.55;
-        }
-        barkAudioRef.current.currentTime = 0;
-        const p = barkAudioRef.current.play();
-        if (p && typeof p.catch === "function") p.catch(() => {});
-      } catch {
-        /* audio is optional */
-      }
-    }
+
   });
 
   const handleDown = (e: ThreeEvent<PointerEvent>) => {
@@ -556,6 +559,7 @@ export default function PetScene({
 
       <CameraRig action={action} actionNonce={actionNonce} reducedMotion={reducedMotion} />
 
+      <StudioEnvironment kind="pet" />
       <Suspense fallback={<SceneLoader />}>
         <Schnauzer
           mood={mood}

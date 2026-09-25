@@ -17,7 +17,7 @@ export default function DigitalWardrobePage() {
           "radial-gradient(1000px 720px at 86% -4%, rgba(63,169,255,0.16), transparent 54%), radial-gradient(900px 700px at 6% 4%, rgba(155,107,255,0.16), transparent 56%), linear-gradient(180deg, #05060c 0%, #06071a 45%, #05060c 100%)",
       }}
     >
-      <div className="max-w-[1100px] mx-auto px-6 pt-8 pb-3">
+      <div className="max-w-[1600px] mx-auto px-6 pt-8 pb-3">
         <nav className="flex items-center justify-between gap-6 py-3 px-5 rounded-full border border-white/20 bg-white/[0.06] backdrop-blur-md">
           <Link href="/" className="flex items-center gap-3">
             <BrandMark />
@@ -31,21 +31,24 @@ export default function DigitalWardrobePage() {
         </nav>
       </div>
 
-      <section className="max-w-[1100px] mx-auto px-6 pt-8 pb-4 text-center">
-        <span className="font-mono text-xs tracking-[2px] uppercase text-cloud-blue">{"// Live Demo"}</span>
+      <section className="max-w-[1600px] mx-auto px-6 pt-8 pb-4 text-center">
+        <span className="font-mono text-xs tracking-[2px] uppercase text-cloud-blue">Your personal style studio</span>
         <h1 className="font-display font-semibold text-[clamp(28px,3.6vw,42px)] tracking-tight text-[#f4f6fb] mt-3 mb-3">
           Digital Wardrobe Avatar Builder
         </h1>
-        <p className="text-[15px] leading-relaxed text-[#9aa2b4] max-w-[560px] mx-auto font-light">
-          Style a real-time 3D model: rotate and zoom the avatar, swap tops, bottoms, shoes, and hats, and
-          recolor each piece on the fly. Built as a fully interactive React Three Fiber component, part of
-          the Frank Cloud Fabric portfolio.
+        <p className="text-white text-[16px] leading-relaxed opacity-75 max-w-[680px] mx-auto">
+          Explore silhouettes, combine your favorite pieces, and make every color your own. Drag to turn the model and zoom in to see the details.
         </p>
       </section>
 
-      <section className="max-w-[900px] mx-auto px-6 pb-24">
+      <section className="max-w-[1600px] mx-auto px-3 sm:px-6 pb-10">
         <WardrobeBuilder />
       </section>
+      <nav aria-label="Explore projects" className="text-white max-w-[1600px] mx-auto px-6 pb-10 flex flex-wrap gap-3 text-sm">
+        <Link className="rounded-full border border-current/20 px-5 py-2 hover:opacity-70" href="/projects/chef-chatbot">Kitchen</Link>
+        <Link className="rounded-full border border-current/20 px-5 py-2 hover:opacity-70" href="/projects/coach-trainer">Fitness studio</Link>
+        <Link className="rounded-full border border-current/20 px-5 py-2 hover:opacity-70" href="/projects/virtual-pet">Pet companion</Link>
+      </nav>
     </main>
   );
 }

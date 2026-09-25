@@ -1,0 +1,50 @@
+[
+  {
+    "route": "chef-chatbot",
+    "width": 1440,
+    "errors": [],
+    "overflow": false
+  },
+  {
+    "route": "coach-trainer",
+    "width": 1440,
+    "errors": [],
+    "overflow": false
+  },
+  {
+    "route": "virtual-pet",
+    "width": 1440,
+    "errors": [],
+    "overflow": false
+  },
+  {
+    "route": "digital-wardrobe",
+    "width": 1440,
+    "errors": [],
+    "overflow": false
+  },
+  {
+    "route": "chef-chatbot",
+    "width": 390,
+    "errors": [],
+    "overflow": false
+  },
+  {
+    "route": "coach-trainer",
+    "width": 390,
+    "errors": [],
+    "overflow": false
+  },
+  {
+    "route": "virtual-pet",
+    "width": 390,
+    "errors": [],
+    "overflow": false
+  },
+  {
+    "route": "digital-wardrobe",
+    "width": 390,
+    "errors": [],
+    "overflow": false
+  }
+]

@@ -1,55 +1,12 @@
 "use client";
 
-// ---------------------------------------------------------------------------
-// Coach trainer — interactive 3D astronaut coach avatar (RIGGED GLB +
-// procedural bone gesturing).
-//
-// This renders the "Ed Stronaut" astronaut coach loaded from a single,
-// SELF-CONTAINED GLB (public/models/characters/astronaut/astronaut.glb). Unlike
-// the old, UNRIGGED coach.obj, this model ships a real humanoid skeleton
-// (1 skin, 52 joints/bones across 57 nodes, 4 skinned meshes) with its 14
-// textures EMBEDDED in the container. GLTFLoader decodes those embedded
-// textures automatically, so we do NOT hand-wire the loose extracted textures
-// under _assetwork/ed/textures/.
-//
-// KEY DIFFERENCE from the old OBJ coach: the GLB HAS a skeleton but ships ZERO
-// baked animation clips, so real limb motion is PROCEDURAL. Modeled on
-// components/chef/ChefScene.tsx's ARM_BONES gesturing: we resolve the arm chain
-// (Left/Right Arm/ForeArm/Hand) plus the spine (Spine/Spine1/Spine2) and
-// Neck/Head bones BY NAME on the cloned model and capture each bone's rest
-// rotation once. In useFrame a single smoothed 0..1 "gesture amount" eases
-// toward 1 while `speaking` and back to 0 when silent; it multiplies small,
-// per-bone time-based sin offsets (differing frequency/phase per bone and per
-// side) ADDED ON TOP OF each captured rest rotation, so the astronaut clearly
-// gestures with its arms plus a little spine/head motion while the reply plays
-// and eases back to its exact rest pose when done. Amplitudes are bounded so
-// the limbs read clearly but never clip through the torso/head. A very subtle
-// always-on idle sway keeps the figure from being perfectly static.
-//
-// CLONING: the GLB contains SkinnedMeshes bound to the skeleton. A plain
-// Object3D.clone(true) does NOT rebind the cloned skin to the cloned bones, so
-// the skinned mesh renders collapsed/invisible (the "empty container" bug). We
-// clone with SkeletonUtils.clone (same pattern as ChefScene / PetScene), which
-// duplicates skinned meshes and rebinds their skeletons.
-//
-// This is a rigged glTF binary, NOT a VRM: it is loaded with GLTFLoader and does
-// not go through the VRMLoaderPlugin or the lib/vrm helpers (those remain in use
-// by the wardrobe scene only).
-//
-// All asset URLs are routed through lib/asset.ts so they resolve under the
-// /frankfabric/ base path in production. This whole component touches WebGL/DOM
-// (react-three-fiber <Canvas />), so it is imported via next/dynamic
-// { ssr:false } by its consumer and never runs during static generation.
-// ---------------------------------------------------------------------------
-
 import { Suspense, useEffect, useMemo, useRef, useState } from "react";
-import { Canvas, useLoader, useFrame, type ThreeEvent } from "@react-three/fiber";
+import { Canvas, useFrame, type ThreeEvent } from "@react-three/fiber";
 import { ContactShadows, useCursor } from "@react-three/drei";
 import { damp, damp3 } from "maath/easing";
 import * as THREE from "three";
-import { GLTFLoader } from "three/examples/jsm/loaders/GLTFLoader.js";
-import { clone as cloneSkeleton } from "three/examples/jsm/utils/SkeletonUtils.js";
-import { asset } from "@/lib/asset";
+import SpeakingAvatar from "@/components/three/SpeakingAvatar";
+import StudioEnvironment from "@/components/three/StudioEnvironment";
 import SceneLoader from "@/components/three/SceneLoader";
 import {
   DEFAULT_QUALITY,
@@ -61,8 +18,7 @@ import type { CoachFocus } from "@/lib/coach/coachEngine";
 type SceneProps = {
   // True while the coach's reply is "playing"; opens the talking-motion window.
   speaking?: boolean;
-  // Returns a live 0..1 audio loudness (Web Audio AnalyserNode RMS). When it
-  // returns 0 while speaking (e.g. muted), the bob falls back to a sine wobble.
+  // Estimated articulation envelope from browser speech word boundaries.
   getLoudness?: () => number;
   // Shared High/Fast render-quality tier (components/three/quality.ts). Gates
   // Canvas shadows, dpr, shadow-map resolution, soft shadows and the heavier
@@ -82,7 +38,7 @@ type SceneProps = {
   // constructs any workout text itself.
   onKettlebellClick?: () => void;
   // When true (user prefers reduced motion), all AMBIENT/IDLE motion is gated:
-  // the camera nudge holds the pinned framing, the astronaut's talking arm /
+  // the camera nudge holds the pinned framing, the coach's talking arm /
   // spine / head gestures and the idle sway are damped to the captured rest
   // pose (gesture amount -> 0 = exact rest), the floor shimmer is skipped, and
   // the kettlebell prop's idle bob is frozen. Interactions still route through
@@ -91,447 +47,9 @@ type SceneProps = {
   reducedMotion?: boolean;
 };
 
-// The rigged astronaut GLB (Ed Stronaut). It is SELF-CONTAINED: its 14 textures
-// are embedded in the container, so GLTFLoader decodes them automatically — do
-// NOT hand-wire the loose extracted textures. The path is base-path-prefixed via
-// asset() so it resolves to /frankfabric/models/... in production. Never
-// hardcode a bare "/models/..." path — it would 404 on GitHub Pages.
-const MODEL_URL = asset("/models/characters/astronaut/astronaut.glb");
-
-// GESTURE BONES: the astronaut rig's arm chain + spine + head/neck, resolved BY
-// NAME against the GLB (verified at build time: NO mixamorig prefix — the rig
-// uses plain humanoid names). While `speaking` is true the astronaut gestures
-// with its arms plus a little spine/head motion driven by the `speaking`
-// window; when it stops we ease every bone back to its captured rest rotation.
-// Any bone missing at runtime is skipped gracefully (never throws).
-const GESTURE_BONES = {
-  rArm: "RightArm",
-  rForearm: "RightForeArm",
-  rHand: "RightHand",
-  lArm: "LeftArm",
-  lForearm: "LeftForeArm",
-  lHand: "LeftHand",
-  spine: "Spine1",
-  chest: "Spine2",
-  neck: "Neck",
-  head: "Head",
-} as const;
-type GestureBoneKey = keyof typeof GESTURE_BONES;
-
-// Resting floor for the speaking-driven gesture amplitude multiplier. The coach
-// voice is the browser Web Speech API (SpeechSynthesis), which exposes NO live
-// amplitude, so getLoudness() is always 0. Driving the gesture INTENSITY off
-// loudness would therefore leave the coach permanently pinned at this floor and
-// reading limp. Instead the amplitude is driven by the plain `speaking` window:
-// it eases toward 1 while speaking and relaxes back to this floor when silent.
-// The floor keeps a subtle motion between replies, and the multiplier is clamped
-// to <= 1 so the bounded per-bone amplitudes are never exceeded (limbs never
-// clip the body). getLoudness is retained on the API for compatibility but is no
-// longer consulted here.
-const GESTURE_LOUDNESS_FLOOR = 0.55;
-
-// ARMS-CLOSE BASE POSE. The astronaut GLB's captured REST pose is a wide
-// A/T-ish stance: the upper-arm bones' local +Y (bone-length) axis points almost
-// straight out to the sides in world space (RightArm bone-length -> world -X,
-// LeftArm -> world +X; both bones' local +Z maps to world -Y = down). Measured
-// with a throwaway node probe against astronaut.glb. To bring each arm DOWN and
-// IN toward the torso we rotate its bone-length axis from "out to the side"
-// toward "down", which is a POSITIVE rotation about the bone's LOCAL X axis for
-// BOTH arms (positive x-Euler swings local +Y toward local +Z = world down).
-// The gesture code already animates the arm's x-Euler as its main swing, so we
-// simply fold this inward offset into the base rotation the gestures ride on.
-//
-// The upper arms take the bulk of the offset (they start fully horizontal, ~90
-// deg from hanging). A smaller inward offset on the forearms tucks the hands in
-// toward the body so the silhouette reads as "arms relaxed at the sides" rather
-// than "elbows out". Both offsets are POSITIVE-x for both sides (the rig is
-// mirror-symmetric across x, and both arms' local +Z points world-down).
-// Chosen so that idle sits arms-close and full-amplitude gestures (upper arm
-// peak ~0.26 rad, forearm ~0.5 rad) still keep the hands clear of the torso.
-const ARM_UPPER_INWARD = 1.02;
-const ARM_FORE_INWARD = 0.28;
-
-// Per-bone inward offset (radians) added to the captured REST rotation to build
-// the ARMS-CLOSE base the gestures animate around. Only the arm chain is
-// adjusted; spine/neck/head keep their captured rest. Absent bones are ignored.
-const ARM_BASE_OFFSET: Partial<Record<GestureBoneKey, [number, number, number]>> = {
-  rArm: [ARM_UPPER_INWARD, 0, 0],
-  lArm: [ARM_UPPER_INWARD, 0, 0],
-  rForearm: [ARM_FORE_INWARD, 0, 0],
-  lForearm: [ARM_FORE_INWARD, 0, 0],
-};
-
-// The astronaut GLB stands upright. We scale it off its TALLEST bound to a
-// ~1.7-unit-tall figure so the fixed camera frames a cozy, front-facing
-// head-and-torso shot, the same read the chef gets, regardless of authoring
-// units.
-const MODEL_TARGET_HEIGHT = 1.7;
-
-// World-space height the aim point sits at (coach's upper chest / lower face).
-// The camera is aimed here and the model is recentered so this point is where
-// the head-and-torso reads best in the fixed shot.
 const AIM_HEIGHT = 1.3;
-// Vertical fraction of the (scaled) model height that we place at AIM_HEIGHT.
-// TIGHTER FRAMING (zoom-in fix): raised from 0.82 -> 0.9 so the aim point sits
-// on the upper chest/lower face. Combined with the closer CAMERA_DISTANCE below
-// this gives a tight head-and-torso shot where the face reads prominently while
-// the top of the head stays comfortably inside the frame (no crop).
-const AIM_MODEL_FRACTION = 0.9;
-// How far back the fixed camera sits from the aim point. TIGHTER FRAMING
-// (zoom-in fix): pulled in from 2.4 -> 1.7 so the astronaut reads noticeably
-// larger in frame (a head-and-torso portrait rather than a full upper-body
-// shot). PINNED_CAM below derives from this constant, so the WS3 CameraRig eases
-// back to this closer framing after any engine nudge.
-const CAMERA_DISTANCE = 1.7;
+const CAMERA_DISTANCE = 2.25;
 
-// Loads the rigged astronaut GLB (embedded textures decoded by GLTFLoader),
-// clones it with SkeletonUtils so the 4 skinned meshes rebind, and drives
-// PROCEDURAL bone gesturing — the GLB ships a 52-joint skeleton but ZERO baked
-// clips, so all limb motion is authored here in useFrame.
-function Avatar({
-  speaking = false,
-  reducedMotion = false,
-}: {
-  speaking?: boolean;
-  // getLoudness is accepted on the props type for API compatibility with the
-  // voice wrapper but is intentionally NOT destructured/consulted: the Web
-  // Speech voice exposes no live amplitude, so the gesture intensity is driven
-  // by the `speaking` window instead (see useFrame).
-  getLoudness?: () => number;
-  reducedMotion?: boolean;
-}) {
-  const gltf = useLoader(GLTFLoader, MODEL_URL);
-
-  // The gesture bones and each bone's captured rest rotation. Bones absent at
-  // runtime are skipped gracefully (we simply never animate them).
-  const boneRef = useRef<Partial<Record<GestureBoneKey, THREE.Object3D>>>({});
-  // The ARMS-CLOSE base rotation each gesture animates around. For the arm chain
-  // this is the captured rest PLUS the measured inward offset (ARM_BASE_OFFSET)
-  // so the arms rest close to the body; for the other bones it is the raw rest.
-  const baseRef = useRef<Partial<Record<GestureBoneKey, THREE.Euler>>>({});
-  // Smoothed 0..1 "gesture amount" easing toward 1 while speaking, 0 otherwise.
-  // Multiplies every bone oscillation so the gesture fades in/out with no snap;
-  // at amount == 0 the bones sit at their captured rest rotation exactly.
-  const gestureRef = useRef(0);
-  // Smoothed per-frame amplitude multiplier driven by the `speaking` window.
-  // With the Web Speech voice there is no live loudness (getLoudness() === 0),
-  // so the intensity is authored from `speaking` alone: it eases toward 1 while
-  // speaking so the gesture clearly swells, and relaxes back to
-  // GESTURE_LOUDNESS_FLOOR when silent (a subtle between-reply motion). Bounded
-  // to <= 1 so the per-bone amplitudes never exceed their clip-safe caps.
-  const loudnessAmpRef = useRef(GESTURE_LOUDNESS_FLOOR);
-
-  // Clone the GLB scene with SkeletonUtils so each SkinnedMesh's skeleton is
-  // correctly rebound to the cloned bones (a plain Object3D.clone would collapse
-  // /hide the skinned meshes — the "empty container" bug). GLTFLoader already
-  // decoded the 14 embedded textures onto the materials; we only ensure the
-  // color/diffuse maps sample in sRGB. Then scale off the tallest bound and
-  // recenter with a fresh Box3 so the fixed camera frames a cozy head-and-torso.
-  const model = useMemo(() => {
-    const root = cloneSkeleton(gltf.scene);
-
-    root.traverse((node) => {
-      node.frustumCulled = false;
-      const mesh = node as THREE.Mesh;
-      if (!mesh.isMesh) return;
-      mesh.castShadow = true;
-      mesh.receiveShadow = true;
-      // GLTFLoader already sets the correct color space on decoded textures, but
-      // make the intent explicit: the base-color/diffuse (.map) and emissive
-      // maps are sRGB; the data maps (normal/roughness/metalness/ao) stay
-      // linear. This keeps the suit reading its true colors with no blow-out
-      // under the near-neutral rig (WS2). We do NOT swap the GLB's PBR
-      // materials — they are correct MeshStandardMaterials already.
-      const materials = Array.isArray(mesh.material)
-        ? mesh.material
-        : [mesh.material];
-      materials.forEach((raw) => {
-        const mat = raw as THREE.MeshStandardMaterial | undefined;
-        if (!mat) return;
-        if (mat.map) mat.map.colorSpace = THREE.SRGBColorSpace;
-        if (mat.emissiveMap) mat.emissiveMap.colorSpace = THREE.SRGBColorSpace;
-        mat.needsUpdate = true;
-      });
-    });
-
-    // Scale to a consistent on-screen height off the model's TALLEST bound so
-    // the fixed camera frames the whole upper body regardless of authoring
-    // units. The astronaut stands upright, so Y is its tallest axis.
-    root.updateMatrixWorld(true);
-    const preBox = new THREE.Box3().setFromObject(root);
-    if (!preBox.isEmpty()) {
-      const preSize = new THREE.Vector3();
-      preBox.getSize(preSize);
-      const tallest = Math.max(preSize.x, preSize.y, preSize.z);
-      if (tallest > 0) root.scale.setScalar(MODEL_TARGET_HEIGHT / tallest);
-    }
-
-    // Recenter deterministically off a fresh Box3 of the SCALED model so the
-    // fixed camera reliably frames the astronaut (never a speck, never clipped).
-    // Center horizontally/in depth on the aim axis, and lift it so a point
-    // AIM_MODEL_FRACTION up its height sits at AIM_HEIGHT (upper chest).
-    root.updateMatrixWorld(true);
-    const box = new THREE.Box3().setFromObject(root);
-    if (!box.isEmpty()) {
-      const size = new THREE.Vector3();
-      const center = new THREE.Vector3();
-      box.getSize(size);
-      box.getCenter(center);
-      const aimWorldY = box.min.y + size.y * AIM_MODEL_FRACTION;
-      root.position.set(
-        root.position.x - center.x,
-        root.position.y - aimWorldY + AIM_HEIGHT,
-        root.position.z - center.z
-      );
-    }
-    return root;
-  }, [gltf]);
-
-  // Resolve the gesture bones on the cloned root we actually add to the scene
-  // and capture each bone's rest rotation once, mirroring ChefScene's ARM_BONES
-  // approach. Any missing bone is skipped gracefully (we simply never animate
-  // it) so a rig change can't throw. Done in an effect so we never touch refs
-  // during render.
-  useEffect(() => {
-    const bones: Partial<Record<GestureBoneKey, THREE.Object3D>> = {};
-    const bases: Partial<Record<GestureBoneKey, THREE.Euler>> = {};
-    (Object.keys(GESTURE_BONES) as GestureBoneKey[]).forEach((key) => {
-      const bone = model.getObjectByName(GESTURE_BONES[key]) ?? null;
-      if (bone) {
-        bones[key] = bone;
-        // Capture the rest rotation, then fold in the measured inward offset for
-        // the arm chain so the ARMS-CLOSE pose becomes the base the gestures
-        // ride on (the wide T/A rest is never the animation base). Non-arm bones
-        // get no offset, so their base is the raw rest. Stored as a fresh Euler
-        // so runtime writes never lose it. Also seat the bone at its base now so
-        // the very first frame (and the reduced-motion hold) reads arms-close.
-        const offset = ARM_BASE_OFFSET[key];
-        const base = bone.rotation.clone();
-        if (offset) {
-          base.set(
-            base.x + offset[0],
-            base.y + offset[1],
-            base.z + offset[2],
-            base.order
-          );
-        }
-        bases[key] = base;
-        bone.rotation.copy(base);
-      } else {
-        console.warn(
-          `[CoachScene] gesture bone "${GESTURE_BONES[key]}" not found; skipping its motion.`
-        );
-      }
-    });
-    boneRef.current = bones;
-    baseRef.current = bases;
-    return () => {
-      boneRef.current = {};
-      baseRef.current = {};
-    };
-  }, [model]);
-
-  // Drive the procedural bone gesturing each frame. A single smoothed 0..1
-  // amount eases toward 1 while speaking and 0 when silent, framerate-
-  // independent, so gestures fade in/out with no snap. It multiplies every
-  // per-bone oscillation, so at rest (amount == 0) the bones sit at their
-  // captured rest rotation exactly. Under reduced motion the target is 0, so
-  // the astronaut eases to its rest pose and holds (no pinned-pose constant is
-  // touched — the captured rest rotations ARE the pose).
-  useFrame((state, delta) => {
-    const t = state.clock.elapsedTime;
-
-    const gTarget = reducedMotion ? 0 : speaking ? 1 : 0;
-    const kGesture = 1 - Math.exp(-delta * 6);
-    gestureRef.current += (gTarget - gestureRef.current) * kGesture;
-
-    // Speaking-driven amplitude. The Web Speech voice exposes no live loudness
-    // (getLoudness() === 0), so the intensity is driven by the `speaking` window
-    // itself: while speaking (and NOT under reduced motion) the target rises to
-    // 1 so the gesture clearly swells; when silent it relaxes back to the floor
-    // for a subtle between-reply motion. Smoothed framerate-independently so the
-    // swell/settle is gradual instead of snapping. Reduced motion keeps this off
-    // the critical path since `amt` is already driven to 0 below.
-    const loudTarget =
-      speaking && !reducedMotion ? 1 : GESTURE_LOUDNESS_FLOOR;
-    const kLoud = 1 - Math.exp(-delta * 10);
-    loudnessAmpRef.current += (loudTarget - loudnessAmpRef.current) * kLoud;
-
-    // Final gesture multiplier: the speaking-gated fade-in (gestureRef) times the
-    // speaking-driven amplitude. At rest (gestureRef == 0) this is 0 so the bones
-    // sit at their exact captured rest rotation; while speaking it swells to 1.
-    const amt = gestureRef.current * loudnessAmpRef.current;
-
-    // A very subtle always-on idle sway so the astronaut is never perfectly
-    // static even when silent. It is gated by reduced motion (idle == 0 then)
-    // and is an order of magnitude smaller than the talking gestures.
-    const idle = reducedMotion ? 0 : 1;
-
-    const bones = boneRef.current;
-    const bases = baseRef.current;
-
-    // Add a bounded per-bone offset ON TOP of the captured rest rotation. The
-    // `amt` term is the speaking-gated gesture; the `idleTerm` is the tiny
-    // always-on sway. Amplitudes are bounded so the limbs read clearly as
-    // gesturing yet never clip through the torso/head within the fixed
-    // head-and-torso framing (arms peak ~0.26 rad, forearm raise ~0.5 rad,
-    // hands ~0.3 rad; spine/neck/head stay under ~0.1 rad).
-    const setBone = (
-      key: GestureBoneKey,
-      dx: number,
-      dy: number,
-      dz: number,
-      idleTerm = 0
-    ) => {
-      const bone = bones[key];
-      const base = bases[key];
-      if (!bone || !base) return;
-      // Animate the bounded gesture ON TOP OF the ARMS-CLOSE base (rest + inward
-      // offset for the arms), so the coach gestures gently while speaking and
-      // eases back to arms-close, never to the wide rest. At amt == 0 (silent
-      // or reduced motion) the bones sit exactly at their arms-close base.
-      bone.rotation.set(
-        base.x + dx * amt + idleTerm * idle,
-        base.y + dy * amt,
-        base.z + dz * amt
-      );
-    };
-
-    // Right arm: a clear upper-arm swing + pronounced forearm raise/rotate + a
-    // wrist flick. Frequencies/phases differ per bone so it reads lively.
-    setBone(
-      "rArm",
-      0.26 * Math.sin(t * 2.1),
-      0.18 * Math.sin(t * 1.7 + 0.5),
-      0.16 * Math.sin(t * 2.4)
-    );
-    setBone(
-      "rForearm",
-      0.50 * (0.5 + 0.5 * Math.sin(t * 3.1)),
-      0.22 * Math.sin(t * 2.6 + 0.9),
-      0.18 * Math.sin(t * 3.4)
-    );
-    setBone(
-      "rHand",
-      0.30 * Math.sin(t * 4.2),
-      0.20 * Math.sin(t * 3.7 + 1.2),
-      0.18 * Math.sin(t * 4.6)
-    );
-
-    // Left arm: same motif, out of phase (offset frequencies/phases) so the two
-    // sides never mirror each other exactly.
-    setBone(
-      "lArm",
-      0.26 * Math.sin(t * 1.9 + 1.6),
-      0.18 * Math.sin(t * 1.5 + 2.1),
-      0.16 * Math.sin(t * 2.2 + 1.1)
-    );
-    setBone(
-      "lForearm",
-      0.50 * (0.5 + 0.5 * Math.sin(t * 2.8 + 1.3)),
-      0.22 * Math.sin(t * 2.3 + 2.4),
-      0.18 * Math.sin(t * 3.1 + 0.7)
-    );
-    setBone(
-      "lHand",
-      0.30 * Math.sin(t * 3.9 + 2.0),
-      0.20 * Math.sin(t * 3.4 + 0.4),
-      0.18 * Math.sin(t * 4.3 + 1.8)
-    );
-
-    // Spine + chest: a small twist/lean so the whole torso engages while
-    // talking. Bounded well under a tenth of a radian so the framing holds. A
-    // tiny idle sway (last arg) keeps the torso alive when silent.
-    setBone(
-      "spine",
-      0.04 * Math.sin(t * 1.5),
-      0.06 * Math.sin(t * 1.1 + 0.3),
-      0.03 * Math.sin(t * 1.8),
-      0.012 * Math.sin(t * 0.9)
-    );
-    setBone(
-      "chest",
-      0.03 * Math.sin(t * 1.9 + 0.6),
-      0.05 * Math.sin(t * 1.4 + 1.0),
-      0.03 * Math.sin(t * 2.2),
-      0.010 * Math.sin(t * 1.1 + 0.5)
-    );
-
-    // Neck + head: a gentle nod/turn so the coach "addresses" you while
-    // speaking, plus a barely-there idle bob so the head is never frozen.
-    setBone(
-      "neck",
-      0.05 * Math.sin(t * 2.0 + 0.4),
-      0.06 * Math.sin(t * 1.6),
-      0.02 * Math.sin(t * 2.3),
-      0.010 * Math.sin(t * 1.3)
-    );
-    setBone(
-      "head",
-      0.06 * Math.sin(t * 2.4 + 0.8),
-      0.07 * Math.sin(t * 1.9 + 0.5),
-      0.03 * Math.sin(t * 2.7),
-      0.012 * Math.sin(t * 1.5 + 0.2)
-    );
-
-    // TALKING "MOUTH" APPROXIMATION (item 3). This astronaut (an Avaturn-style
-    // export) has a BAKED-TEXTURE face: it carries ZERO morph targets / blend
-    // shapes and NO jaw / mouth / eye / eyelid bones on ANY mesh — its only
-    // head-region bones are "Head" and "Neck". A real lip-sync (viseme morphs)
-    // or a jaw-bone mouth open is therefore IMPOSSIBLE on this model, and we do
-    // NOT float a fake mouth/eye mesh over the baked face (it cannot be placed
-    // reliably and would miss the face). The honest approximation is a subtle
-    // "talking" HEAD cadence: a small, quicker nod (pitch) with a faint
-    // side-tilt (roll) layered ADDITIVELY on the Head bone ONLY while speaking,
-    // so the coach reads as actively talking-to-you rather than a frozen face.
-    // It is gated by the SAME speaking window as every other gesture: headTalk
-    // rides gestureRef (eases 0 while silent -> 1 while speaking) so it fades in
-    // and out with speech and sits at exactly the rest pose when silent, and it
-    // is fully suppressed under reduced motion (gestureRef is driven to 0 by the
-    // reducedMotion target above — no parallel engine state, no ambient timer).
-    // Amplitudes are tiny (<= ~0.05 rad) so the tight head-and-torso framing and
-    // the head never clip. Real mouth+eye ARTICULATION would require a
-    // face-rigged / morph-target avatar (a VRM with visemes+blink blendshapes,
-    // or a ReadyPlayerMe/Avaturn export WITH ARKit blendshapes) — see docs.
-    const headBone = bones.head;
-    const headBase = bases.head;
-    if (headBone && headBase && !reducedMotion) {
-      const talk = gestureRef.current; // 0..1 speaking-driven, eased
-      // A quicker speech-cadence nod (pitch) + a smaller counter-tilt (roll),
-      // layered on TOP of the base + gesture rotation already written above.
-      const nod = 0.05 * (0.5 + 0.5 * Math.sin(t * 8.5)) * talk;
-      const tilt = 0.02 * Math.sin(t * 6.2) * talk;
-      headBone.rotation.x += nod;
-      headBone.rotation.z += tilt;
-    }
-  });
-
-  // On unmount, dispose ONLY the resources this component owns. SkeletonUtils
-  // .clone reuses geometries AND materials by reference from the loader-cached
-  // gltf.scene (we did not create new materials — we only tweaked color space on
-  // the shared ones), and useLoader keeps the GLTF cached for reuse across
-  // strict-mode remounts. So we deliberately do NOT dispose the geometries,
-  // materials, or embedded textures here — they are owned by the loader cache,
-  // not by this clone. Disposing them would corrupt a subsequent remount. We
-  // only drop our bone references.
-  useEffect(() => {
-    return () => {
-      boneRef.current = {};
-      baseRef.current = {};
-    };
-  }, [model]);
-
-  return <primitive object={model} />;
-}
-
-// A subtle procedural ground plane so the coach reads as standing ON something
-// rather than floating over only the ContactShadows. It is a plain-color matte
-// disc placed at y=0 (the same plane ContactShadows uses) with a soft radial
-// vignette baked into a tiny canvas texture, so it fades out at the edges and
-// never shows a hard rim in the fixed shot. No external image asset — the
-// texture is generated in-memory, so it adds nothing to the cold-load budget.
-// Gated to High (it costs an extra draw + a receiveShadow surface); on Fast the
-// figure keeps only its ContactShadows, exactly like today.
 function GroundBackdrop() {
   const texture = useMemo(() => {
     const size = 256;
@@ -832,12 +350,7 @@ function KettlebellProp({
   );
 }
 
-// `speaking` opens the gesture window and `getLoudness` drives its intensity in
-// <Avatar />. The GLB is rigged (52 joints) but ships no baked clips, so the
-// arm/spine/head motion is authored procedurally: it fades in while speaking and
-// its amplitude rides the live AnalyserNode loudness (with a floor so it still
-// clearly gestures when loudness is 0/unavailable). Reduced motion drives it to
-// the exact captured rest pose regardless of loudness.
+// Speech boundaries drive the VRM mouth shapes; reduced motion suppresses body gestures.
 export default function CoachScene({
   speaking = false,
   getLoudness,
@@ -858,11 +371,8 @@ export default function CoachScene({
       // react-three-fiber forwards unknown props to the underlying <canvas>, so
       // these give assistive tech a text alternative for the avatar stage.
       role="img"
-      aria-label="Animated 3D astronaut gym coach that gestures with its arms and nods its head as if talking while giving workout advice"
+      aria-label="Animated fitness coach with speaking mouth shapes and blinking in a furnished gym"
       onCreated={({ gl, camera }) => {
-        // Tone mapping unchanged (ACESFilmic): the astronaut GLB's suit renders
-        // fine under the near-neutral rig below with no blow-out, so per
-        // CONSTRAINT #2 we leave the tone mapping as-is.
         gl.toneMapping = THREE.ACESFilmicToneMapping;
         // Fixed, front-facing framing: aim the camera straight at the aim point
         // the model was recentered onto (its upper chest). No OrbitControls,
@@ -916,9 +426,10 @@ export default function CoachScene({
         reducedMotion={reducedMotion}
       />
 
+      <StudioEnvironment kind="coach" />
       <Suspense fallback={<SceneLoader />}>
         <group position={[0, 0, 0]}>
-          <Avatar
+          <SpeakingAvatar
             speaking={speaking}
             getLoudness={getLoudness}
             reducedMotion={reducedMotion}
