@@ -137,6 +137,7 @@ const THUMBNAILS: Record<Category, (string | null)[]> = {
   ],
   hat: [
     null,
+    "/wardrobe/thumbnails/head-reference-bob.svg",
     "/wardrobe/thumbnails/head-short.png",
     "/wardrobe/thumbnails/head-ponytail.png",
     "/wardrobe/thumbnails/head-curledbangs.png",
@@ -174,14 +175,14 @@ function WardrobeBuilderInner() {
   // Default first-load look: a cohesive fully-clothed outfit so the atelier
   // opens on a styled avatar rather than the near-nude base body. Each index
   // maps to a *visible* garment in OPTIONS (see WardrobeScene): outfit=Shirt,
-  // bottom=Cargo Pants, shoes=Sneakers, hat=Short (hair). Option 0
+  // bottom=Cargo Pants, shoes=Sneakers, hat=Side-part Bob (hair). Option 0
   // ("Base"/"None") stays meaningful — users can strip any layer back to the
   // base body — but the initial selection intentionally skips it.
   const [selection, setSelection] = useState<WardrobeSelection>({
     outfit: 2, // Shirt
     bottom: 1, // Cargo Pants
     shoes: 1, // Sneakers
-    hat: 1, // Short (hair)
+    hat: 1, // Reference-inspired side-part bob
   });
   // Colours pair with the selection above: a warm-neutral starting look that
   // tints each real garment's materials via the scene's applyColor().
@@ -189,7 +190,7 @@ function WardrobeBuilderInner() {
     outfit: "#a65a4b", // Terracotta
     bottom: "#3f5a6b", // Slate
     shoes: "#2f2b28", // Espresso
-    hat: "#2f2b28", // Espresso
+    hat: "#d4b77e", // Warm blonde with shaded roots
   });
 
   const setOption = (cat: Category, idx: number) => {

@@ -143,6 +143,7 @@ export function Garment({
   url,
   color,
   preserveMaterials = false,
+  onReady,
 }: {
   baseVrm: VRM;
   url: string | null;
@@ -150,6 +151,7 @@ export function Garment({
   // When true, the transplanted VRM's authored materials are kept untinted
   // (used for the always-mounted eyes trait). Default false = normal garment.
   preserveMaterials?: boolean;
+  onReady?: (group: THREE.Group) => void;
 }) {
   // Rendered group + tintable materials for the currently-mounted garment.
   const mounted = useRef<Transplant | null>(null);
@@ -186,6 +188,7 @@ export function Garment({
         color: colorRef.current,
         preserveMaterials,
       });
+      onReady?.(transplant.group);
       baseVrm.scene.add(transplant.group);
       mounted.current = transplant;
       disposeScene.current = garment.scene;
@@ -210,7 +213,7 @@ export function Garment({
         disposeScene.current = null;
       }
     };
-  }, [baseVrm, url, preserveMaterials]);
+  }, [baseVrm, url, preserveMaterials, onReady]);
 
   // Live-tint the mounted garment's materials when the colour changes AFTER the
   // garment is already mounted. The initial tint is applied inside the load

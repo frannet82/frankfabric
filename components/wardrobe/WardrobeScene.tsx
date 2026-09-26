@@ -98,7 +98,7 @@ type ClipName = Exclude<WardrobeAnimation, "rest">;
 // /frankfabric/models/characters/drophunter/body.vrm in production and
 // /models/characters/drophunter/body.vrm in dev. NEVER hardcode a bare
 // "/models/..." path — it would 404 on GitHub Pages.
-const MODEL_URL = asset("/models/characters/drophunter/body.vrm");
+const MODEL_URL = asset("/models/wardrobe-reference/body.vrm");
 
 // The eyes are a SEPARATE required trait of this modular avatar (the drophunter
 // manifest lists requiredTraits=['body','eyes']). The base body VRM ships with
@@ -107,7 +107,7 @@ const MODEL_URL = asset("/models/characters/drophunter/body.vrm");
 // on load, using the same bone-rebind path garments use. It is NOT a
 // user-selectable option, so it never appears in OPTIONS/GARMENT_URLS/THUMBNAILS.
 // Routed through asset() so it resolves under /frankfabric/ in production.
-const EYES_URL = asset("/models/characters/drophunter/eyes/regulareyes.vrm");
+const EYES_URL = asset("/models/wardrobe-reference/eyes.vrm");
 
 // Per-category, per-option-index map to the real garment VRM public paths.
 // Index 0 is null (Base/None → no garment mounted). Every non-null path is
@@ -147,6 +147,7 @@ const GARMENT_URLS: Record<Category, (string | null)[]> = {
   ],
   hat: [
     null,
+    asset("/models/wardrobe-reference/bob.vrm"),
     asset("/models/characters/drophunter/head/short.vrm"),
     asset("/models/characters/drophunter/head/ponytail.vrm"),
     asset("/models/characters/drophunter/head/curledbangs.vrm"),
@@ -178,6 +179,28 @@ type WardrobeSceneProps = SceneProps & {
   reducedMotion?: boolean;
 };
 
+// Keep the sclera white while muting the authored turquoise irises to blue-gray.
+function prepareReferenceEyes(group: THREE.Group) {
+  group.traverse(object => {
+    const mesh = object as THREE.Mesh;
+    if (!mesh.isMesh) return;
+    mesh.geometry.computeVertexNormals();
+    const materials = Array.isArray(mesh.material) ? mesh.material : [mesh.material];
+    for (const material of materials) {
+      material.onBeforeCompile = shader => {
+        shader.fragmentShader = shader.fragmentShader.replace('#include <map_fragment>', `
+          #include <map_fragment>
+          float iris = smoothstep(0.02, 0.12, diffuseColor.g - diffuseColor.r);
+          float gray = dot(diffuseColor.rgb, vec3(0.2126, 0.7152, 0.0722));
+          diffuseColor.rgb = mix(diffuseColor.rgb, gray * vec3(0.65, 0.79, 0.88), iris * 0.95);
+        `);
+      };
+      material.customProgramCacheKey = () => 'wardrobe-blue-gray-eyes-v1';
+      material.needsUpdate = true;
+    }
+  });
+}
+
 function Avatar({ selection, colors, animation, cycleCategory }: SceneProps) {
   const gltf = useLoader(GLTFLoader, MODEL_URL, (loader) => {
     loader.register(
@@ -198,6 +221,7 @@ function Avatar({ selection, colors, animation, cycleCategory }: SceneProps) {
       obj.frustumCulled = false;
       const mesh = obj as THREE.Mesh;
       if (mesh.isMesh) {
+        mesh.geometry.computeVertexNormals();
         mesh.castShadow = true;
         mesh.receiveShadow = true;
       }
@@ -380,6 +404,7 @@ function Avatar({ selection, colors, animation, cycleCategory }: SceneProps) {
       <Garment
         baseVrm={vrm}
         url={EYES_URL}
+        onReady={prepareReferenceEyes}
         color="#000000"
         preserveMaterials
       />

@@ -7,7 +7,9 @@ export const EXERCISES: { id: Exercise; label: string; cue: string }[] = [
 ];
 /** Smooth repeating demonstration poses. Angles are normalized VRM local rotations. */
 export function exercisePose(exercise: Exercise, seconds: number) {
-  const cycle = (1 - Math.cos(seconds * Math.PI * 2 / (exercise === 'squat' ? 3.6 : 2.4))) / 2;
+  // Full repetitions: controlled squats at 2.4s, brisk jumping jacks at 1.2s.
+  const period = exercise === 'jacks' ? 1.2 : 2.4;
+  const cycle = (1 - Math.cos(seconds * Math.PI * 2 / period)) / 2;
   const march = Math.sin(seconds * Math.PI * 2 / 2.4);
   const squat = exercise === 'squat' ? cycle * 0.85 : 0;
   const jack = exercise === 'jacks' ? cycle : 0;

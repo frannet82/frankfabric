@@ -1,20 +1,27 @@
 [
   {
-    "route": "digital-wardrobe",
+    "route": "virtual-pet",
     "width": 1440,
     "height": 900,
     "errors": [],
     "overflow": false
   },
   {
-    "route": "digital-wardrobe",
+    "route": "virtual-pet",
     "width": 1280,
     "height": 720,
     "errors": [],
     "overflow": false
   },
   {
-    "route": "digital-wardrobe",
+    "route": "virtual-pet",
+    "width": 1024,
+    "height": 768,
+    "errors": [],
+    "overflow": false
+  },
+  {
+    "route": "virtual-pet",
     "width": 390,
     "height": 844,
     "errors": [],

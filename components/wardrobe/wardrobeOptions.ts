@@ -69,6 +69,7 @@ export const OPTIONS: Record<Category, string[]> = {
   ],
   hat: [
     "None",
+    "Side-part Bob",
     "Short",
     "Ponytail",
     "Curled Bangs",

@@ -2,7 +2,7 @@ import { chromium } from 'playwright-core';
 import { createServer } from 'node:http';
 import { readFile, mkdir, writeFile } from 'node:fs/promises';
 import { extname, resolve, join } from 'node:path';
-const output = resolve(process.argv.includes('--assistants') ? 'docs/assistant-layout-review' : process.argv.includes('--controls') ? 'docs/controls-review' : process.argv.includes('--reference') ? 'docs/reference-review' : 'docs/layout-review');
+const output = resolve(process.argv.includes('--appearance') ? 'docs/wardrobe-appearance-review' : process.argv.includes('--pet-layout') ? 'docs/pet-layout-review' : process.argv.includes('--assistants') ? 'docs/assistant-layout-review' : process.argv.includes('--controls') ? 'docs/controls-review' : process.argv.includes('--reference') ? 'docs/reference-review' : 'docs/layout-review');
 await mkdir(output, { recursive: true });
 const root = resolve('out');
 const types = { '.html': 'text/html', '.js': 'text/javascript', '.css': 'text/css', '.png': 'image/png', '.jpg': 'image/jpeg', '.webp': 'image/webp', '.svg': 'image/svg+xml' };
@@ -24,10 +24,10 @@ const browser = await chromium.launch({ executablePath: '/Applications/Google Ch
 const requested = process.argv.slice(2).filter(arg => !arg.startsWith('--'));
 const results = [];
 try {
- for (const viewport of [{width:1440,height:900},{width:1280,height:720},...(process.argv.includes('--assistants') ? [{width:1024,height:768}] : []),{width:390,height:844}]) {
+ for (const viewport of [{width:1440,height:900},{width:1280,height:720},...((process.argv.includes('--assistants') || process.argv.includes('--pet-layout')) ? [{width:1024,height:768}] : []),{width:390,height:844}]) {
   for (const route of ['coach-trainer', 'chef-chatbot', 'virtual-pet', 'digital-wardrobe', 'pet-puzzles', 'home']) {
    if (requested.length && !requested.includes(route)) continue;
-   if (viewport.width === 1280 && route !== 'digital-wardrobe' && !process.argv.includes('--assistants')) continue;
+   if (viewport.width === 1280 && route !== 'digital-wardrobe' && !process.argv.includes('--assistants') && !process.argv.includes('--pet-layout')) continue;
    const page = await browser.newPage({ viewport });
    const errors = [];
    page.on('pageerror', e => errors.push(e.message));
@@ -63,11 +63,29 @@ try {
      await page.waitForTimeout(200);
     }
    }
+   if (route === 'virtual-pet' && process.argv.includes('--pet-layout') && viewport.width >= 1024) {
+    const fit = await page.evaluate(() => {
+     const form = document.querySelector('form');
+     const care = form.parentElement;
+     return {height:document.documentElement.scrollHeight, viewport:innerHeight, formBottom:form.getBoundingClientRect().bottom, careHeight:care.clientHeight, careScroll:care.scrollHeight, panelBottom:document.querySelector('.assistant-panel').getBoundingClientRect().bottom};
+    });
+    if (fit.height > fit.viewport + 1 || fit.formBottom > fit.viewport || fit.panelBottom > fit.viewport || fit.careScroll > fit.careHeight + 1) errors.push('Pet layout exceeds viewport: '+JSON.stringify(fit));
+   }
    if (route === 'digital-wardrobe' && viewport.width >= 1024) {
     const fit = await page.evaluate(() => ({height:document.documentElement.scrollHeight, viewport:innerHeight, bottom:document.querySelector('.wardrobe-builder').getBoundingClientRect().bottom}));
     if (fit.height > fit.viewport + 1 || fit.bottom > fit.viewport) errors.push('Wardrobe exceeds viewport: '+JSON.stringify(fit));
     await page.getByRole('button',{name:'Top: Tank Top',exact:true}).click();
     await page.waitForTimeout(2500); // Catch accumulated camera drift after the selection pulse.
+   }
+   if (route === 'digital-wardrobe' && process.argv.includes('--appearance')) {
+    await page.getByRole('button',{name:'Hair: Short',exact:true}).click();
+    await page.waitForTimeout(700);
+    await page.getByRole('button',{name:'Hair: Side-part Bob',exact:true}).click();
+    await page.getByRole('radio',{name:'Play Waving animation',exact:true}).click();
+    await page.waitForTimeout(1800);
+    await page.locator('canvas').screenshot({path:join(output,`waving-${viewport.width}.png`)});
+    await page.getByRole('radio',{name:'Play Rest animation',exact:true}).click();
+    await page.waitForTimeout(600);
    }
    if (route === 'digital-wardrobe' && process.argv.includes('--controls')) {
     await page.getByRole('button', {name:'Rotate left', exact:true}).click();
@@ -115,7 +133,7 @@ try {
      await menu.locator('#back').click();
     }
    }
-   if (process.argv.includes('--reference') && ['virtual-pet', 'digital-wardrobe'].includes(route)) {
+   if ((process.argv.includes('--reference') || process.argv.includes('--appearance')) && ['virtual-pet', 'digital-wardrobe'].includes(route)) {
     await page.getByRole('radio', {name:'Fast', exact:true}).click();
     await page.waitForTimeout(1800);
     await page.locator('canvas').screenshot({path:join(output,`${route}-fast-${viewport.width}.png`)});
