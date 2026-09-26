@@ -147,6 +147,7 @@ export default function PetScene({
       <StudioEnvironment kind="pet" />
       <Suspense fallback={<SceneLoader />}>
         <WhiteSchnauzer
+          high={isHigh}
           mood={mood}
           action={action}
           actionNonce={actionNonce}

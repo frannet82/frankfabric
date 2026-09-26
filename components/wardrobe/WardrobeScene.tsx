@@ -34,6 +34,7 @@ import { Canvas, useFrame, useLoader, type ThreeEvent } from "@react-three/fiber
 import { OrbitControls, ContactShadows, useCursor } from "@react-three/drei";
 import { damp3 } from "maath/easing";
 import * as THREE from "three";
+import ChangingRoom from "./ChangingRoom";
 import SceneLoader from "@/components/three/SceneLoader";
 import {
   DEFAULT_QUALITY,
@@ -453,66 +454,6 @@ function ClipLoader({
   return null;
 }
 
-// A subtle floor + backdrop for depth. The wardrobe previously set only a flat
-// #efede8 background + ContactShadows, so the avatar read as floating on a flat
-// card. This adds a matte ground disc at y=0 (the ContactShadows plane) with a
-// soft radial vignette baked into a small in-memory canvas texture (no external
-// asset, nothing added to the cold-load budget), fading out at the rim so it
-// dissolves into the flat background instead of ending on a hard line. Gated to
-// High; on Fast the avatar keeps only its ContactShadows over the flat bg,
-// exactly like today.
-function GroundBackdrop() {
-  const texture = useMemo(() => {
-    const size = 256;
-    const canvas = document.createElement("canvas");
-    canvas.width = size;
-    canvas.height = size;
-    const ctx = canvas.getContext("2d");
-    if (ctx) {
-      const grad = ctx.createRadialGradient(
-        size / 2,
-        size / 2,
-        size * 0.06,
-        size / 2,
-        size / 2,
-        size / 2
-      );
-      // Warm atelier neutral, slightly darker than the #efede8 background at the
-      // center so the floor reads with depth, fading to transparent at the rim.
-      grad.addColorStop(0, "rgba(224,220,210,1)");
-      grad.addColorStop(0.6, "rgba(214,209,198,1)");
-      grad.addColorStop(1, "rgba(214,209,198,0)");
-      ctx.fillStyle = grad;
-      ctx.fillRect(0, 0, size, size);
-    }
-    const tex = new THREE.CanvasTexture(canvas);
-    tex.colorSpace = THREE.SRGBColorSpace;
-    return tex;
-  }, []);
-
-  useEffect(() => {
-    return () => texture.dispose();
-  }, [texture]);
-
-  return (
-    <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, -0.001, 0]} receiveShadow>
-      <circleGeometry args={[5, 64]} />
-      <meshStandardMaterial
-        map={texture}
-        transparent
-        roughness={0.96}
-        metalness={0}
-      />
-    </mesh>
-  );
-}
-
-// An invisible clickable hit-box over a body region. On pointer-down it calls
-// the callback WardrobeBuilder wired to its EXISTING selection setter, so the
-// click cycles a garment category exactly as if a menu card were pressed. drei
-// useCursor gives a pointer affordance on hover. The mesh is fully transparent
-// (visible=false material would not receive pointer events, so we use a
-// transparent, non-writing material instead) and casts/receives nothing.
 function GarmentHitbox({
   region,
   onClick,
@@ -610,6 +551,8 @@ function CameraRig({
       changed === "outfit" ? 0.05 : changed === "bottom" ? -0.06 : 0;
     const dolly = -0.16; // metres closer at full pulse.
 
+    const previousDolly = offset.current.z;
+    const previousHeight = offset.current.y;
     damp3(
       offset.current,
       [0, vBias * scale, dolly * scale],
@@ -622,8 +565,10 @@ function CameraRig({
     const cam = state.camera;
     const forward = new THREE.Vector3();
     cam.getWorldDirection(forward); // unit vector camera is looking along.
-    cam.position.addScaledVector(forward, -offset.current.z);
-    cam.position.y += offset.current.y;
+    // OrbitControls preserves camera position, so apply only the offset delta.
+    // Adding the full offset every frame accumulates an unintended zoom.
+    cam.position.addScaledVector(forward, previousDolly - offset.current.z);
+    cam.position.y += offset.current.y - previousHeight;
   });
 
   return null;
@@ -748,7 +693,7 @@ export default function WardrobeScene({
       // react-three-fiber forwards unknown props to the underlying <canvas>, so
       // these give assistive tech a text alternative for the wardrobe stage.
       role="img"
-      aria-label="Rotating 3D avatar wearing the currently selected top, bottoms, shoes and hair; drag to rotate, scroll to zoom"
+      aria-label="3D avatar in a changing room with a full-length mirror, curtain and clothing rail; drag to rotate, scroll to zoom"
       onCreated={({ gl }) => {
         // Tone mapping unchanged (ACESFilmic). The key intensity below is kept
         // at today's ~1.4 and the whole rig stays near-neutral, so the VRM's
@@ -759,7 +704,8 @@ export default function WardrobeScene({
         gl.toneMapping = THREE.ACESFilmicToneMapping;
       }}
     >
-      <color attach="background" args={["#efede8"]} />
+      <color attach="background" args={["#ded8ce"]} />
+      <ChangingRoom high={isHigh} />
 
       {/* NOTE: drei <SoftShadows> is deliberately NOT used here. It rewrites the
           global shadow-map shader chunk, which collides with the VRM's custom
@@ -816,8 +762,6 @@ export default function WardrobeScene({
             only on High so the Fast frame budget never regresses). Skipped
             entirely under reduced motion so nothing drifts. */}
         {reducedMotion ? null : <AtelierMotes high={isHigh} />}
-        {/* Floor/backdrop for depth — High only. */}
-        {isHigh ? <GroundBackdrop /> : null}
       </Suspense>
 
       {/* Kept ContactShadows so the avatar never floats; softened blur on High. */}

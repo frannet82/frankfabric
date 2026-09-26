@@ -2,7 +2,7 @@ import { chromium } from 'playwright-core';
 import { createServer } from 'node:http';
 import { readFile, mkdir, writeFile } from 'node:fs/promises';
 import { extname, resolve, join } from 'node:path';
-const output = resolve('docs/layout-review');
+const output = resolve(process.argv.includes('--reference') ? 'docs/reference-review' : 'docs/layout-review');
 await mkdir(output, { recursive: true });
 const root = resolve('out');
 const types = { '.html': 'text/html', '.js': 'text/javascript', '.css': 'text/css', '.png': 'image/png', '.jpg': 'image/jpeg', '.webp': 'image/webp', '.svg': 'image/svg+xml' };
@@ -21,7 +21,7 @@ const server = createServer(async (req, res) => {
 await new Promise(r => server.listen(5197, '127.0.0.1', r));
 const browser = await chromium.launch({ executablePath: '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome', headless: true, args: ['--no-sandbox'] });
 
-const requested = process.argv.slice(2);
+const requested = process.argv.slice(2).filter(arg => !arg.startsWith('--'));
 const results = [];
 try {
  for (const viewport of [{width:1440,height:900},{width:1280,height:720},{width:390,height:844}]) {
@@ -31,6 +31,7 @@ try {
    const page = await browser.newPage({ viewport });
    const errors = [];
    page.on('pageerror', e => errors.push(e.message));
+   page.on('console', message => { if (message.type() === 'error' && /THREE|WebGL|shader/i.test(message.text())) errors.push(message.text()); });
    await page.goto('http://127.0.0.1:5197/frankfabric/' + (route === 'home' ? '' : 'projects/' + route + '/'), {waitUntil:'networkidle'});
    await page.waitForTimeout(route === 'home' || route === 'pet-puzzles' ? 500 : 2200);
    if (route === 'coach-trainer') {
@@ -53,6 +54,7 @@ try {
     const fit = await page.evaluate(() => ({height:document.documentElement.scrollHeight, viewport:innerHeight, bottom:document.querySelector('.wardrobe-builder').getBoundingClientRect().bottom}));
     if (fit.height > fit.viewport + 1 || fit.bottom > fit.viewport) errors.push('Wardrobe exceeds viewport: '+JSON.stringify(fit));
     await page.getByRole('button',{name:'Top: Tank Top',exact:true}).click();
+    await page.waitForTimeout(2500); // Catch accumulated camera drift after the selection pulse.
    }
    if (route === 'home') {
     await page.locator('#projects').scrollIntoViewIfNeeded();
@@ -77,6 +79,11 @@ try {
      await page.screenshot({path:join(output,`puzzle-${kind}-${viewport.width}.png`),fullPage:true});
      await menu.locator('#back').click();
     }
+   }
+   if (process.argv.includes('--reference') && ['virtual-pet', 'digital-wardrobe'].includes(route)) {
+    await page.getByRole('radio', {name:'Fast', exact:true}).click();
+    await page.waitForTimeout(1800);
+    await page.locator('canvas').screenshot({path:join(output,`${route}-fast-${viewport.width}.png`)});
    }
    const overflow = await page.evaluate(() => document.documentElement.scrollWidth > innerWidth);
    results.push({route,...viewport,errors,overflow});
