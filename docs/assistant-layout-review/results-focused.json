@@ -1,0 +1,58 @@
+[
+  {
+    "route": "coach-trainer",
+    "width": 1440,
+    "height": 900,
+    "errors": [],
+    "overflow": false
+  },
+  {
+    "route": "chef-chatbot",
+    "width": 1440,
+    "height": 900,
+    "errors": [],
+    "overflow": false
+  },
+  {
+    "route": "coach-trainer",
+    "width": 1280,
+    "height": 720,
+    "errors": [],
+    "overflow": false
+  },
+  {
+    "route": "chef-chatbot",
+    "width": 1280,
+    "height": 720,
+    "errors": [],
+    "overflow": false
+  },
+  {
+    "route": "coach-trainer",
+    "width": 1024,
+    "height": 768,
+    "errors": [],
+    "overflow": false
+  },
+  {
+    "route": "chef-chatbot",
+    "width": 1024,
+    "height": 768,
+    "errors": [],
+    "overflow": false
+  },
+  {
+    "route": "coach-trainer",
+    "width": 390,
+    "height": 844,
+    "errors": [],
+    "overflow": false
+  },
+  {
+    "route": "chef-chatbot",
+    "width": 390,
+    "height": 844,
+    "errors": [],
+    "overflow": false
+  }
+]

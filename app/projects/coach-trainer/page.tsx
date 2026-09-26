@@ -11,13 +11,13 @@ export const metadata = {
 export default function CoachTrainerPage() {
   return (
     <main
-      className="min-h-screen relative"
+      className="assistant-page min-h-screen relative"
       style={{
         background:
           "radial-gradient(1000px 720px at 86% -4%, rgba(230,0,126,0.28), transparent 54%), radial-gradient(900px 700px at 6% 4%, rgba(255,242,0,0.20), transparent 56%), linear-gradient(180deg, #111111 0%, #1a1a1a 55%, #111111 100%)",
       }}
     >
-      <div className="max-w-[1600px] mx-auto px-6 pt-8 pb-3">
+      <div className="assistant-nav max-w-[1600px] mx-auto px-6 pt-8 pb-3">
         <nav className="flex items-center justify-between gap-6 py-3 px-5 rounded-full border border-sf-yellow/40 bg-sf-black/70 backdrop-blur-md shadow-sm">
           <Link href="/" className="flex items-center gap-3">
             <BrandMark />
@@ -31,7 +31,7 @@ export default function CoachTrainerPage() {
         </nav>
       </div>
 
-      <section className="max-w-[1600px] mx-auto px-6 pt-8 pb-4 text-center">
+      <section className="assistant-heading max-w-[1600px] mx-auto px-6 pt-8 pb-4 text-center">
         <span className="font-mono text-xs tracking-[2px] uppercase text-sf-yellow">Make room for movement</span>
         <h1 className="font-display font-bold text-[clamp(28px,3.6vw,42px)] tracking-tight text-sf-mist mt-3 mb-3">
           Coach Fabric <span className="text-sf-yellow">Smart Fit</span> Trainer
@@ -41,11 +41,11 @@ export default function CoachTrainerPage() {
         </p>
       </section>
 
-      <section className="max-w-[1600px] mx-auto px-3 sm:px-6 pb-10">
+      <section className="assistant-workspace max-w-[1600px] mx-auto px-3 sm:px-6 pb-10">
         {/* CoachChatbot's root is positioned `absolute inset-0` (it fills its
             parent), so it needs a sized relative container here to establish a
             positioning context and give it height. */}
-        <div className="relative w-full h-[850px] md:h-[max(720px,calc(100dvh-250px))] rounded-3xl overflow-hidden border border-sf-yellow/40 bg-sf-black shadow-[0_10px_40px_rgba(230,0,126,0.25)]">
+        <div className="assistant-panel relative w-full h-[850px] md:h-[max(720px,calc(100dvh-250px))] rounded-3xl overflow-hidden border border-sf-yellow/40 bg-sf-black shadow-[0_10px_40px_rgba(230,0,126,0.25)]">
           <CoachChatbot />
         </div>
       </section>

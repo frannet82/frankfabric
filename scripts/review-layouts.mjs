@@ -2,7 +2,7 @@ import { chromium } from 'playwright-core';
 import { createServer } from 'node:http';
 import { readFile, mkdir, writeFile } from 'node:fs/promises';
 import { extname, resolve, join } from 'node:path';
-const output = resolve(process.argv.includes('--controls') ? 'docs/controls-review' : process.argv.includes('--reference') ? 'docs/reference-review' : 'docs/layout-review');
+const output = resolve(process.argv.includes('--assistants') ? 'docs/assistant-layout-review' : process.argv.includes('--controls') ? 'docs/controls-review' : process.argv.includes('--reference') ? 'docs/reference-review' : 'docs/layout-review');
 await mkdir(output, { recursive: true });
 const root = resolve('out');
 const types = { '.html': 'text/html', '.js': 'text/javascript', '.css': 'text/css', '.png': 'image/png', '.jpg': 'image/jpeg', '.webp': 'image/webp', '.svg': 'image/svg+xml' };
@@ -24,17 +24,17 @@ const browser = await chromium.launch({ executablePath: '/Applications/Google Ch
 const requested = process.argv.slice(2).filter(arg => !arg.startsWith('--'));
 const results = [];
 try {
- for (const viewport of [{width:1440,height:900},{width:1280,height:720},{width:390,height:844}]) {
-  for (const route of ['coach-trainer', 'virtual-pet', 'digital-wardrobe', 'pet-puzzles', 'home']) {
+ for (const viewport of [{width:1440,height:900},{width:1280,height:720},...(process.argv.includes('--assistants') ? [{width:1024,height:768}] : []),{width:390,height:844}]) {
+  for (const route of ['coach-trainer', 'chef-chatbot', 'virtual-pet', 'digital-wardrobe', 'pet-puzzles', 'home']) {
    if (requested.length && !requested.includes(route)) continue;
-   if (viewport.width === 1280 && route !== 'digital-wardrobe') continue;
+   if (viewport.width === 1280 && route !== 'digital-wardrobe' && !process.argv.includes('--assistants')) continue;
    const page = await browser.newPage({ viewport });
    const errors = [];
    page.on('pageerror', e => errors.push(e.message));
    page.on('console', message => { if (message.type() === 'error' && /THREE|WebGL|shader/i.test(message.text())) errors.push(message.text()); });
    await page.goto('http://127.0.0.1:5197/frankfabric/' + (route === 'home' ? '' : 'projects/' + route + '/'), {waitUntil:'networkidle'});
    await page.waitForTimeout(route === 'home' || route === 'pet-puzzles' ? 500 : 2200);
-   if (route === 'coach-trainer') {
+   if (route === 'coach-trainer' && !process.argv.includes('--assistants')) {
     for (const exercise of ['Squats','March','Jumping jacks']) {
      await page.getByRole('button', {name:exercise,exact:true}).click();
      await page.waitForTimeout(1800);
@@ -42,6 +42,19 @@ try {
      await page.waitForTimeout(500);
      await page.locator('canvas').screenshot({path:join(output,`trainer-${exercise}-${viewport.width}.png`)});
      if (!(await page.getByRole('button',{name:'Resume demo',exact:true}).isVisible())) errors.push('Pause failed');
+    }
+   }
+   if (process.argv.includes('--assistants')) {
+    if (route === 'coach-trainer') await page.getByRole('button', {name:'Squats',exact:true}).click();
+    await page.getByRole('textbox').fill(route === 'chef-chatbot' ? 'A recipe with chicken and rice' : 'A beginner full body workout');
+    await page.locator('form button[type="submit"]').click();
+    await page.waitForTimeout(1200);
+    if (viewport.width >= 1024) {
+     const fit = await page.evaluate(() => {
+      const bounds = el => { const r = el.getBoundingClientRect(); return {top:r.top,bottom:r.bottom,height:r.height}; };
+      return {height:document.documentElement.scrollHeight, viewport:innerHeight, panel:bounds(document.querySelector('.assistant-panel')),form:bounds(document.querySelector('form')),footer:bounds(document.querySelector('nav[aria-label="Explore projects"]')),log:bounds(document.querySelector('[role="log"]'))};
+     });
+     if (fit.height > fit.viewport + 1 || fit.form.bottom > fit.viewport || fit.footer.bottom > fit.viewport || fit.log.height < 160) errors.push('Assistant does not fit desktop: '+JSON.stringify(fit));
     }
    }
    if (route === 'virtual-pet') {
