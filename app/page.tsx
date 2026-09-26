@@ -405,7 +405,7 @@ export default function Home() {
             const Card = (
               <div className="rounded border border-white/[0.08] bg-gradient-to-br from-white/[0.045] to-white/[0.015] overflow-hidden transition-all group-hover:border-cloud-blue/55 group-hover:shadow-[0_0_0_1px_rgba(63,169,255,0.25),0_20px_60px_rgba(63,169,255,0.18)] group-hover:-translate-y-1 h-full">
                 <div
-                  className="relative aspect-video grid place-items-center bg-[#0d1018]"
+                  className="relative md:aspect-video min-h-[210px] min-w-0 grid place-items-center bg-[#0d1018]"
                   style={{
                     backgroundImage:
                       "repeating-linear-gradient(135deg, rgba(120,140,190,0.10) 0 12px, transparent 12px 24px)",
@@ -422,7 +422,7 @@ export default function Home() {
                           canvas. Cozy Animal-Crossing palette so the preview
                           matches the live chatbot. The whole card links out to
                           the live chef. */}
-                      <div className="flex flex-col items-center gap-3">
+                      <div className="flex min-w-0 w-full flex-col items-center gap-3">
                         <span className="grid place-items-center w-16 h-16 rounded-2xl border border-ac-leaf/50 bg-ac-cream/90 shadow-[0_6px_20px_rgba(95,168,90,0.28)]">
                           <svg
                             viewBox="0 0 24 24"
@@ -458,7 +458,7 @@ export default function Home() {
                           canvas. Bold Smart Fit yellow/black/magenta palette so
                           the preview matches the live coach. The whole card
                           links out to the live coach. */}
-                      <div className="flex flex-col items-center gap-3">
+                      <div className="flex min-w-0 w-full flex-col items-center gap-3">
                         <span className="grid place-items-center w-16 h-16 rounded-2xl border border-sf-yellow/50 bg-sf-black/90 shadow-[0_6px_20px_rgba(230,0,126,0.35)]">
                           <svg
                             viewBox="0 0 24 24"
@@ -493,7 +493,7 @@ export default function Home() {
                           canvas. Warm cozy Tamagotchi palette so the preview
                           matches the live virtual pet. The whole card links out
                           to the live pet. */}
-                      <div className="flex flex-col items-center gap-3">
+                      <div className="flex min-w-0 w-full flex-col items-center gap-3">
                         <span className="grid place-items-center w-16 h-16 rounded-2xl border border-pet-accent/50 bg-pet-paper/90 shadow-[0_6px_20px_rgba(224,138,76,0.30)]">
                           <svg
                             viewBox="0 0 24 24"
@@ -533,7 +533,7 @@ export default function Home() {
                           and the leaf green of Pet Tower Sort, so the preview
                           matches the live games. The whole card links out to
                           the playable build. */}
-                      <div className="flex flex-col items-center gap-3">
+                      <div className="flex min-w-0 w-full flex-col items-center gap-3">
                         <span className="flex items-end gap-2">
                           <span className="grid place-items-center w-12 h-12 rounded-[14px] bg-[#e9e5de] shadow-[0_3px_0_#c6c0b6]">
                             <svg viewBox="0 0 24 24" aria-hidden="true" className="w-8 h-8 text-[#574e44]">

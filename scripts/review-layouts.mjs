@@ -2,7 +2,7 @@ import { chromium } from 'playwright-core';
 import { createServer } from 'node:http';
 import { readFile, mkdir, writeFile } from 'node:fs/promises';
 import { extname, resolve, join } from 'node:path';
-const output = resolve(process.argv.includes('--reference') ? 'docs/reference-review' : 'docs/layout-review');
+const output = resolve(process.argv.includes('--controls') ? 'docs/controls-review' : process.argv.includes('--reference') ? 'docs/reference-review' : 'docs/layout-review');
 await mkdir(output, { recursive: true });
 const root = resolve('out');
 const types = { '.html': 'text/html', '.js': 'text/javascript', '.css': 'text/css', '.png': 'image/png', '.jpg': 'image/jpeg', '.webp': 'image/webp', '.svg': 'image/svg+xml' };
@@ -56,11 +56,33 @@ try {
     await page.getByRole('button',{name:'Top: Tank Top',exact:true}).click();
     await page.waitForTimeout(2500); // Catch accumulated camera drift after the selection pulse.
    }
+   if (route === 'digital-wardrobe' && process.argv.includes('--controls')) {
+    await page.getByRole('button', {name:'Rotate left', exact:true}).click();
+    await page.getByRole('button', {name:'Zoom in', exact:true}).click();
+    await page.locator('canvas').screenshot({path:join(output,`wardrobe-adjusted-${viewport.width}.png`)});
+    for (const label of ['Rotate right', 'Tilt up', 'Tilt down', 'Zoom out', 'Reset view']) await page.getByRole('button', {name:label, exact:true}).click();
+    await page.locator('canvas').screenshot({path:join(output,`wardrobe-reset-${viewport.width}.png`)});
+   }
    if (route === 'home') {
     await page.locator('#projects').scrollIntoViewIfNeeded();
     await page.getByRole('button',{name:'Next build',exact:true}).click();
     await page.waitForTimeout(800);
     if (await page.getByRole('button',{name:'Previous build',exact:true}).isDisabled()) errors.push('Carousel did not advance');
+    if (process.argv.includes('--controls')) {
+     const posterOverflow = await page.locator('.project-carousel > div').first().evaluate(card => { const poster = card.querySelector('.relative'); return poster && poster.getBoundingClientRect().width > card.getBoundingClientRect().width + 1; });
+     if (posterOverflow) errors.push('Card artwork exceeds card width');
+     const dimensions = await page.locator('.project-carousel').evaluate(node => ({width:node.clientWidth,card:node.firstElementChild.getBoundingClientRect().width}));
+     if (viewport.width >= 768 && Math.abs(dimensions.width - (dimensions.card * 2 + 24)) > 3) errors.push('Carousel does not show exactly two cards: '+JSON.stringify(dimensions));
+     for (let step = 0; step < 12 && !(await page.getByRole('button',{name:'Next build',exact:true}).isDisabled()); step++) {
+      await page.getByRole('button',{name:'Next build',exact:true}).click();
+      await page.waitForTimeout(400);
+     }
+     if (!(await page.getByRole('button',{name:'Next build',exact:true}).isDisabled())) errors.push('Carousel end is not clamped');
+     await page.locator('.project-carousel').focus();
+     await page.keyboard.press('Home');
+     await page.waitForTimeout(600);
+     if (!(await page.getByRole('button',{name:'Previous build',exact:true}).isDisabled())) errors.push('Carousel Home did not return to start');
+    }
     await page.locator('#projects').screenshot({path:join(output,`carousel-${viewport.width}.png`)});
    } else {
     await page.screenshot({path:join(output,`${route}-${viewport.width}.png`),fullPage:true});

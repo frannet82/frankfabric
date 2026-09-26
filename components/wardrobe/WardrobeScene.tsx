@@ -32,7 +32,7 @@
 import { Suspense, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Canvas, useFrame, useLoader, type ThreeEvent } from "@react-three/fiber";
 import { OrbitControls, ContactShadows, useCursor } from "@react-three/drei";
-import { damp3 } from "maath/easing";
+import type { OrbitControls as OrbitControlsImpl } from "three-stdlib";
 import * as THREE from "three";
 import ChangingRoom from "./ChangingRoom";
 import SceneLoader from "@/components/three/SceneLoader";
@@ -174,17 +174,7 @@ type SceneProps = {
 // resolution, soft shadows and the heavier fill/bounce lights + backdrop depth.
 type WardrobeSceneProps = SceneProps & {
   quality?: Quality;
-  // The garment-change signal from WardrobeBuilder (which category's selection
-  // last changed + a monotonic nonce). The camera nudge keys off this
-  // content-layer output, easing back to the turntable framing afterwards.
-  lastChange?: { category: Category; nonce: number } | null;
-  // When true (user prefers reduced motion), all AMBIENT motion is gated: the
-  // OrbitControls turntable autoRotate is forced off, the garment-change camera
-  // nudge holds the pinned framing, and the atelier motes are skipped. The
-  // avatar's selected animation clip (idle/walking/waving) still plays when the
-  // user explicitly picks it, and drag-to-rotate / scroll-to-zoom still work;
-  // only the AUTOMATIC ambient motion is damped. Defaults to false so behaviour
-  // is identical to today.
+  // Reduced motion disables ambient particles. Camera motion is always manual.
   reducedMotion?: boolean;
 };
 
@@ -251,16 +241,15 @@ function Avatar({ selection, colors, animation, cycleCategory }: SceneProps) {
     walking: null,
     waving: null,
   });
-  // The action currently faded in (null at rest). A ref so the crossfade
+  // The action currently faded in. A ref so the crossfade
   // callback only mutates `ref.current`, which is a permitted ref write.
   const currentAction = useRef<THREE.AnimationAction | null>(null);
 
   // Which clips have been requested so far (so their <ClipLoader> is mounted
-  // and their FBX fetched). Seeded from the initial animation: "rest" needs no
-  // clip, anything else needs its own clip on cold load. This is the on-demand
+  // and their FBX fetched). Rest uses a frozen idle pose. This is the on-demand
   // gate — walking/waving are absent from this set until first selected.
   const [requested, setRequested] = useState<Set<ClipName>>(() =>
-    animation === "rest" ? new Set() : new Set<ClipName>([animation])
+    new Set<ClipName>([animation === "rest" ? "idle" : animation])
   );
 
   // When the selected animation changes to a clip we have not requested yet,
@@ -268,8 +257,9 @@ function Avatar({ selection, colors, animation, cycleCategory }: SceneProps) {
   // the React "adjust state while rendering" pattern (not a setState-in-effect
   // cascade): the extra render happens before the browser paints, so the new
   // ClipLoader mounts in the same commit that reflects the selection.
-  if (animation !== "rest" && !requested.has(animation)) {
-    setRequested(new Set(requested).add(animation));
+  const neededClip = animation === "rest" ? "idle" : animation;
+  if (!requested.has(neededClip)) {
+    setRequested(new Set(requested).add(neededClip));
   }
 
   // Stop the mixer's actions when it is torn down (avatar change/unmount). We
@@ -288,21 +278,23 @@ function Avatar({ selection, colors, animation, cycleCategory }: SceneProps) {
   // Crossfade to the requested clip: fade the current action out and the target
   // in. Called both when `animation` changes AND when a just-loaded clip
   // registers its action (a clip selected before its FBX finished loading still
-  // starts playing the moment it becomes available). "rest" fades everything
-  // out so the avatar returns to its rest pose.
+  // starts playing the moment it becomes available). Rest holds an idle frame
+  // with relaxed arms instead of exposing the model's authored T-pose.
   const applyCrossfade = useCallback(() => {
-    const next = animation === "rest" ? null : actions.current[animation];
+    const next = actions.current[animation === "rest" ? "idle" : animation];
     // If the requested clip has not loaded/registered yet, wait — the
     // ClipLoader will call this again once its action exists.
-    if (animation !== "rest" && !next) return;
+    if (!next) return;
     const prev = currentAction.current;
-    if (next === prev) return;
+    if (next === prev) { next.paused = animation === "rest"; return; }
 
     const FADE = 0.35;
     if (next) {
       // reset() re-enables the action and zeroes its time/weight; fadeIn then
       // ramps its weight to 1 over FADE seconds as we play it.
       next.reset();
+      next.paused = animation === "rest";
+      if (next.paused) next.time = 0.5;
       next.setEffectiveWeight(1);
       next.fadeIn(FADE);
       next.play();
@@ -500,80 +492,6 @@ function GarmentHitbox({
   );
 }
 
-// INTERACTION-RESPONSIVE CAMERA NUDGE. LAYERED on top of the turntable/orbit:
-// on a garment change it eases a small ADDITIVE offset that momentarily
-// emphasizes the changed region (a subtle push-in toward the torso when the
-// outfit changes, toward the legs when the bottom changes) then eases back to
-// zero, so the OrbitControls turntable framing is untouched. It writes the
-// offset by translating the camera along its CURRENT view direction and
-// nudging its position, WITHOUT touching the OrbitControls target, min/max
-// distance, autoRotate, or the pinned camera constants — OrbitControls re-reads
-// the camera each frame, so this reads as a brief dolly that relaxes back.
-//
-// It keys off `lastChange` (the content-layer output: which category changed +
-// a nonce), never off click coordinates.
-function CameraRig({
-  lastChange,
-  reducedMotion = false,
-}: {
-  lastChange?: { category: Category; nonce: number } | null;
-  reducedMotion?: boolean;
-}) {
-  // Current additive dolly amount (metres along the view direction) and a small
-  // vertical look bias, both eased toward a pulse-scaled target and back to 0.
-  const offset = useRef(new THREE.Vector3()); // x: unused, y: vertical, z: dolly
-  const pulse = useRef(0);
-  const lastNonce = useRef<number | null>(null);
-  const region = useRef<Category | null>(null);
-
-  useEffect(() => {
-    if (lastChange && lastChange.nonce !== lastNonce.current) {
-      lastNonce.current = lastChange.nonce;
-      region.current = lastChange.category;
-      pulse.current = 1;
-    }
-  }, [lastChange]);
-
-  useFrame((state, delta) => {
-    // Reduced motion: hold the turntable framing (drive the nudge target to 0).
-    if (reducedMotion) {
-      pulse.current = 0;
-    } else {
-      pulse.current = Math.max(0, pulse.current - delta / 1.2);
-    }
-    const scale = pulse.current;
-
-    // Emphasis target: a small push-in (negative dolly) plus a gentle vertical
-    // bias toward the changed region. Only outfit/bottom clicks are dispatched
-    // from the scene, but any category change reads as a subtle push-in.
-    const changed = region.current;
-    const vBias =
-      changed === "outfit" ? 0.05 : changed === "bottom" ? -0.06 : 0;
-    const dolly = -0.16; // metres closer at full pulse.
-
-    const previousDolly = offset.current.z;
-    const previousHeight = offset.current.y;
-    damp3(
-      offset.current,
-      [0, vBias * scale, dolly * scale],
-      0.5,
-      delta
-    );
-
-    // Apply as a brief additive move along the camera's own axes, layered over
-    // whatever OrbitControls set this frame. Forward = -Z in view space.
-    const cam = state.camera;
-    const forward = new THREE.Vector3();
-    cam.getWorldDirection(forward); // unit vector camera is looking along.
-    // OrbitControls preserves camera position, so apply only the offset delta.
-    // Adding the full offset every frame accumulates an unintended zoom.
-    cam.position.addScaledVector(forward, previousDolly - offset.current.z);
-    cam.position.y += offset.current.y - previousHeight;
-  });
-
-  return null;
-}
-
 // AMBIENT LIFE: slow floating motes drifting around the pedestal so the atelier
 // isn't dead while the turntable spins. All procedural (no external asset). The
 // heavier version (more, larger motes with more drift) is gated to High; on
@@ -673,17 +591,34 @@ export default function WardrobeScene({
   colors,
   animation,
   quality = DEFAULT_QUALITY,
-  lastChange = null,
   cycleCategory,
   reducedMotion = false,
 }: WardrobeSceneProps) {
-  // Keep the showroom turntable spinning at rest; hold still while a clip
-  // plays so the motion reads clearly. Under reduced motion the turntable is
-  // forced OFF so nothing auto-rotates (the user can still drag to rotate).
-  const autoRotate = !reducedMotion && animation === "rest";
+  const controls = useRef<OrbitControlsImpl>(null);
+  const moveView = (action: string) => {
+    const orbit = controls.current;
+    if (!orbit) return;
+    if (action === "reset") {
+      orbit.target.set(0, 0.95, 0);
+      orbit.object.position.set(0, 0.95, 3.3);
+    } else {
+      const spherical = new THREE.Spherical().setFromVector3(orbit.object.position.clone().sub(orbit.target));
+      if (action === "left") spherical.theta -= Math.PI / 12;
+      if (action === "right") spherical.theta += Math.PI / 12;
+      if (action === "up") spherical.phi -= Math.PI / 18;
+      if (action === "down") spherical.phi += Math.PI / 18;
+      if (action === "in") spherical.radius *= 0.85;
+      if (action === "out") spherical.radius /= 0.85;
+      spherical.radius = THREE.MathUtils.clamp(spherical.radius, orbit.minDistance, orbit.maxDistance);
+      spherical.phi = THREE.MathUtils.clamp(spherical.phi, orbit.minPolarAngle, orbit.maxPolarAngle);
+      orbit.object.position.copy(orbit.target).add(new THREE.Vector3().setFromSpherical(spherical));
+    }
+    orbit.update();
+  };
   const q = qualitySettings(quality);
   const isHigh = quality === "high";
   return (
+    <div className="relative h-full w-full pb-16">
     <Canvas
       shadows={q.shadows}
       dpr={q.dpr}
@@ -743,12 +678,6 @@ export default function WardrobeScene({
         />
       ) : null}
 
-      {/* Interaction-responsive camera nudge, layered on the turntable/orbit.
-          Reacts ONLY to the garment-change signal (content-layer output) and
-          eases back to the turntable framing; the OrbitControls props below are
-          untouched. */}
-      <CameraRig lastChange={lastChange} reducedMotion={reducedMotion} />
-
       <Suspense fallback={<SceneLoader />}>
         <group position={[0, 0, 0]}>
           <Avatar
@@ -775,15 +704,24 @@ export default function WardrobeScene({
       />
 
       <OrbitControls
+        ref={controls}
+        enableDamping={false}
         enablePan={false}
         minDistance={1.4}
         maxDistance={5}
         minPolarAngle={Math.PI / 6}
         maxPolarAngle={Math.PI / 1.9}
         target={[0, 0.95, 0]}
-        autoRotate={autoRotate}
-        autoRotateSpeed={0.6}
+        autoRotate={false}
       />
     </Canvas>
+    <div role="group" aria-label="Avatar view controls" className="absolute bottom-2 left-1/2 -translate-x-1/2 flex gap-1 rounded-2xl bg-white/90 p-1.5 shadow-lg border border-black/10">
+      {([
+        ["left", "Rotate left", "↶"], ["right", "Rotate right", "↷"],
+        ["up", "Tilt up", "↑"], ["down", "Tilt down", "↓"],
+        ["in", "Zoom in", "+"], ["out", "Zoom out", "−"], ["reset", "Reset view", "⟲"],
+      ] as const).map(([action, label, icon]) => <button key={action} type="button" aria-label={label} title={label} onClick={() => moveView(action)} className="h-9 w-9 sm:h-10 sm:w-10 shrink-0 rounded-xl text-xl text-[#2c2a26] hover:bg-[#e4ded3] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#755c3e]">{icon}</button>)}
+    </div>
+    </div>
   );
 }

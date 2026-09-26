@@ -170,7 +170,7 @@ export default function WardrobeBuilder() {
 function WardrobeBuilderInner() {
   const { quality } = useQuality();
   const reducedMotion = useReducedMotion();
-  const [animation, setAnimation] = useState<WardrobeAnimation>("idle");
+  const [animation, setAnimation] = useState<WardrobeAnimation>("rest");
   // Default first-load look: a cohesive fully-clothed outfit so the atelier
   // opens on a styled avatar rather than the near-nude base body. Each index
   // maps to a *visible* garment in OPTIONS (see WardrobeScene): outfit=Shirt,
@@ -192,20 +192,8 @@ function WardrobeBuilderInner() {
     hat: "#2f2b28", // Espresso
   });
 
-  // The single garment-change signal the scene keys its camera nudge off. It
-  // records the category whose selection last changed plus a monotonic nonce so
-  // repeatedly cycling the SAME category still re-fires the nudge (mirrors the
-  // pet's action + actionNonce). It is derived from the SAME selection change
-  // the option menus and the 3D click both go through — never from click
-  // coordinates.
-  const [lastChange, setLastChange] = useState<{
-    category: Category;
-    nonce: number;
-  } | null>(null);
-
   const setOption = (cat: Category, idx: number) => {
     setSelection((s) => ({ ...s, [cat]: idx }));
-    setLastChange((c) => ({ category: cat, nonce: (c?.nonce ?? 0) + 1 }));
   };
   const setColor = (cat: Category, color: string) =>
     setColors((c) => ({ ...c, [cat]: color }));
@@ -224,14 +212,13 @@ function WardrobeBuilderInner() {
       colors,
       animation,
       quality,
-      lastChange,
       cycleCategory,
       reducedMotion,
     }),
     // cycleCategory closes over the latest selection via setOption/setSelection
     // updater; selection is already a dep, so the memo stays fresh.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [selection, colors, animation, quality, lastChange, reducedMotion]
+    [selection, colors, animation, quality, reducedMotion]
   );
 
   // A single category's vertical menu section: heading, scrollable stack of
