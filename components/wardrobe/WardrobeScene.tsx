@@ -35,6 +35,7 @@ import { OrbitControls, ContactShadows, useCursor } from "@react-three/drei";
 import type { OrbitControls as OrbitControlsImpl } from "three-stdlib";
 import * as THREE from "three";
 import ChangingRoom from "./ChangingRoom";
+import { prepareAnimeSkin, prepareAnimeHair } from "@/lib/vrm/animeAppearance";
 import SceneLoader from "@/components/three/SceneLoader";
 import {
   DEFAULT_QUALITY,
@@ -217,6 +218,7 @@ function Avatar({ selection, colors, animation, cycleCategory }: SceneProps) {
   // skeleton's individual bone nodes by name, so those nodes must stay intact.
   useMemo(() => {
     VRMUtils.removeUnnecessaryVertices(vrm.scene);
+    prepareAnimeSkin(vrm.scene, "#e6bf9f", "#b93649");
     vrm.scene.traverse((obj) => {
       obj.frustumCulled = false;
       const mesh = obj as THREE.Mesh;
@@ -430,6 +432,7 @@ function Avatar({ selection, colors, animation, cycleCategory }: SceneProps) {
       <Garment
         baseVrm={vrm}
         url={GARMENT_URLS.hat[selection.hat] ?? null}
+        onReady={selection.hat === 1 ? prepareAnimeHair : undefined}
         color={colors.hat}
       />
     </group>

@@ -8,6 +8,7 @@ import * as THREE from 'three';
 import { asset } from '@/lib/asset';
 import { transplantGarment } from '@/lib/vrm/transplant';
 import SceneLoader from './SceneLoader';
+import { prepareAnimeSkin, prepareAnimeHair } from '@/lib/vrm/animeAppearance';
 import { exercisePose, type Exercise } from '@/lib/coach/exercises';
 import { Html } from '@react-three/drei';
 
@@ -31,20 +32,37 @@ export default function SpeakingAvatar({ exercise = 'rest', paused = false, spea
     const loader = new GLTFLoader();
     loader.register(parser => new VRMLoaderPlugin(parser));
     const load = async (path: string) => {
-      const gltf = await loader.loadAsync(asset(ROOT + path));
+      const gltf = await loader.loadAsync(asset(path.startsWith("/") ? path : ROOT + path));
       const model = gltf.userData.vrm as VRM;
       if (cancelled) { VRMUtils.deepDispose(model.scene); throw new Error('cancelled'); }
       owned.push(model);
       return model;
     };
     const outfit = [['chest/tanktop.vrm', '#617c63'], ['legs/sportshorts.vrm', '#282d31']];
-    const pieces = [...outfit, ['head/short.vrm', '#392b24'], ['eyes/regulareyes.vrm', ''], ['feet/tennisshoes.vrm', '#e9e7e0']];
-    Promise.all([load('body.vrm'), ...pieces.map(([path]) => load(path))]).then(([body, ...garments]) => {
+    const pieces = [...outfit, ['/models/coach-reference/waves.vrm', '#39302e'], ['/models/coach-reference/eyes.vrm', ''], ['feet/tennisshoes.vrm', '#e9e7e0']];
+    Promise.all([load('/models/coach-reference/body.vrm'), ...pieces.map(([path]) => load(path))]).then(([body, ...garments]) => {
       if (cancelled) return;
+      prepareAnimeSkin(body.scene, "#ad754e", "#984957");
       garments.forEach((garment, i) => {
-        body.scene.add(transplantGarment(garment, body, { color: pieces[i][1] || null, preserveMaterials: !pieces[i][1] }).group);
+        const transplanted = transplantGarment(garment, body, { color: pieces[i][1] || null, preserveMaterials: !pieces[i][1] });
+        if (pieces[i][0].endsWith('/waves.vrm')) prepareAnimeHair(transplanted.group);
+        if (pieces[i][0].endsWith('/eyes.vrm')) {
+          for (const material of transplanted.materials) {
+            material.onBeforeCompile = shader => {
+              shader.fragmentShader = shader.fragmentShader.replace('#include <map_fragment>', `
+                #include <map_fragment>
+                float iris = smoothstep(0.02, 0.12, diffuseColor.g - diffuseColor.r);
+                float value = dot(diffuseColor.rgb, vec3(0.2126, 0.7152, 0.0722));
+                diffuseColor.rgb = mix(diffuseColor.rgb, value * vec3(0.15, 0.085, 0.048), iris);
+              `);
+            };
+            material.customProgramCacheKey = () => 'coach-dark-brown-eyes-v1';
+            material.needsUpdate = true;
+          }
+        }
+        body.scene.add(transplanted.group);
       });
-      body.scene.traverse(obj => { obj.frustumCulled = false; if (obj instanceof THREE.Mesh) { obj.castShadow = true; obj.receiveShadow = true; } });
+      body.scene.traverse(obj => { obj.frustumCulled = false; if (obj instanceof THREE.Mesh) { obj.geometry.computeVertexNormals(); obj.castShadow = true; obj.receiveShadow = true; } });
       body.scene.updateMatrixWorld(true);
       const box = new THREE.Box3().setFromObject(body.scene);
       const scale = 1.7 / (box.max.y - box.min.y);
@@ -66,7 +84,7 @@ export default function SpeakingAvatar({ exercise = 'rest', paused = false, spea
     vrm.expressionManager?.setValue('aa', mouth.current * 0.85);
     vrm.expressionManager?.setValue('oh', mouth.current * (0.15 + 0.12 * Math.sin(t * 6)));
     vrm.expressionManager?.setValue('ee', mouth.current * (0.12 + 0.10 * Math.sin(t * 9)));
-    vrm.expressionManager?.setValue('happy', 0.12);
+    vrm.expressionManager?.setValue('happy', speaking ? 0.12 : 0.28);
     const blinkPhase = t % 4.7;
     vrm.expressionManager?.setValue('blink', reducedMotion ? 0 : Math.max(0, 1 - Math.abs(blinkPhase - 0.12) / 0.10));
     const gesture = reducedMotion ? 0 : (speaking ? 0.10 : 0.018);

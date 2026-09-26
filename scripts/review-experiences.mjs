@@ -2,7 +2,8 @@ import { chromium } from 'playwright-core';
 import { createServer } from 'node:http';
 import { readFile, mkdir, writeFile } from 'node:fs/promises';
 import { extname, resolve, join } from 'node:path';
-const output = resolve('docs/experience-review');
+const requested = process.argv.slice(2);
+const output = resolve(requested.includes('coach-trainer') ? 'docs/coach-appearance-review/speech' : 'docs/experience-review');
 await mkdir(output, { recursive: true });
 const root = resolve('out');
 const types = { '.html': 'text/html', '.js': 'text/javascript', '.css': 'text/css', '.png': 'image/png', '.jpg': 'image/jpeg', '.webp': 'image/webp', '.svg': 'image/svg+xml' };
@@ -24,6 +25,7 @@ const results = [];
 try {
  for (const width of [1440, 390]) {
   for (const route of ['chef-chatbot', 'coach-trainer', 'virtual-pet', 'digital-wardrobe']) {
+    if (requested.length && !requested.includes(route)) continue;
     const page = await browser.newPage({ viewport: { width, height: 1000 } });
     const errors = [];
     page.on('pageerror', e => errors.push(e.message));

@@ -1,0 +1,16 @@
+[
+  {
+    "route": "coach-trainer",
+    "width": 1440,
+    "height": 900,
+    "errors": [],
+    "overflow": false
+  },
+  {
+    "route": "coach-trainer",
+    "width": 390,
+    "height": 844,
+    "errors": [],
+    "overflow": false
+  }
+]

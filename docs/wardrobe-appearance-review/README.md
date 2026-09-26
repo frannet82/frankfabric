@@ -1,3 +1,5 @@
+> Superseded by the anime revision: the live avatars now use the original anime face textures, larger authored eyes, and shared skin shading. The generated face atlas below is retained only as an earlier design asset and is no longer referenced by the models. See `docs/anime-avatar-review/README.md`.
+
 # Reference-inspired wardrobe avatar
 
 The wardrobe now uses a dedicated head/body and eye asset with smaller eye proportions, a slightly wider jaw, warm skin shading, blue-gray irises, and a generated face albedo with brown brows and muted rose lips. A new tintable shoulder-length bob is the default hair choice. The original trainer assets are unchanged. The result is stylized, not a photorealistic likeness.

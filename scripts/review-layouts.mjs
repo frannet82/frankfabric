@@ -2,7 +2,7 @@ import { chromium } from 'playwright-core';
 import { createServer } from 'node:http';
 import { readFile, mkdir, writeFile } from 'node:fs/promises';
 import { extname, resolve, join } from 'node:path';
-const output = resolve(process.argv.includes('--appearance') ? 'docs/wardrobe-appearance-review' : process.argv.includes('--pet-layout') ? 'docs/pet-layout-review' : process.argv.includes('--assistants') ? 'docs/assistant-layout-review' : process.argv.includes('--controls') ? 'docs/controls-review' : process.argv.includes('--reference') ? 'docs/reference-review' : 'docs/layout-review');
+const output = resolve(process.argv.includes('--anime') ? 'docs/anime-avatar-review' : process.argv.includes('--coach-look') ? 'docs/coach-appearance-review' : process.argv.includes('--appearance') ? 'docs/wardrobe-appearance-review' : process.argv.includes('--pet-layout') ? 'docs/pet-layout-review' : process.argv.includes('--assistants') ? 'docs/assistant-layout-review' : process.argv.includes('--controls') ? 'docs/controls-review' : process.argv.includes('--reference') ? 'docs/reference-review' : 'docs/layout-review');
 await mkdir(output, { recursive: true });
 const root = resolve('out');
 const types = { '.html': 'text/html', '.js': 'text/javascript', '.css': 'text/css', '.png': 'image/png', '.jpg': 'image/jpeg', '.webp': 'image/webp', '.svg': 'image/svg+xml' };
@@ -56,6 +56,10 @@ try {
      });
      if (fit.height > fit.viewport + 1 || fit.form.bottom > fit.viewport || fit.footer.bottom > fit.viewport || fit.log.height < 160) errors.push('Assistant does not fit desktop: '+JSON.stringify(fit));
     }
+   }
+   if (route === 'coach-trainer' && process.argv.includes('--coach-look')) {
+    await page.getByRole('button', {name:'Rest',exact:true}).click();
+    await page.waitForTimeout(700);
    }
    if (route === 'virtual-pet') {
     for (const action of ['Feed','Play','Sleep','Clean']) {
@@ -133,7 +137,7 @@ try {
      await menu.locator('#back').click();
     }
    }
-   if ((process.argv.includes('--reference') || process.argv.includes('--appearance')) && ['virtual-pet', 'digital-wardrobe'].includes(route)) {
+   if ((process.argv.includes('--reference') || process.argv.includes('--appearance') || process.argv.includes('--coach-look')) && ['virtual-pet', 'digital-wardrobe', 'coach-trainer'].includes(route)) {
     await page.getByRole('radio', {name:'Fast', exact:true}).click();
     await page.waitForTimeout(1800);
     await page.locator('canvas').screenshot({path:join(output,`${route}-fast-${viewport.width}.png`)});
