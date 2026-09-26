@@ -11,13 +11,13 @@ export const metadata = {
 export default function DigitalWardrobePage() {
   return (
     <main
-      className="min-h-screen relative"
+      className="wardrobe-page min-h-screen relative"
       style={{
         background:
           "radial-gradient(1000px 720px at 86% -4%, rgba(63,169,255,0.16), transparent 54%), radial-gradient(900px 700px at 6% 4%, rgba(155,107,255,0.16), transparent 56%), linear-gradient(180deg, #05060c 0%, #06071a 45%, #05060c 100%)",
       }}
     >
-      <div className="max-w-[1600px] mx-auto px-6 pt-8 pb-3">
+      <div className="wardrobe-nav max-w-[1600px] mx-auto px-6 pt-8 pb-3">
         <nav className="flex items-center justify-between gap-6 py-3 px-5 rounded-full border border-white/20 bg-white/[0.06] backdrop-blur-md">
           <Link href="/" className="flex items-center gap-3">
             <BrandMark />
@@ -31,7 +31,7 @@ export default function DigitalWardrobePage() {
         </nav>
       </div>
 
-      <section className="max-w-[1600px] mx-auto px-6 pt-8 pb-4 text-center">
+      <section className="wardrobe-heading max-w-[1600px] mx-auto px-6 pt-8 pb-4 text-center">
         <span className="font-mono text-xs tracking-[2px] uppercase text-cloud-blue">Your personal style studio</span>
         <h1 className="font-display font-semibold text-[clamp(28px,3.6vw,42px)] tracking-tight text-[#f4f6fb] mt-3 mb-3">
           Digital Wardrobe Avatar Builder
@@ -41,7 +41,7 @@ export default function DigitalWardrobePage() {
         </p>
       </section>
 
-      <section className="max-w-[1600px] mx-auto px-3 sm:px-6 pb-10">
+      <section className="wardrobe-workspace max-w-[1600px] mx-auto px-3 sm:px-6 pb-10">
         <WardrobeBuilder />
       </section>
       <nav aria-label="Explore projects" className="text-white max-w-[1600px] mx-auto px-6 pb-10 flex flex-wrap gap-3 text-sm">

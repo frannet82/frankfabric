@@ -349,9 +349,9 @@ function WardrobeBuilderInner() {
 
   return (
     <div
-      className="relative w-full flex flex-col overflow-hidden rounded-3xl"
+      className="wardrobe-builder relative w-full flex flex-col overflow-hidden rounded-3xl"
       style={{
-        minHeight: 820,
+
         fontFamily: "Jost, sans-serif",
         color: "#2c2a26",
         background:

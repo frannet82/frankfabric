@@ -1,5 +1,6 @@
 import Image from "next/image";
 import Link from "next/link";
+import ProjectCarousel from "@/components/ProjectCarousel";
 import BrandMark from "@/components/BrandMark";
 import { stack, cases, badges, caps, projects, ticker } from "@/lib/data";
 import { asset } from "@/lib/asset";
@@ -399,7 +400,7 @@ export default function Home() {
             Selected Builds in Detail
           </h2>
         </div>
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+        <ProjectCarousel>
           {projects.map((p) => {
             const Card = (
               <div className="rounded border border-white/[0.08] bg-gradient-to-br from-white/[0.045] to-white/[0.015] overflow-hidden transition-all group-hover:border-cloud-blue/55 group-hover:shadow-[0_0_0_1px_rgba(63,169,255,0.25),0_20px_60px_rgba(63,169,255,0.18)] group-hover:-translate-y-1 h-full">
@@ -613,7 +614,7 @@ export default function Home() {
               </div>
             );
           })}
-        </div>
+        </ProjectCarousel>
       </section>
 
       {/* CONTACT */}

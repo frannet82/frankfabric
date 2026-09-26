@@ -25,6 +25,7 @@
 // the cozy `ac` tokens).
 // ---------------------------------------------------------------------------
 
+import { EXERCISES, type Exercise } from "@/lib/coach/exercises";
 import { useCallback, useEffect, useRef, useState } from "react";
 import dynamic from "next/dynamic";
 import {
@@ -84,6 +85,8 @@ function CoachChatbotInner() {
   const [suggestions, setSuggestions] = useState<string[]>(GREETING_SUGGESTIONS);
   const [input, setInput] = useState("");
   // `speaking` opens the talking-motion window; `muted` gates all audio.
+  const [exercise, setExercise] = useState<Exercise>("rest");
+  const [paused, setPaused] = useState(false);
   const [speaking, setSpeaking] = useState(false);
   const [muted, setMuted] = useState(false);
   // The engine's `focus` read-out for the most recent reply, plus a monotonic
@@ -167,7 +170,10 @@ function CoachChatbotInner() {
     <div className="absolute inset-0 z-[5] flex flex-col md:flex-row bg-sf-black/90 backdrop-blur-[1px]">
       {/* 3D coach stage */}
       <div className="relative md:w-[54%] w-full h-[42%] md:h-full min-h-[120px] bg-gradient-to-b from-sf-ink to-sf-gray border-b md:border-b-0 md:border-r border-sf-yellow/40">
+        <div className="absolute inset-0 bottom-[124px]">
         <CoachScene
+          exercise={exercise}
+          paused={paused}
           speaking={speaking}
           getLoudness={getLoudness}
           quality={quality}
@@ -176,6 +182,7 @@ function CoachChatbotInner() {
           onKettlebellClick={() => send("Suggest a workout")}
           reducedMotion={reducedMotion}
         />
+        </div>
         {/* Shared High/Fast render-quality control, placed unobtrusively in the
             stage's top-left so it never overlaps the mute toggle (top-right) or
             the label (bottom). Same control across all four scenes. */}
@@ -193,9 +200,16 @@ function CoachChatbotInner() {
             {muted ? "🔇" : "🔊"}
           </span>
         </button>
-        <span className="absolute bottom-2 left-0 right-0 text-center font-mono text-[10px] tracking-widest uppercase text-sf-yellow/80 pointer-events-none">
-          Coach Fabric
-        </span>
+        <div className="absolute bottom-3 left-3 right-3 rounded-2xl border border-white/15 bg-sf-black/90 p-3 text-sf-mist">
+          <div className="flex items-center justify-between gap-2 mb-2">
+            <span className="text-xs font-semibold">Exercise demos</span>
+            {exercise !== 'rest' && <button onClick={() => setPaused(value => !value)} className="text-xs rounded-full border border-white/30 px-3 py-1">{paused ? 'Resume' : 'Pause'} demo</button>}
+          </div>
+          <div className="flex flex-wrap gap-1.5" role="group" aria-label="Exercise demonstrations">
+            {EXERCISES.map(item => <button key={item.id} aria-pressed={exercise === item.id} onClick={() => { setExercise(item.id); setPaused(false); }} className={`rounded-full px-3 py-1.5 text-xs border ${exercise === item.id ? 'bg-sf-yellow text-black border-sf-yellow' : 'border-white/25 hover:bg-white/10'}`}>{item.label}</button>)}
+          </div>
+          <p aria-live="polite" className="text-[11px] text-white/70 mt-2">{EXERCISES.find(item => item.id === exercise)?.cue}</p>
+        </div>
       </div>
 
       {/* Chat panel */}

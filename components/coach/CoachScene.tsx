@@ -13,9 +13,12 @@ import {
   qualitySettings,
   type Quality,
 } from "@/components/three/quality";
+import type { Exercise } from "@/lib/coach/exercises";
 import type { CoachFocus } from "@/lib/coach/coachEngine";
 
 type SceneProps = {
+  exercise?: Exercise;
+  paused?: boolean;
   // True while the coach's reply is "playing"; opens the talking-motion window.
   speaking?: boolean;
   // Estimated articulation envelope from browser speech word boundaries.
@@ -138,14 +141,17 @@ function coachFocusPose(focus: CoachFocus | null | undefined): {
 }
 
 function CameraRig({
+  exercise = "rest",
   focus,
   focusNonce = 0,
   reducedMotion = false,
 }: {
+  exercise?: Exercise;
   focus?: CoachFocus | null;
   focusNonce?: number;
   reducedMotion?: boolean;
 }) {
+  const framing = useRef(0);
   const posOffset = useRef(new THREE.Vector3());
   const lookOffset = useRef(new THREE.Vector3());
   // Short 0..1 pulse re-armed on every nonce so the same focus reads again and
@@ -178,14 +184,16 @@ function CameraRig({
       delta
     );
 
+    framing.current = THREE.MathUtils.damp(framing.current, exercise === "rest" ? 0 : 1, 5, delta);
+    const f = framing.current;
     state.camera.position.set(
       PINNED_CAM.x + posOffset.current.x,
-      PINNED_CAM.y + posOffset.current.y,
-      PINNED_CAM.z + posOffset.current.z
+      PINNED_CAM.y - 0.30 * f + posOffset.current.y,
+      PINNED_CAM.z + 1.7 * f + posOffset.current.z
     );
     state.camera.lookAt(
       PINNED_LOOK.x + lookOffset.current.x,
-      PINNED_LOOK.y + lookOffset.current.y,
+      PINNED_LOOK.y - 0.30 * f + lookOffset.current.y,
       PINNED_LOOK.z + lookOffset.current.z
     );
   });
@@ -352,6 +360,8 @@ function KettlebellProp({
 
 // Speech boundaries drive the VRM mouth shapes; reduced motion suppresses body gestures.
 export default function CoachScene({
+  exercise = "rest",
+  paused = false,
   speaking = false,
   getLoudness,
   quality = DEFAULT_QUALITY,
@@ -421,6 +431,7 @@ export default function CoachScene({
       {/* Engine-driven camera nudge, layered on the pinned framing. Reacts ONLY
           to the `focus` the engine returned; eases back to the locked shot. */}
       <CameraRig
+        exercise={exercise}
         focus={focus}
         focusNonce={focusNonce}
         reducedMotion={reducedMotion}
@@ -430,6 +441,8 @@ export default function CoachScene({
       <Suspense fallback={<SceneLoader />}>
         <group position={[0, 0, 0]}>
           <SpeakingAvatar
+            exercise={exercise}
+            paused={paused}
             speaking={speaking}
             getLoudness={getLoudness}
             reducedMotion={reducedMotion}

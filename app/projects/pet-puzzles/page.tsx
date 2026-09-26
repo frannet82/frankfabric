@@ -17,13 +17,13 @@ const GAME_SRC = "/games/pet-puzzles.html";
 export default function PetPuzzlesPage() {
   return (
     <main
-      className="min-h-screen relative"
+      className="puzzles-page min-h-screen relative"
       style={{
         background:
           "radial-gradient(1000px 720px at 88% -4%, rgba(238,110,150,0.16), transparent 54%), radial-gradient(900px 700px at 6% 4%, rgba(47,143,107,0.14), transparent 56%), linear-gradient(180deg, #f4ede3 0%, #fffcf7 45%, #f4ede3 100%)",
       }}
     >
-      <div className="max-w-[1100px] mx-auto px-6 pt-8 pb-3">
+      <div className="max-w-[1600px] mx-auto px-6 pt-8 pb-3">
         <nav className="flex items-center justify-between gap-6 py-3 px-5 rounded-full border border-puz-rim bg-puz-paper/80 backdrop-blur-md shadow-sm">
           <Link href="/" className="flex items-center gap-3">
             <BrandMark />
@@ -37,7 +37,7 @@ export default function PetPuzzlesPage() {
         </nav>
       </div>
 
-      <section className="max-w-[1100px] mx-auto px-6 pt-8 pb-4 text-center">
+      <section className="max-w-[1600px] mx-auto px-6 pt-8 pb-4 text-center">
         <span className="font-mono text-xs tracking-[2px] uppercase text-puz-leaf">{"// Live Demo"}</span>
         <h1 className="font-display font-semibold text-[clamp(28px,3.6vw,42px)] tracking-tight text-puz-ink mt-3 mb-3">
           Pet Puzzles <span className="text-puz-pinkDeep">Tile</span> &amp;{" "}
@@ -57,8 +57,8 @@ export default function PetPuzzlesPage() {
         </p>
       </section>
 
-      <section className="max-w-[560px] mx-auto px-6 pb-6">
-        <div className="relative w-full h-[min(82vh,900px)] min-h-[620px] rounded-3xl overflow-hidden border border-puz-rim bg-puz-paper shadow-[0_10px_40px_rgba(140,122,102,0.25)]">
+      <section className="puzzles-workspace max-w-[560px] lg:max-w-[1600px] mx-auto px-6 pb-6">
+        <div className="relative w-full h-[min(82vh,900px)] min-h-[620px] lg:min-h-0 lg:h-[calc(100dvh-180px)] rounded-3xl overflow-hidden border border-puz-rim bg-puz-paper shadow-[0_10px_40px_rgba(140,122,102,0.25)]">
           <iframe
             src={asset(GAME_SRC)}
             title="Pet Puzzles — Pet Jump and Pet Tower Sort"
@@ -81,7 +81,7 @@ export default function PetPuzzlesPage() {
           </svg>
         </a>
         <p className="text-[12px] text-puz-inkSoft mt-3 font-light">
-          Best on a phone. Sound is on — mute it with the speaker button.
+          Play on desktop or mobile. Use the speaker button to mute sound.
         </p>
       </section>
     </main>

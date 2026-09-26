@@ -8,16 +8,23 @@ import * as THREE from 'three';
 import { asset } from '@/lib/asset';
 import { transplantGarment } from '@/lib/vrm/transplant';
 import SceneLoader from './SceneLoader';
+import { exercisePose, type Exercise } from '@/lib/coach/exercises';
 import { Html } from '@react-three/drei';
 
-type Props = { speaking?: boolean; getLoudness?: () => number; reducedMotion?: boolean };
+type Props = { exercise?: Exercise; paused?: boolean; speaking?: boolean; getLoudness?: () => number; reducedMotion?: boolean };
 const ROOT = '/models/characters/drophunter/';
 
 /** Each mounted character owns its VRM, so portfolio previews cannot share a skeleton. */
-export default function SpeakingAvatar({ speaking = false, getLoudness, reducedMotion = false }: Props) {
+export default function SpeakingAvatar({ exercise = 'rest', paused = false, speaking = false, getLoudness, reducedMotion = false }: Props) {
   const [vrm, setVrm] = useState<VRM | null>(null);
   const [failed, setFailed] = useState(false);
+  const rigRef = useRef<VRM | null>(null);
+  const motionRef = useRef(exercisePose("rest", 0));
   const mouth = useRef(0);
+  const exerciseTime = useRef(0);
+  const exerciseWeight = useRef(0);
+  const originY = useRef(0);
+  useEffect(() => { exerciseTime.current = 0; }, [exercise]);
   useEffect(() => {
     let cancelled = false;
     const owned: VRM[] = [];
@@ -43,12 +50,15 @@ export default function SpeakingAvatar({ speaking = false, getLoudness, reducedM
       const scale = 1.7 / (box.max.y - box.min.y);
       body.scene.scale.setScalar(scale);
       body.scene.position.y = -box.min.y * scale;
+      originY.current = body.scene.position.y;
+      rigRef.current = body;
       setVrm(body);
     }).catch(error => { if (!cancelled) { console.error('Character loading failed', error); setFailed(true); } });
-    return () => { cancelled = true; owned.forEach(model => VRMUtils.deepDispose(model.scene)); };
+    return () => { rigRef.current = null; cancelled = true; owned.forEach(model => VRMUtils.deepDispose(model.scene)); };
   }, []);
 
   useFrame(({ clock }, delta) => {
+    const vrm = rigRef.current;
     if (!vrm) return;
     const t = clock.elapsedTime;
     const target = speaking ? (getLoudness ? getLoudness() : Math.max(0, Math.sin(t * 18)) * 0.7) : 0;
@@ -67,6 +77,30 @@ export default function SpeakingAvatar({ speaking = false, getLoudness, reducedM
     pose.getNormalizedBoneNode('rightLowerArm')?.rotation.set(-0.18 - gesture * 1.5 * (0.5 + 0.5 * Math.sin(t * 1.7 + 2)), 0, 0);
     pose.getNormalizedBoneNode('head')?.rotation.set(gesture * 0.18 * Math.sin(t * 2), gesture * 0.3 * Math.sin(t * 0.8), 0);
     pose.getNormalizedBoneNode('chest')?.rotation.set(reducedMotion ? 0 : 0.008 * Math.sin(t * 1.8), 0, 0);
+    // Demos are explicitly started by the user; Pause also works with reduced motion.
+    if (!paused) exerciseTime.current += Math.min(delta, 0.05);
+    exerciseWeight.current = THREE.MathUtils.damp(exerciseWeight.current, exercise === 'rest' ? 0 : 1, 5, delta);
+    const targetMotion = exercisePose(exercise, exerciseTime.current);
+    const motion = motionRef.current;
+    for (const key of Object.keys(motion) as (keyof typeof motion)[]) {
+      motion[key] = THREE.MathUtils.damp(motion[key], targetMotion[key], 12, delta);
+    }
+    const w = exerciseWeight.current;
+    pose.getNormalizedBoneNode('leftUpperLeg')?.rotation.set(motion.leftThigh * w, 0, motion.spread * w);
+    pose.getNormalizedBoneNode('rightUpperLeg')?.rotation.set(motion.rightThigh * w, 0, -motion.spread * w);
+    pose.getNormalizedBoneNode('leftLowerLeg')?.rotation.set(motion.leftKnee * w, 0, 0);
+    pose.getNormalizedBoneNode('rightLowerLeg')?.rotation.set(motion.rightKnee * w, 0, 0);
+    pose.getNormalizedBoneNode('leftFoot')?.rotation.set(motion.ankle * w, 0, -motion.spread * w);
+    pose.getNormalizedBoneNode('rightFoot')?.rotation.set(motion.ankle * w, 0, motion.spread * w);
+    if (exercise !== 'rest') {
+      pose.getNormalizedBoneNode('leftUpperArm')?.rotation.set(motion.leftSwing, 0, -1.3 + motion.armRaise);
+      pose.getNormalizedBoneNode('rightUpperArm')?.rotation.set(motion.rightSwing, 0, 1.3 - motion.armRaise);
+      pose.getNormalizedBoneNode('leftLowerArm')?.rotation.set(-0.25, 0, 0);
+      pose.getNormalizedBoneNode('rightLowerArm')?.rotation.set(-0.25, 0, 0);
+      pose.getNormalizedBoneNode('chest')?.rotation.set(motion.lean, 0, 0);
+      pose.getNormalizedBoneNode('head')?.rotation.set(-motion.lean * 0.5, 0, 0);
+    }
+    vrm.scene.position.y = originY.current - motion.hipDrop * w + motion.hop * w;
     vrm.update(Math.min(delta, 0.05));
   });
   if (!vrm) return failed ? <Html center><p role="alert" className="rounded-xl bg-white p-4 text-sm text-gray-800">The character could not load. Reload the page to try again. You can still use the chat.</p></Html> : <SceneLoader />;

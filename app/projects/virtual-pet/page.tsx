@@ -5,7 +5,7 @@ import VirtualPet from "@/components/pet/VirtualPet";
 export const metadata = {
   title: "Fabric Pet Virtual Tamagotchi — Frank Cloud Fabric",
   description:
-    "A client-side 3D virtual pet: feed, play with, and care for a rigged, animated 3D Miniature Schnauzer that lives in your browser. Its stats decay over time and it reacts to how you look after it — no server, all in the browser.",
+    "A client-side 3D virtual pet: feed, play with, and care for an animated white 3D Miniature Schnauzer that lives in your browser. Its stats decay over time and it reacts to how you look after it — no server, all in the browser.",
 };
 
 export default function VirtualPetPage() {
