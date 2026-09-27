@@ -216,7 +216,7 @@ function ChefChatbotInner() {
               >
                 <div
                   className={[
-                    "max-w-[85%] rounded-2xl px-3 py-2 text-[14px] leading-relaxed whitespace-pre-wrap shadow-sm",
+                    "max-w-[85%] rounded-2xl px-3 py-2 text-[14px] lg:text-[18px] lg:leading-[1.65] leading-relaxed whitespace-pre-wrap shadow-sm",
                     isUser
                       ? "bg-ac-sun text-ac-brown border border-ac-orange/50 rounded-br-sm"
                       : "bg-white text-ac-brown border border-ac-leaf/40 rounded-bl-sm",
@@ -231,13 +231,13 @@ function ChefChatbotInner() {
 
         {/* suggestion chips */}
         {suggestions.length > 0 && (
-          <div className="flex flex-wrap gap-1.5 px-3 pb-2">
+          <div className="flex shrink-0 flex-wrap gap-1.5 px-3 pb-2">
             {suggestions.map((chip) => (
               <button
                 key={chip}
                 type="button"
                 onClick={() => send(chip)}
-                className="font-mono text-[10.5px] tracking-wide text-ac-moss px-2.5 py-1 rounded-full border border-ac-leaf/60 bg-ac-leaf/25 hover:bg-ac-leaf/40 hover:border-ac-leafDark focus:outline-none focus:ring-2 focus:ring-ac-leafDark transition-colors"
+                className="font-mono text-[10.5px] lg:text-[14px] lg:tracking-normal tracking-wide text-ac-moss px-2.5 py-1 rounded-full border border-ac-leaf/60 bg-ac-leaf/25 hover:bg-ac-leaf/40 hover:border-ac-leafDark focus:outline-none focus:ring-2 focus:ring-ac-leafDark transition-colors"
               >
                 {chip}
               </button>
@@ -260,12 +260,12 @@ function ChefChatbotInner() {
             onChange={(event) => setInput(event.target.value)}
             placeholder="Ask about a recipe…"
             autoComplete="off"
-            className="flex-1 min-w-0 rounded-full bg-white border border-ac-leaf/50 px-4 py-2 text-[14px] text-ac-brown placeholder:text-ac-brownSoft/70 focus:outline-none focus:border-ac-leafDark focus:ring-2 focus:ring-ac-leafDark/40"
+            className="flex-1 min-w-0 rounded-full bg-white border border-ac-leaf/50 px-4 py-2 text-[14px] lg:text-[18px] text-ac-brown placeholder:text-ac-brownSoft/70 focus:outline-none focus:border-ac-leafDark focus:ring-2 focus:ring-ac-leafDark/40"
           />
           <button
             type="submit"
             disabled={!input.trim()}
-            className="shrink-0 rounded-full bg-ac-leaf text-ac-brown text-[14px] font-semibold px-4 py-2 border border-ac-leafDark/50 shadow-[0_4px_14px_rgba(95,168,90,0.35)] hover:-translate-y-0.5 hover:bg-ac-leafDark hover:text-white focus:outline-none focus:ring-2 focus:ring-ac-leafDark transition-all disabled:opacity-40 disabled:hover:translate-y-0"
+            className="shrink-0 rounded-full bg-ac-leaf text-ac-brown text-[14px] lg:text-[16px] font-semibold px-4 py-2 border border-ac-leafDark/50 shadow-[0_4px_14px_rgba(95,168,90,0.35)] hover:-translate-y-0.5 hover:bg-ac-leafDark hover:text-white focus:outline-none focus:ring-2 focus:ring-ac-leafDark transition-all disabled:opacity-40 disabled:hover:translate-y-0"
           >
             Send
           </button>

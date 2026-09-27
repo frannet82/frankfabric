@@ -234,7 +234,7 @@ function CoachChatbotInner() {
               >
                 <div
                   className={[
-                    "max-w-[85%] rounded-2xl px-3 py-2 text-[14px] leading-relaxed whitespace-pre-wrap shadow-sm",
+                    "max-w-[85%] rounded-2xl px-3 py-2 text-[14px] lg:text-[18px] lg:leading-[1.65] leading-relaxed whitespace-pre-wrap shadow-sm",
                     isUser
                       ? "bg-sf-yellow text-sf-black border border-sf-gold/70 rounded-br-sm font-medium"
                       : "bg-sf-gray text-sf-mist border border-sf-yellow/25 rounded-bl-sm",
@@ -249,13 +249,13 @@ function CoachChatbotInner() {
 
         {/* suggestion chips */}
         {suggestions.length > 0 && (
-          <div className="flex flex-wrap gap-1.5 px-3 pb-2">
+          <div className="flex shrink-0 flex-wrap gap-1.5 px-3 pb-2">
             {suggestions.map((chip) => (
               <button
                 key={chip}
                 type="button"
                 onClick={() => send(chip)}
-                className="font-mono text-[10.5px] tracking-wide text-sf-yellow px-2.5 py-1 rounded-full border border-sf-yellow/50 bg-sf-yellow/10 hover:bg-sf-magenta hover:text-white hover:border-sf-magenta focus:outline-none focus:ring-2 focus:ring-sf-yellow transition-colors"
+                className="font-mono text-[10.5px] lg:text-[14px] lg:tracking-normal tracking-wide text-sf-yellow px-2.5 py-1 rounded-full border border-sf-yellow/50 bg-sf-yellow/10 hover:bg-sf-magenta hover:text-white hover:border-sf-magenta focus:outline-none focus:ring-2 focus:ring-sf-yellow transition-colors"
               >
                 {chip}
               </button>
@@ -278,12 +278,12 @@ function CoachChatbotInner() {
             onChange={(event) => setInput(event.target.value)}
             placeholder="Ask about a workout…"
             autoComplete="off"
-            className="flex-1 min-w-0 rounded-full bg-sf-gray border border-sf-yellow/40 px-4 py-2 text-[14px] text-sf-mist placeholder:text-sf-mist/50 focus:outline-none focus:border-sf-yellow focus:ring-2 focus:ring-sf-yellow/40"
+            className="flex-1 min-w-0 rounded-full bg-sf-gray border border-sf-yellow/40 px-4 py-2 text-[14px] lg:text-[18px] text-sf-mist placeholder:text-sf-mist/50 focus:outline-none focus:border-sf-yellow focus:ring-2 focus:ring-sf-yellow/40"
           />
           <button
             type="submit"
             disabled={!input.trim()}
-            className="shrink-0 rounded-full bg-sf-yellow text-sf-black text-[14px] font-bold px-4 py-2 border border-sf-gold/60 shadow-[0_4px_14px_rgba(255,242,0,0.35)] hover:-translate-y-0.5 hover:bg-sf-magenta hover:text-white focus:outline-none focus:ring-2 focus:ring-sf-yellow transition-all disabled:opacity-40 disabled:hover:translate-y-0"
+            className="shrink-0 rounded-full bg-sf-yellow text-sf-black text-[14px] lg:text-[16px] font-bold px-4 py-2 border border-sf-gold/60 shadow-[0_4px_14px_rgba(255,242,0,0.35)] hover:-translate-y-0.5 hover:bg-sf-magenta hover:text-white focus:outline-none focus:ring-2 focus:ring-sf-yellow transition-all disabled:opacity-40 disabled:hover:translate-y-0"
           >
             Send
           </button>
