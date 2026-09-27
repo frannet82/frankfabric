@@ -45,7 +45,7 @@ export default function VirtualPetPage() {
         {/* VirtualPet's root is positioned `absolute inset-0` (it fills its
             parent), so it needs a sized relative container here to establish a
             positioning context and give it height. */}
-        <div className="assistant-panel relative w-full h-[850px] md:h-[max(720px,calc(100dvh-250px))] rounded-3xl overflow-hidden border border-pet-accentSoft bg-pet-paper shadow-[0_10px_40px_rgba(224,138,76,0.22)]">
+        <div className="assistant-panel pet-panel relative w-full h-[850px] md:h-[max(720px,calc(100dvh-250px))] rounded-3xl overflow-hidden border border-pet-accentSoft bg-pet-paper shadow-[0_10px_40px_rgba(224,138,76,0.22)]">
           <VirtualPet />
         </div>
       </section>
