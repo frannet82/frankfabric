@@ -1,0 +1,16 @@
+[
+  {
+    "route": "home",
+    "width": 1440,
+    "height": 900,
+    "errors": [],
+    "overflow": false
+  },
+  {
+    "route": "home",
+    "width": 390,
+    "height": 844,
+    "errors": [],
+    "overflow": false
+  }
+]

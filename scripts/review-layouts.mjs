@@ -2,7 +2,7 @@ import { chromium } from 'playwright-core';
 import { createServer } from 'node:http';
 import { readFile, mkdir, writeFile } from 'node:fs/promises';
 import { extname, resolve, join } from 'node:path';
-const output = resolve(process.argv.includes('--anime') ? 'docs/anime-avatar-review' : process.argv.includes('--coach-look') ? 'docs/coach-appearance-review' : process.argv.includes('--appearance') ? 'docs/wardrobe-appearance-review' : process.argv.includes('--pet-layout') ? 'docs/pet-layout-review' : process.argv.includes('--assistants') ? 'docs/assistant-layout-review' : process.argv.includes('--controls') ? 'docs/controls-review' : process.argv.includes('--reference') ? 'docs/reference-review' : 'docs/layout-review');
+const output = resolve(process.argv.includes('--certifications') ? 'docs/certification-review' : process.argv.includes('--anime') ? 'docs/anime-avatar-review' : process.argv.includes('--coach-look') ? 'docs/coach-appearance-review' : process.argv.includes('--appearance') ? 'docs/wardrobe-appearance-review' : process.argv.includes('--pet-layout') ? 'docs/pet-layout-review' : process.argv.includes('--assistants') ? 'docs/assistant-layout-review' : process.argv.includes('--controls') ? 'docs/controls-review' : process.argv.includes('--reference') ? 'docs/reference-review' : 'docs/layout-review');
 await mkdir(output, { recursive: true });
 const root = resolve('out');
 const types = { '.html': 'text/html', '.js': 'text/javascript', '.css': 'text/css', '.png': 'image/png', '.jpg': 'image/jpeg', '.webp': 'image/webp', '.svg': 'image/svg+xml' };
@@ -97,6 +97,31 @@ try {
     await page.locator('canvas').screenshot({path:join(output,`wardrobe-adjusted-${viewport.width}.png`)});
     for (const label of ['Rotate right', 'Tilt up', 'Tilt down', 'Zoom out', 'Reset view']) await page.getByRole('button', {name:label, exact:true}).click();
     await page.locator('canvas').screenshot({path:join(output,`wardrobe-reset-${viewport.width}.png`)});
+   }
+   if (route === 'home' && process.argv.includes('--certifications')) {
+    const region=page.locator('#credentials');
+    await region.scrollIntoViewIfNeeded();
+    const links=region.locator('.credential-link');
+    if (await links.count() !== 3) errors.push('Missing certification links');
+    for (const link of await links.all()) {
+     const href=await link.getAttribute('href');
+     if (!/^https:\/\/(www\.credly\.com|certification\.adobe\.com)\//.test(href || '')) errors.push('Invalid verification destination');
+    }
+    await page.getByRole('button',{name:'Pause floating',exact:true}).click();
+    const paused=await region.locator('.credential-float').evaluateAll(nodes => nodes.every(node => getComputedStyle(node).animationPlayState === 'paused'));
+    if (!paused) errors.push('Floating does not pause');
+    const first=links.first();
+    const before=await first.locator('.credential-object').evaluate(node=>getComputedStyle(node).transform);
+    await first.hover();
+    await page.waitForTimeout(250);
+    const after=await first.locator('.credential-object').evaluate(node=>getComputedStyle(node).transform);
+    if (before===after) errors.push('Pointer tilt did not respond');
+    await first.focus();
+    if (!(await first.evaluate(node=>node===document.activeElement))) errors.push('Credential link cannot receive keyboard focus');
+    await region.screenshot({path:join(output,`certifications-${viewport.width}.png`)});
+    await page.emulateMedia({reducedMotion:'reduce'});
+    if (await first.locator('.credential-float').evaluate(node=>getComputedStyle(node).animationName) !== 'none') errors.push('Reduced motion does not stop floating');
+    await page.emulateMedia({reducedMotion:'no-preference'});
    }
    if (route === 'home') {
     await page.locator('#projects').scrollIntoViewIfNeeded();

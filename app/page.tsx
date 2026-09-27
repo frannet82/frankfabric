@@ -1,6 +1,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import ProjectCarousel from "@/components/ProjectCarousel";
+import FloatingCertifications from "@/components/FloatingCertifications";
 import BrandMark from "@/components/BrandMark";
 import { stack, cases, badges, caps, projects, ticker } from "@/lib/data";
 import { asset } from "@/lib/asset";
@@ -347,43 +348,7 @@ export default function Home() {
               Credentials &amp; Certifications
             </h2>
           </div>
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 max-w-[820px] mx-auto">
-            {badges.map((b) => {
-              const isLight = b.variant === "light";
-              return (
-                <a
-                  key={b.abbr}
-                  href={b.href}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className={`cert-card${isLight ? " cert-card--light" : ""} group relative flex items-center gap-6 p-7 rounded overflow-hidden transition-all hover:-translate-y-1`}
-                >
-                  <span className="absolute top-0 left-0 right-0 h-[2px] bg-gradient-to-r from-cloud-blue to-cloud-violet" />
-                  <div className="cert-badge-glow flex-none w-[88px] h-[88px] relative grid place-items-center transition-transform group-hover:scale-105">
-                    <Image
-                      src={asset(b.image)}
-                      alt={`${b.title} certification badge`}
-                      width={88}
-                      height={88}
-                      className="w-full h-full object-contain"
-                    />
-                  </div>
-                  <div>
-                    <div className="cert-card__issuer font-mono text-[11px] tracking-widest uppercase text-cloud-blue mb-[6px]">
-                      {b.issuer}
-                    </div>
-                    <div className="cert-card__title font-display font-semibold text-lg text-[#f4f6fb] leading-snug">
-                      {b.title}
-                    </div>
-                    <div className="cert-card__meta text-[13px] text-[#8b93a7] mt-[6px] font-light">{b.meta}</div>
-                  </div>
-                  <span className="cert-card__verify ml-auto self-start font-mono text-[10px] tracking-widest uppercase text-[#8b93a7] transition-colors group-hover:text-cloud-blue whitespace-nowrap">
-                    Verify ↗
-                  </span>
-                </a>
-              );
-            })}
-          </div>
+          <FloatingCertifications badges={badges} />
         </div>
       </section>
 

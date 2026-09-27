@@ -176,3 +176,31 @@ a:hover {
   .assistant-page > nav { padding-top: 0; padding-bottom: 8px; flex-shrink: 0; }
   .assistant-page > nav a { padding-top: 4px; padding-bottom: 4px; font-size: 12px; }
 }
+
+/* Real CSS 3D layers give the credential plaques depth without another WebGL canvas. */
+.credential-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 32px; }
+.credential-link { display: block; min-width: 0; border-radius: 24px; text-align: center; outline-offset: 6px; --tilt-x: -7deg; --tilt-y: var(--rest-y); }
+.credential-link:focus-visible { outline: 2px solid #63c5ff; }
+.credential-stage { display: grid; place-items: center; position: relative; height: 320px; perspective: 900px; }
+.credential-float { display: block; width: min(230px, 86%); aspect-ratio: 0.87; transform-style: preserve-3d; animation: credential-float 6s ease-in-out infinite; animation-delay: var(--float-delay); }
+.credential-object { display: block; position: relative; width: 100%; height: 100%; transform-style: preserve-3d; transform: rotateX(var(--tilt-x)) rotateY(var(--tilt-y)); transition: transform 180ms ease-out; }
+.credential-edge, .credential-face, .credential-shine { position: absolute; inset: 0; border-radius: 26px; backface-visibility: hidden; }
+.credential-edge { background: linear-gradient(120deg, #94b5ce, #283b58 25%, #182334 60%, #849ab8); border: 1px solid #63839a; }
+.credential-face { display: flex; flex-direction: column; align-items: center; padding: 18px; background: linear-gradient(140deg, #20324d, #101827 60%, #24334f); border: 1px solid #8bc2ef80; box-shadow: inset 0 0 0 5px #ffffff05, 0 18px 38px #0007; }
+.credential-serial { font-family: var(--font-mono), monospace; font-size: 9px; letter-spacing: 2px; color: #a8c5df; align-self: flex-start; }
+.credential-art { object-fit: contain; width: 100%; height: 76%; min-height: 0; margin: auto; filter: drop-shadow(0 6px 8px #0004); }
+.credential-seal { display: flex; justify-content: space-between; width: 100%; font-family: monospace; font-size: 11px; letter-spacing: 3px; color: #c4ddf3; }
+.credential-shine { pointer-events: none; transform: translateZ(1px); background: linear-gradient(125deg, #ffffff22, transparent 37%, transparent 64%, #ffffff08); }
+.credential-floor { position: absolute; bottom: 10px; width: 68%; height: 26px; border-radius: 50%; border: 1px solid #66baff22; background: radial-gradient(ellipse, #3fa9ff24, #05071400 70%); box-shadow: 0 0 28px #3fa9ff16; }
+.credential-copy { display: flex; flex-direction: column; align-items: center; gap: 8px; padding: 14px 6px 20px; }
+.credential-issuer { font-family: monospace; text-transform: uppercase; letter-spacing: 1.5px; font-size: 11px; color: #70c9ff; }
+.credential-title { color: #f4f6fb; font-size: 20px; font-weight: 600; line-height: 1.35; }
+.credential-meta { color: #98a5ba; font-size: 13px; }
+.credential-open { color: #c9d9f0; font-size: 13px; margin-top: 6px; border-bottom: 1px solid #ffffff30; padding-bottom: 3px; }
+.credential-link:hover .credential-open, .credential-link:focus-visible .credential-open { color: #70c9ff; border-color: #70c9ff; }
+.credential-link--light .credential-face { background: linear-gradient(140deg, #fff, #edf1f5); border-color: #fff; }
+.credential-link--light .credential-serial, .credential-link--light .credential-seal { color: #963e49; }
+.credential-link:hover .credential-float, .credential-link:focus-visible .credential-float, .credential-gallery[data-paused="true"] .credential-float { animation-play-state: paused; }
+@keyframes credential-float { 0%, 100% { transform: translateY(5px) rotateZ(-1deg); } 50% { transform: translateY(-12px) rotateZ(1deg); } }
+@media (max-width: 767px) { .credential-grid { grid-template-columns: 1fr; gap: 24px; } .credential-stage { height: 300px; } .credential-float { width: 220px; max-width: 86%; } }
+@media (prefers-reduced-motion: reduce) { .credential-float { animation: none; } .credential-object { transition: none; transform: rotateX(-4deg) rotateY(5deg); } .credential-motion { display: none; } }
