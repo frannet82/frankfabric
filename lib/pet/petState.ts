@@ -110,52 +110,43 @@ export function decayForElapsed(state: PetState, nowMs: number): PetState {
 }
 
 /**
- * Apply an interaction. Returns a NEW state with adjusted stats (all clamped).
- * The lastUpdated timestamp is left untouched here — the caller decides whether
- * to also decay/persist (typically decayForElapsed is applied first).
+ * Stat changes for one full interaction. Negative values are side-effects.
  *
  *   feed  => big fullness boost, small cleanliness cost (eating is messy).
  *   play  => happiness boost, but costs energy and a little fullness.
  *   sleep => big energy restore + a little happiness (a good nap feels nice).
  *   clean => big cleanliness boost + a small happiness bump (fresh & comfy).
  */
-export function applyAction(state: PetState, action: PetAction): PetState {
+export const ACTION_DELTAS: Record<PetAction, Partial<PetStats>> = {
+  feed: { hunger: 34, cleanliness: -6 },
+  play: { happiness: 28, energy: -14, hunger: -8 },
+  sleep: { energy: 40, happiness: 6 },
+  clean: { cleanliness: 45, happiness: 5 },
+};
+
+/**
+ * Apply `factor` x an interaction's deltas (factor 1 = one full interaction).
+ * Used by the Care Blocks puzzle, where every cleared block is a fraction of an
+ * action. Returns a NEW state with all stats clamped; lastUpdated untouched.
+ */
+export function applyActionScaled(state: PetState, action: PetAction, factor: number): PetState {
+  const deltas = ACTION_DELTAS[action];
+  if (!deltas || !(factor > 0)) return state;
   const s = state.stats;
-  let next: PetStats;
-  switch (action) {
-    case "feed":
-      next = {
-        ...s,
-        hunger: clamp(s.hunger + 34),
-        cleanliness: clamp(s.cleanliness - 6),
-      };
-      break;
-    case "play":
-      next = {
-        ...s,
-        happiness: clamp(s.happiness + 28),
-        energy: clamp(s.energy - 14),
-        hunger: clamp(s.hunger - 8),
-      };
-      break;
-    case "sleep":
-      next = {
-        ...s,
-        energy: clamp(s.energy + 40),
-        happiness: clamp(s.happiness + 6),
-      };
-      break;
-    case "clean":
-      next = {
-        ...s,
-        cleanliness: clamp(s.cleanliness + 45),
-        happiness: clamp(s.happiness + 5),
-      };
-      break;
-    default:
-      next = { ...s };
-  }
+  const next: PetStats = { ...s };
+  (Object.keys(deltas) as (keyof PetStats)[]).forEach((key) => {
+    next[key] = clamp(s[key] + (deltas[key] ?? 0) * factor);
+  });
   return { ...state, stats: next };
+}
+
+/**
+ * Apply one full interaction. Returns a NEW state with adjusted stats (all
+ * clamped). The lastUpdated timestamp is left untouched here — the caller
+ * decides whether to also decay/persist (typically decayForElapsed first).
+ */
+export function applyAction(state: PetState, action: PetAction): PetState {
+  return applyActionScaled(state, action, 1);
 }
 
 /**

@@ -37,7 +37,7 @@ export default function VirtualPetPage() {
           Fabric Pet <span className="text-pet-accent">3D Virtual Pet</span>
         </h1>
         <p className="text-pet-inkSoft text-[16px] leading-relaxed opacity-75 max-w-[680px] mx-auto">
-          Meet your new companion. Share a meal, make time to play, and settle down for a rest. Your pet remembers your care on this device.
+          Meet Luffy, your new companion. Look after him by playing Care Blocks: every row you clear feeds, plays with, rests or bathes him, depending on the colours of the blocks. Luffy remembers your care on this device.
         </p>
       </section>
 

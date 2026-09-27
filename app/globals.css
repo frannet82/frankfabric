@@ -296,3 +296,9 @@ section[id] { scroll-margin-top: 84px; }
   .cap-head { align-self: end; }
   .cap-diagram { margin: 0; align-self: center; }
 }
+
+/* Care Blocks (components/pet/CareBlocks.tsx): cell size scales with screen. */
+.care-board { --cell: 17px; }
+@media (min-width: 400px) { .care-board { --cell: 19px; } }
+@media (min-width: 1024px) { .care-board { --cell: 22px; } }
+.care-cell { box-shadow: inset 0 -2px 0 rgba(0, 0, 0, 0.14), inset 0 1px 0 rgba(255, 255, 255, 0.35); }
