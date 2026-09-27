@@ -24,7 +24,7 @@ const browser = await chromium.launch({ executablePath: '/Applications/Google Ch
 const requested = process.argv.slice(2).filter(arg => !arg.startsWith('--'));
 const results = [];
 try {
- for (const viewport of [{width:1440,height:900},{width:1280,height:720},...((process.argv.includes('--assistants') || process.argv.includes('--pet-layout')) ? [{width:1024,height:768}] : []),{width:390,height:844}]) {
+ for (const viewport of [{width:1440,height:900},{width:1280,height:720},...(process.argv.includes('--capabilities') ? [{width:320,height:740},{width:375,height:812},{width:768,height:1024}] : []),...((process.argv.includes('--assistants') || process.argv.includes('--pet-layout')) ? [{width:1024,height:768}] : []),{width:390,height:844}]) {
   for (const route of ['coach-trainer', 'chef-chatbot', 'virtual-pet', 'digital-wardrobe', 'pet-puzzles', 'home']) {
    if (requested.length && !requested.includes(route)) continue;
    if (viewport.width === 1280 && route !== 'digital-wardrobe' && !process.argv.includes('--assistants') && !process.argv.includes('--pet-layout')) continue;
@@ -123,7 +123,21 @@ try {
     if (await first.locator('.credential-float').evaluate(node=>getComputedStyle(node).animationName) !== 'none') errors.push('Reduced motion does not stop floating');
     await page.emulateMedia({reducedMotion:'no-preference'});
    }
-   if (route === 'home' && process.argv.includes('--avatar')) {
+   if (route === 'home' && process.argv.includes('--capabilities')) {
+    const buttons = page.locator('button[aria-controls="capability-detail"]');
+    for (let index = 0; index < await buttons.count(); index++) {
+     await buttons.nth(index).click();
+     const overflow = await page.locator('#capability-detail').evaluate(panel => {
+      const bounds = panel.getBoundingClientRect();
+      return bounds.left < 0 || bounds.right > innerWidth || [...panel.querySelectorAll('h3,p,a')].some(node => {
+       const rect = node.getBoundingClientRect();
+       return rect.left < bounds.left || rect.right > bounds.right || node.scrollWidth > node.clientWidth + 1;
+      });
+     });
+     if (overflow) errors.push(`Capability ${index + 1} overflows`);
+     if (index === 4) await page.locator('#capability-detail').screenshot({path:join(output,`capability-mlops-${viewport.width}.png`)});
+    }
+   } else if (route === 'home' && process.argv.includes('--avatar')) {
     const portrait = page.locator('.hero-portrait img');
     await portrait.evaluate(img => img.decode());
     if (!(await portrait.getAttribute('src')).includes('final_futuristic_avatar_cutout.png')) errors.push('Updated avatar not loaded');

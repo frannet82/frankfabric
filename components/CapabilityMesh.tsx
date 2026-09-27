@@ -61,16 +61,16 @@ export default function CapabilityMesh({ caps, children }: { caps: Cap[]; childr
         <div
           id="capability-detail"
           aria-live="polite"
-          className="relative rounded-2xl border border-white/[0.09] bg-gradient-to-br from-white/[0.05] to-white/[0.015] backdrop-blur-md p-7 overflow-hidden"
+          className="relative rounded-2xl border border-white/[0.09] bg-gradient-to-br from-white/[0.05] to-white/[0.015] backdrop-blur-md p-5 sm:p-7 overflow-hidden [overflow-wrap:anywhere]"
         >
           <span className="absolute top-0 left-0 right-0 h-[2px] bg-gradient-to-r from-cloud-blue to-cloud-violet" />
           <div className="flex items-center gap-3 mb-4">
-            <span className="grid place-items-center w-11 h-11 rounded-xl border border-cloud-blue/40 bg-cloud-blue/10 text-cloud-mist">
+            <span className="grid place-items-center w-11 h-11 shrink-0 rounded-xl border border-cloud-blue/40 bg-cloud-blue/10 text-cloud-mist">
               <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
                 {icons[active.icon]}
               </svg>
             </span>
-            <div>
+            <div className="min-w-0">
               <div className="font-mono text-[11px] tracking-[2px] uppercase text-cloud-blue">
                 {String(activeIdx + 1).padStart(2, "0")} · {active.code}
               </div>
@@ -81,16 +81,16 @@ export default function CapabilityMesh({ caps, children }: { caps: Cap[]; childr
           {isInternal ? (
             <Link
               href={active.link.href}
-              className="inline-flex items-center gap-2 font-mono text-[12px] tracking-wider uppercase !text-cloud-mist hover:!text-white"
+              className="inline-flex max-w-full items-start gap-2 font-mono text-[12px] tracking-wider uppercase !text-cloud-mist hover:!text-white"
             >
-              {active.link.label} <span aria-hidden="true">→</span>
+              <span className="min-w-0">{active.link.label}</span> <span className="shrink-0" aria-hidden="true">→</span>
             </Link>
           ) : (
             <a
               href={active.link.href}
-              className="inline-flex items-center gap-2 font-mono text-[12px] tracking-wider uppercase !text-cloud-mist hover:!text-white"
+              className="inline-flex max-w-full items-start gap-2 font-mono text-[12px] tracking-wider uppercase !text-cloud-mist hover:!text-white"
             >
-              {active.link.label} <span aria-hidden="true">→</span>
+              <span className="min-w-0">{active.link.label}</span> <span className="shrink-0" aria-hidden="true">→</span>
             </a>
           )}
         </div>

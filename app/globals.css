@@ -297,7 +297,8 @@ h1.font-display, h2.font-display, h3.font-display { letter-spacing: var(--displa
 section[id] { scroll-margin-top: 84px; }
 /* Capabilities: heading, diagram, panel stack on mobile; heading + panel sit
    beside the diagram on desktop. */
-.cap-layout { display: grid; gap: 40px; grid-template-areas: "head" "diagram" "panel"; }
+.cap-layout { display: grid; grid-template-columns: minmax(0, 1fr); gap: 40px; grid-template-areas: "head" "diagram" "panel"; }
+.cap-layout > * { min-width: 0; }
 .cap-head { grid-area: head; }
 .cap-panel { grid-area: panel; }
 .cap-diagram { grid-area: diagram; margin-top: 28px; margin-bottom: 28px; }
