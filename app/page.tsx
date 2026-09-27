@@ -17,7 +17,7 @@ export default function Home() {
       className="min-h-screen overflow-x-hidden relative"
       style={{
         background:
-          "radial-gradient(1000px 720px at 86% -4%, rgba(63,169,255,0.28), transparent 54%), radial-gradient(900px 700px at 6% 4%, rgba(155,107,255,0.28), transparent 56%), radial-gradient(820px 640px at 56% 114%, rgba(95,242,223,0.16), transparent 58%), linear-gradient(180deg, #05060c 0%, #06071a 45%, #05060c 100%)",
+          "var(--page-bg)",
       }}
     >
       {/* HUD overlay */}
@@ -33,7 +33,7 @@ export default function Home() {
 
       {/* STATUS TICKER */}
       <section aria-hidden="true" className="relative z-10 border-b border-white/[0.06] bg-black/30 overflow-hidden">
-        <div className="max-w-[1280px] mx-auto px-5 sm:px-10 py-2 flex items-center gap-5 font-mono text-[11px] tracking-widest text-[#6b8b9a]">
+        <div className="max-w-[1280px] mx-auto px-5 sm:px-10 py-2 flex items-center gap-5 font-mono text-[11px] tracking-widest text-ink-4">
           <span className="inline-flex items-center gap-[7px] text-cloud-blue whitespace-nowrap">
             <span className="w-[6px] h-[6px] rounded-full bg-cloud-blue shadow-[0_0_8px_#3fa9ff] animate-emberPulse" />
             SYS.ONLINE
@@ -48,7 +48,7 @@ export default function Home() {
               ))}
             </div>
           </div>
-          <span className="whitespace-nowrap opacity-70">LAT 40.71 · LON -74.00</span>
+          <span className="whitespace-nowrap opacity-70">SAN JOSÉ, CR · LAT 9.93 · LON -84.08</span>
         </div>
       </section>
 
@@ -58,13 +58,13 @@ export default function Home() {
           className="relative rounded-3xl overflow-hidden md:min-h-[640px] flex flex-col"
           style={{
             background:
-              "radial-gradient(58% 55% at 64% 26%, rgba(60,60,150,0.45), transparent 62%), linear-gradient(120deg, #0a0e26 0%, #10184a 40%, #1a2a6c 70%, #0f1030 100%)",
+              "var(--hero-bg)",
           }}
         >
           <div
             className="absolute inset-0 pointer-events-none mix-blend-screen"
             style={{
-              background: "radial-gradient(46% 40% at 24% 82%, rgba(40,80,150,0.30), transparent 62%)",
+              background: "var(--hero-glow)",
             }}
           />
 
@@ -73,7 +73,7 @@ export default function Home() {
           >
             <Image
               src={asset("/images/final_futuristic_avatar.jpg")}
-              alt="Frank, wearing futuristic visor glasses and a holographic jacket"
+              alt="Frank Murillo, wearing futuristic visor glasses and a holographic jacket"
               fill
               sizes="(min-width: 768px) 58vw, 100vw"
               className="object-cover"
@@ -91,30 +91,30 @@ export default function Home() {
           <div className="relative z-10 max-w-[740px] px-6 sm:px-14 pt-[250px] md:pt-12 pb-10 md:pb-14 flex-1 flex flex-col justify-center">
             <div className="flex items-center gap-3 mb-5 font-mono text-[12px] sm:text-[12.5px] tracking-[2px] uppercase text-white/90">
               <span className="w-[11px] h-[11px] bg-gradient-to-br from-cloud-mist to-white rotate-45 shadow-[0_0_12px_rgba(95,242,223,0.7)]" />
-              Woven for the Enterprise
+              Frank Murillo · Cloud &amp; AI Architect
             </div>
             <h1 className="font-display font-bold text-[clamp(38px,4.6vw,66px)] leading-[1.02] tracking-tighter mb-6 text-white">
               Where Enterprise AEM &amp;&nbsp;AWS&nbsp;Cloud{" "}
-              <span className="sm:block sm:whitespace-nowrap pr-2 bg-gradient-to-r from-[#c9e0ff] via-[#d6c6ff] to-[#c6f2ec] bg-clip-text text-transparent">
+              <span className="sm:block sm:whitespace-nowrap pr-2 bg-gradient-to-r headline-gradient">
                 Meet Generative&nbsp;AI.
               </span>
             </h1>
             <p className="text-[17px] sm:text-lg leading-relaxed text-white/80 max-w-[480px] mb-8 font-light">
-              Frank Cloud Fabric designs resilient, massive-scale cloud architectures where enterprise content,
-              machine learning, and generative intelligence converge.
+              I&apos;m Frank Murillo, a cloud and AI architect with 12+ years on Adobe Experience Manager and AWS.
+              I design platforms that hold up at enterprise scale, then put generative AI to work on them.
             </p>
             <div className="flex flex-wrap items-center gap-3 mb-10">
               <a
                 href="#contact"
-                className="inline-flex items-center gap-2 bg-white !text-[#0d1030] px-7 py-[14px] rounded-full font-semibold text-[15px] hover:-translate-y-0.5 hover:shadow-[0_12px_40px_rgba(95,242,223,0.25)] transition-all focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-cloud-mist"
+                className="inline-flex items-center gap-2 btn-primary px-7 py-[14px] rounded-full font-semibold text-[15px] hover:-translate-y-0.5 hover:shadow-[0_12px_40px_rgba(95,242,223,0.25)] transition-all focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-cloud-mist"
               >
-                Start a project <span aria-hidden="true">→</span>
+                Work with me <span aria-hidden="true">→</span>
               </a>
               <a
                 href="#case-studies"
                 className="inline-flex items-center gap-2 !text-white px-6 py-[13px] rounded-full font-medium text-[15px] border border-white/30 bg-white/[0.04] backdrop-blur-sm hover:border-white/60 hover:bg-white/[0.08] transition-all focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-cloud-mist"
               >
-                View case studies
+                See my work
               </a>
             </div>
             <dl className="grid grid-cols-3 max-w-[460px] border-t border-white/15 pt-5">
@@ -136,8 +136,8 @@ export default function Home() {
       {/* STACK MARQUEE */}
       <section aria-labelledby="stack-label" className="border-y border-white/[0.06] bg-white/[0.015] py-5 overflow-hidden relative z-10">
         <div className="max-w-[1280px] mx-auto mb-3 px-5 sm:px-10">
-          <span id="stack-label" className="font-mono text-[11.5px] tracking-[2px] uppercase text-[#8a93a8]">
-            Core Stack &amp; Platforms
+          <span id="stack-label" className="font-mono text-[11.5px] tracking-[2px] uppercase text-ink-3">
+            Tools I build with
           </span>
         </div>
         <ul className="sr-only">
@@ -149,7 +149,7 @@ export default function Home() {
           <div className="flex gap-10 w-max animate-marquee items-center px-5">
             {stackLoop.map((tech, i) => (
               <span key={i} className="flex items-center gap-10 whitespace-nowrap">
-                <span className="font-display font-medium text-[19px] sm:text-[22px] text-[#b4bccd] tracking-wide">{tech}</span>
+                <span className="font-display font-medium text-[19px] sm:text-[22px] text-ink-2 tracking-wide">{tech}</span>
                 <span className="w-[7px] h-[7px] rotate-45 bg-gradient-to-br from-cloud-blue to-cloud-violet opacity-70" />
               </span>
             ))}
@@ -163,15 +163,15 @@ export default function Home() {
           <div className="max-w-[560px]">
           <div className="flex items-center gap-4 mb-4">
             <span className="font-mono text-xs tracking-[2px] uppercase text-cloud-blue whitespace-nowrap">
-              {"// Capabilities"}
+              {"// What I do"}
             </span>
             <span className="flex-1 h-[10px] bg-[repeating-linear-gradient(90deg,rgba(63,169,255,0.45)_0_1px,transparent_1px_9px)]" />
           </div>
-          <h2 className="font-display font-semibold text-[clamp(28px,3.2vw,42px)] tracking-tight text-[#f4f6fb] mb-3">
-            Key Features &amp; Services
+          <h2 className="font-display font-semibold text-[clamp(28px,3.2vw,42px)] tracking-tight text-ink-1 mb-3">
+            How I can help
           </h2>
-          <p className="text-[16px] leading-relaxed text-[#9aa2b4] font-light">
-            Six disciplines, one fabric. Select a node to see what each one covers and where it shows up in real work.
+          <p className="text-[16px] leading-relaxed text-ink-3 font-light">
+            Six areas I work across, all connected. Select one to see what it covers and where I&apos;ve applied it.
           </p>
         </div>
         </CapabilityMesh>
@@ -186,9 +186,12 @@ export default function Home() {
             </span>
             <span className="flex-1 h-[10px] bg-[repeating-linear-gradient(90deg,rgba(63,169,255,0.45)_0_1px,transparent_1px_9px)]" />
           </div>
-          <h2 className="font-display font-semibold text-[clamp(28px,3.2vw,42px)] tracking-tight text-[#f4f6fb]">
-            Architecture Case Studies
+          <h2 className="font-display font-semibold text-[clamp(28px,3.2vw,42px)] tracking-tight text-ink-1">
+            Systems I&apos;ve architected
           </h2>
+          <p className="mt-3 text-[16px] leading-relaxed text-ink-3 font-light">
+            Real enterprise AEM and AWS work, each with an interactive diagram you can explore.
+          </p>
         </div>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           {cases.map((c) => (
@@ -215,20 +218,20 @@ export default function Home() {
                 </span>
               </div>
               <div className="flex flex-col flex-1 p-7">
-                <h3 className="font-display font-semibold text-xl leading-snug mb-3 text-[#f4f6fb]">{c.title}</h3>
-                <p className="text-[14.5px] leading-relaxed text-[#9198aa] mb-5 font-light">{c.desc}</p>
+                <h3 className="font-display font-semibold text-xl leading-snug mb-3 text-ink-1">{c.title}</h3>
+                <p className="text-[14.5px] leading-relaxed text-ink-3 mb-5 font-light">{c.desc}</p>
                 <div className="mt-auto flex items-center justify-between gap-3">
                   <div className="flex gap-2 flex-wrap">
                     {c.tags.map((t) => (
                       <span
                         key={t}
-                        className="font-mono text-[11px] text-[#8b93a7] px-[10px] py-[5px] rounded-sm border border-white/10"
+                        className="font-mono text-[11px] text-ink-3 px-[10px] py-[5px] rounded-sm border border-white/10"
                       >
                         {t}
                       </span>
                     ))}
                   </div>
-                  <span className="font-mono text-[11px] tracking-widest uppercase text-[#8b93a7] whitespace-nowrap transition-colors group-hover:text-cloud-blue">
+                  <span className="font-mono text-[11px] tracking-widest uppercase text-ink-3 whitespace-nowrap transition-colors group-hover:text-cloud-blue">
                     View →
                   </span>
                 </div>
@@ -244,8 +247,8 @@ export default function Home() {
         <div className="relative max-w-[1280px] mx-auto px-10">
           <div className="text-center max-w-[600px] mx-auto mb-14">
             <span className="font-mono text-xs tracking-[2px] uppercase text-cloud-blue">{"// Verified"}</span>
-            <h2 className="font-display font-semibold text-[clamp(28px,3.2vw,42px)] tracking-tight text-[#f4f6fb] mt-4">
-              Credentials &amp; Certifications
+            <h2 className="font-display font-semibold text-[clamp(28px,3.2vw,42px)] tracking-tight text-ink-1 mt-4">
+              Certified by AWS and Adobe
             </h2>
           </div>
           <FloatingCertifications badges={badges} />
@@ -261,9 +264,12 @@ export default function Home() {
             </span>
             <span className="flex-1 h-[10px] bg-[repeating-linear-gradient(90deg,rgba(63,169,255,0.45)_0_1px,transparent_1px_9px)]" />
           </div>
-          <h2 className="font-display font-semibold text-[clamp(28px,3.2vw,42px)] tracking-tight text-[#f4f6fb]">
-            Selected Builds in Detail
+          <h2 className="font-display font-semibold text-[clamp(28px,3.2vw,42px)] tracking-tight text-ink-1">
+            Live side projects
           </h2>
+          <p className="mt-3 text-[16px] leading-relaxed text-ink-3 font-light">
+            Where I experiment with 3D, voice and generative AI in the browser. They all run live, so jump in and try one.
+          </p>
         </div>
         <ProjectCarousel>
           {projects.map((p) => {
@@ -320,7 +326,7 @@ export default function Home() {
                   ) : p.href === "/projects/coach-trainer" ? (
                     <div className="absolute inset-0 grid place-items-center px-6 text-center bg-gradient-to-b from-sf-ink to-sf-gray">
                       {/* Stylized dumbbell mark — pure CSS/SVG poster, no 3D
-                          canvas. Bold Smart Fit yellow/black/magenta palette so
+                          canvas. Bold gym-style yellow/black/magenta palette so
                           the preview matches the live coach. The whole card
                           links out to the live coach. */}
                       <div className="flex min-w-0 w-full flex-col items-center gap-3">
@@ -348,14 +354,14 @@ export default function Home() {
                           Coach Fabric
                         </span>
                         <span className="font-mono text-[10.5px] tracking-widest uppercase text-sf-mist/80">
-                          Live Smart Fit trainer · click to chat
+                          Live AI fitness trainer · click to chat
                         </span>
                       </div>
                     </div>
                   ) : p.href === "/projects/virtual-pet" ? (
                     <div className="absolute inset-0 grid place-items-center px-6 text-center bg-gradient-to-b from-pet-accentSoft/60 to-pet-clean/25">
                       {/* Stylized dog/paw mark — pure CSS/SVG poster, no 3D
-                          canvas. Warm cozy Tamagotchi palette so the preview
+                          canvas. Warm cozy virtual-pet palette so the preview
                           matches the live virtual pet. The whole card links out
                           to the live pet. */}
                       <div className="flex min-w-0 w-full flex-col items-center gap-3">
@@ -455,7 +461,7 @@ export default function Home() {
                   ) : p.image ? (
                     <Image src={asset(p.image)} alt={p.title} fill className="object-cover opacity-80" />
                   ) : (
-                    <span className="relative font-mono text-xs text-[#6b7286] tracking-wide px-5 text-center">
+                    <span className="relative font-mono text-xs text-ink-4 tracking-wide px-5 text-center">
                       {p.label}
                     </span>
                   )}
@@ -464,8 +470,8 @@ export default function Home() {
                   </span>
                 </div>
                 <div className="px-6 py-6">
-                  <h3 className="font-display font-semibold text-[19px] mb-1 text-[#f4f6fb]">{p.title}</h3>
-                  <p className="text-sm text-[#9198aa] font-light">{p.meta}</p>
+                  <h3 className="font-display font-semibold text-[19px] mb-1 text-ink-1">{p.title}</h3>
+                  <p className="text-sm text-ink-3 font-light">{p.meta}</p>
                 </div>
               </div>
             );
@@ -493,40 +499,40 @@ export default function Home() {
         />
         <div className="relative max-w-[760px] mx-auto text-center">
           <span className="font-mono text-xs tracking-[2px] uppercase text-cloud-blue">{"// Let's Build"}</span>
-          <h2 className="font-display font-semibold text-[clamp(30px,3.6vw,48px)] tracking-tight leading-[1.08] mt-4 mb-5 text-[#f4f6fb]">
+          <h2 className="font-display font-semibold text-[clamp(30px,3.6vw,48px)] tracking-tight leading-[1.08] mt-4 mb-5 text-ink-1">
             Have an architecture challenge{" "}
             <span className="bg-gradient-to-r from-cloud-blue to-cloud-violet bg-clip-text text-transparent">
               worth solving
             </span>
             ?
           </h2>
-          <p className="text-[17px] leading-relaxed text-[#9aa2b4] max-w-[520px] mx-auto mb-10 font-light">
-            Available for enterprise cloud, AEM, and generative-AI engagements. Let&apos;s talk about what you&apos;re
-            building.
+          <p className="text-[17px] leading-relaxed text-ink-3 max-w-[520px] mx-auto mb-10 font-light">
+            I&apos;m available for enterprise cloud, AEM and generative-AI work. Tell me what you&apos;re building and
+            let&apos;s see where I can help.
           </p>
           <div className="flex gap-4 justify-center flex-wrap mb-11">
             <a
               href="mailto:frank@frankcloudfabric.io"
-              className="inline-flex items-center gap-2 bg-gradient-to-br from-cloud-blue to-cloud-violet text-white px-7 py-[15px] rounded-sm font-semibold text-[15px] shadow-[0_8px_30px_rgba(63,169,255,0.35)] hover:shadow-[0_10px_40px_rgba(63,169,255,0.5)] hover:-translate-y-0.5 transition-all"
+              className="inline-flex items-center gap-2 bg-gradient-to-br from-cloud-blue to-cloud-violet !text-[#150a2e] px-7 py-[15px] rounded-sm font-semibold text-[15px] shadow-[0_8px_30px_rgba(63,169,255,0.35)] hover:shadow-[0_10px_40px_rgba(63,169,255,0.5)] hover:-translate-y-0.5 transition-all"
             >
-              Start a Conversation →
+              Email me →
             </a>
             <a
-              href="#"
-              className="inline-flex items-center gap-2 text-[#e8eaf0] px-7 py-[15px] rounded-sm font-medium text-[15px] border border-white/[0.16] bg-white/[0.02] hover:border-cloud-blue/60 hover:text-cloud-blue transition-all"
+              href="https://www.linkedin.com/in/franciscomurillo03b7uita85b0"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center gap-2 text-ink-1 px-7 py-[15px] rounded-sm font-medium text-[15px] border border-white/[0.16] bg-white/[0.02] hover:border-cloud-blue/60 hover:text-cloud-blue transition-all"
             >
-              Download Résumé
+              Connect on LinkedIn <span aria-hidden="true">↗</span>
+              <span className="sr-only">(opens in a new tab)</span>
             </a>
           </div>
           <div className="flex gap-9 justify-center flex-wrap font-mono text-[13.5px]">
-            <a href="mailto:frank@frankcloudfabric.io" className="text-[#aab0c0] hover:text-cloud-blue">
+            <a href="mailto:frank@frankcloudfabric.io" className="text-ink-2 hover:text-cloud-blue">
               frank@frankcloudfabric.io
             </a>
-            <a href="#" className="text-[#aab0c0] hover:text-cloud-blue">
+            <a href="https://www.linkedin.com/in/franciscomurillo03b7uita85b0" target="_blank" rel="noopener noreferrer" className="text-ink-2 hover:text-cloud-blue">
               LinkedIn
-            </a>
-            <a href="#" className="text-[#aab0c0] hover:text-cloud-blue">
-              GitHub
             </a>
           </div>
         </div>
@@ -534,10 +540,10 @@ export default function Home() {
 
       {/* FOOTER */}
       <footer className="relative border-t border-white/[0.06] px-10 py-10 max-w-[1280px] mx-auto flex justify-between items-center flex-wrap gap-4 z-10">
-        <span className="font-display font-semibold text-[15px] text-[#c4cad8]">
+        <span className="font-display font-semibold text-[15px] text-ink-2">
           Frank<span className="text-cloud-blue">.</span>CloudFabric
         </span>
-        <span className="font-mono text-xs text-[#6b7286]">Enterprise AEM · AWS Cloud · Generative AI</span>
+        <span className="font-mono text-xs text-ink-4">© {new Date().getFullYear()} Frank Murillo · Enterprise AEM · AWS Cloud · Generative AI</span>
       </footer>
     </main>
   );

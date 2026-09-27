@@ -1,5 +1,5 @@
 // ---------------------------------------------------------------------------
-// Virtual pet (Tamagotchi) state engine.
+// Virtual pet state engine.
 //
 // This module is framework-agnostic, dependency-free, and fully SSR-safe: it
 // touches no browser globals and calls no Date.now() inside its pure functions

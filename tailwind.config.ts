@@ -8,12 +8,21 @@ const config: Config = {
   theme: {
     extend: {
       colors: {
+        // Colour tokens are CSS variables (see app/globals.css) so the whole
+        // landing page can be re-themed from one place.
         cloud: {
-          bg: "#05060c",
-          panel: "#0d1018",
-          blue: "#3fa9ff",
-          violet: "#9b6bff",
-          mist: "#5ff2df",
+          bg: "rgb(var(--c-bg) / <alpha-value>)",
+          panel: "rgb(var(--c-panel) / <alpha-value>)",
+          blue: "rgb(var(--c-blue) / <alpha-value>)",
+          violet: "rgb(var(--c-violet) / <alpha-value>)",
+          mist: "rgb(var(--c-mist) / <alpha-value>)",
+        },
+        // Text ramp: 1 = headings, 2 = body, 3 = secondary, 4 = meta/decorative.
+        ink: {
+          1: "rgb(var(--ink-1) / <alpha-value>)",
+          2: "rgb(var(--ink-2) / <alpha-value>)",
+          3: "rgb(var(--ink-3) / <alpha-value>)",
+          4: "rgb(var(--ink-4) / <alpha-value>)",
         },
         // Animal-Crossing-inspired cozy pastel palette. Warm cream/beige
         // backgrounds, soft leaf greens, sunflower yellow/orange accents, a
@@ -89,6 +98,10 @@ const config: Config = {
         display: ["var(--font-display)", "sans-serif"],
         body: ["var(--font-body)", "sans-serif"],
         mono: ["var(--font-mono)", "monospace"],
+      },
+      fontWeight: {
+        // Paragraph weight is a token: thin 300 reads poorly on dark grounds.
+        light: "var(--w-body-light)",
       },
       keyframes: {
         marquee: { from: { transform: "translateX(0)" }, to: { transform: "translateX(-50%)" } },

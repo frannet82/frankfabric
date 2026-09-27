@@ -32,7 +32,7 @@ function NavBar({
       <nav
         aria-label="Primary"
         className={`flex items-center justify-between gap-3 sm:gap-6 pl-4 sm:pl-6 pr-2.5 sm:pr-3 rounded-full border border-white/20 backdrop-blur-md ${
-          compact ? "py-2 bg-[#0b1030]/80 shadow-[0_12px_40px_rgba(0,0,0,0.45)]" : "py-2.5 sm:py-3 bg-white/[0.06]"
+          compact ? "py-2 bg-[rgb(var(--nav-bg)/0.8)] shadow-[0_12px_40px_rgba(0,0,0,0.45)]" : "py-2.5 sm:py-3 bg-white/[0.06]"
         }`}
       >
         <a href="#top" className="flex items-center gap-3 min-w-0 !text-white" onClick={onNavigate}>
@@ -62,9 +62,9 @@ function NavBar({
         <div className="flex items-center gap-2">
           <a
             href="#contact"
-            className="hidden sm:inline-flex flex-none !text-[#0d1030] bg-white px-5 sm:px-6 py-[9px] sm:py-[11px] rounded-full font-semibold text-[13px] sm:text-[14.5px] whitespace-nowrap hover:-translate-y-0.5 transition-transform focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-cloud-mist"
+            className="hidden sm:inline-flex flex-none btn-primary px-5 sm:px-6 py-[9px] sm:py-[11px] rounded-full font-semibold text-[13px] sm:text-[14.5px] whitespace-nowrap hover:-translate-y-0.5 transition-transform focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-cloud-mist"
           >
-            Start a Project
+            Let&apos;s talk
           </a>
           <button
             type="button"
@@ -83,7 +83,7 @@ function NavBar({
       {menuOpen && (
         <div
           id={menuId}
-          className="md:hidden absolute left-0 right-0 top-[calc(100%+8px)] z-50 rounded-2xl border border-white/15 bg-[#0b1030]/95 backdrop-blur-xl p-2 shadow-[0_20px_60px_rgba(0,0,0,0.5)]"
+          className="md:hidden absolute left-0 right-0 top-[calc(100%+8px)] z-50 rounded-2xl border border-white/15 bg-[rgb(var(--nav-bg)/0.95)] backdrop-blur-xl p-2 shadow-[0_20px_60px_rgba(0,0,0,0.5)]"
         >
           <ul className="flex flex-col">
             {links.map((l) => (
@@ -102,9 +102,9 @@ function NavBar({
           <a
             href="#contact"
             onClick={onNavigate}
-            className="mt-2 flex justify-center !text-[#0d1030] bg-white px-6 py-3.5 rounded-xl font-semibold text-[15px]"
+            className="mt-2 flex justify-center btn-primary px-6 py-3.5 rounded-xl font-semibold text-[15px]"
           >
-            Start a Project
+            Let&apos;s talk
           </a>
         </div>
       )}

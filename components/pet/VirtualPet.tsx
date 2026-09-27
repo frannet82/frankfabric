@@ -1,7 +1,7 @@
 "use client";
 
 // ---------------------------------------------------------------------------
-// Virtual pet — composed widget (3D Miniature Schnauzer stage + Tamagotchi game UI).
+// Virtual pet — composed widget (3D Miniature Schnauzer stage + virtual-pet game UI).
 //
 // The 3D scene (components/pet/PetScene.tsx) touches WebGL/DOM, so it is
 // imported here via next/dynamic { ssr:false } with a themed loading fallback,
@@ -23,7 +23,7 @@
 // and labels; controls are real <button>s with hover/disabled/focus-visible
 // states; the layout stacks on narrow screens.
 //
-// THEME: warm, cozy Tamagotchi look using the `pet` Tailwind tokens.
+// THEME: warm, cozy virtual-pet look using the `pet` Tailwind tokens.
 // ---------------------------------------------------------------------------
 
 import { useCallback, useEffect, useRef, useState } from "react";

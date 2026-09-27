@@ -1,4 +1,4 @@
-// Bundled workout knowledge base for the Smart Fit coach trainer chatbot.
+// Bundled workout knowledge base for the AI fitness coach chatbot.
 //
 // This data is self-authored for this project (no external dataset), so there
 // are no third-party licensing constraints. It is intentionally small and

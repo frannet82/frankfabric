@@ -7,22 +7,63 @@
 }
 
 :root {
-  --font-display: "Space Grotesk", sans-serif;
-  --font-body: "IBM Plex Sans", sans-serif;
-  --font-mono: "IBM Plex Mono", monospace;
+  /* Type: "Holographic" direction */
+  --font-display: "Sora", sans-serif;
+  --font-body: "Manrope", sans-serif;
+  --font-mono: "JetBrains Mono", monospace;
+  --w-body-light: 400;
+  --display-tracking: -0.04em;
+
+  /* Colour (space-separated RGB so Tailwind alpha modifiers work).
+     Accents are sampled from the hero portrait: cyan + magenta. The token
+     names are historical: "blue" is the primary (cyan) accent and "violet"
+     the secondary (magenta) accent. */
+  --c-bg: 8 5 16;
+  --c-panel: 16 11 30;
+  --c-blue: 94 234 255;
+  --c-violet: 255 92 214;
+  --c-mist: 94 234 212;
+  /* Text ramp: 1 = headings, 2 = body, 3 = secondary, 4 = meta (all AA on bg) */
+  --ink-1: 248 245 255;
+  --ink-2: 200 192 224;
+  --ink-3: 164 154 194;
+  --ink-4: 134 124 168;
+  --nav-bg: 22 10 48;
+  --btn-bg: #ffffff;
+  --btn-fg: #150a2e;
+  --headline-grad: linear-gradient(90deg, #7df9ff 0%, #c7a5ff 50%, #ff7ad9 100%);
+  --page-bg:
+    radial-gradient(1000px 720px at 86% -4%, rgba(255,92,214,0.18), transparent 54%),
+    radial-gradient(900px 700px at 6% 4%, rgba(94,234,255,0.14), transparent 56%),
+    radial-gradient(820px 640px at 56% 114%, rgba(255,92,214,0.12), transparent 58%),
+    linear-gradient(180deg, #080510 0%, #0d0720 45%, #080510 100%);
+  --hero-bg:
+    radial-gradient(58% 55% at 66% 26%, rgba(255,92,214,0.26), transparent 62%),
+    linear-gradient(120deg, #0f0624 0%, #1b0b42 40%, #2a1060 70%, #10061f 100%);
+  --hero-glow: radial-gradient(46% 40% at 24% 82%, rgba(94,234,255,0.14), transparent 62%);
 }
 
 body {
-  background: #05060c;
+  background: rgb(var(--c-bg));
 }
 
 a {
-  color: #3fa9ff;
+  color: rgb(var(--c-blue));
 }
 
 a:hover {
-  color: #7cc4ff;
+  color: rgb(var(--c-mist));
 }
+
+h1.font-display, h2.font-display, h3.font-display { letter-spacing: var(--display-tracking); }
+.headline-gradient {
+  background-image: var(--headline-grad);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+.btn-primary { background: var(--btn-bg); color: var(--btn-fg) !important; }
+
 
 /*
  * Credentials & Certifications section.
