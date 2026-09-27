@@ -35,7 +35,7 @@ try {
    await page.goto('http://127.0.0.1:5197/frankfabric/' + (route === 'home' ? '' : 'projects/' + route + '/'), {waitUntil:'networkidle'});
    await page.waitForTimeout(route === 'home' || route === 'pet-puzzles' ? 500 : 2200);
    if (route === 'coach-trainer' && !process.argv.includes('--assistants')) {
-    for (const exercise of ['Squats','March','Jumping jacks']) {
+    for (const exercise of ['Squats','March','Jumping jacks','Biceps curl']) {
      await page.getByRole('button', {name:exercise,exact:true}).click();
      await page.waitForTimeout(1800);
      await page.getByRole('button', {name:'Pause demo',exact:true}).click();

@@ -32,3 +32,15 @@ test('faster demonstrations reach full range halfway through each repetition', (
   assert.ok(Math.abs(exercisePose('jacks',seconds).hop) < 1e-10);
  }
 });
+
+test('biceps curl raises both forearms while keeping legs and torso still', () => {
+ const bottom=exercisePose('curl',0),top=exercisePose('curl',1.4),end=exercisePose('curl',2.8);
+ assert.ok(top.elbowCurl > 2 && top.elbowCurl < 2.3);
+ assert.ok(Math.abs(end.elbowCurl-bottom.elbowCurl)<1e-10);
+ for (let t=0;t<2.8;t+=0.04) {
+  const p=exercisePose('curl',t);
+  for (const key of ['leftThigh','rightThigh','leftKnee','rightKnee','hipDrop','hop','lean','leftSwing','rightSwing']) assert.equal(Math.abs(p[key]),0);
+  assert.equal(p.grip,1);
+ }
+ assert.equal(exercisePose('rest',0).grip,0);
+});

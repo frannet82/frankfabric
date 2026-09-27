@@ -1,27 +1,13 @@
 [
   {
-    "route": "virtual-pet",
+    "route": "coach-trainer",
     "width": 1440,
     "height": 900,
     "errors": [],
     "overflow": false
   },
   {
-    "route": "pet-puzzles",
-    "width": 1440,
-    "height": 900,
-    "errors": [],
-    "overflow": false
-  },
-  {
-    "route": "virtual-pet",
-    "width": 390,
-    "height": 844,
-    "errors": [],
-    "overflow": false
-  },
-  {
-    "route": "pet-puzzles",
+    "route": "coach-trainer",
     "width": 390,
     "height": 844,
     "errors": [],

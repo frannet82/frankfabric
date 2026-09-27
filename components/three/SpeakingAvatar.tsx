@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { useFrame } from '@react-three/fiber';
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
-import { VRMLoaderPlugin, VRMUtils, type VRM } from '@pixiv/three-vrm';
+import { VRMLoaderPlugin, VRMUtils, type VRM, type VRMHumanBoneName } from '@pixiv/three-vrm';
 import * as THREE from 'three';
 import { asset } from '@/lib/asset';
 import { transplantGarment } from '@/lib/vrm/transplant';
@@ -117,6 +117,22 @@ export default function SpeakingAvatar({ exercise = 'rest', paused = false, spea
       pose.getNormalizedBoneNode('rightLowerArm')?.rotation.set(-0.25, 0, 0);
       pose.getNormalizedBoneNode('chest')?.rotation.set(motion.lean, 0, 0);
       pose.getNormalizedBoneNode('head')?.rotation.set(-motion.lean * 0.5, 0, 0);
+    }
+    // Bend around the normalized arms' local Y axes, mirrored left/right.
+    // Local X runs along the arm, so rotating X alone only twists the forearm.
+    if (exercise === 'curl' || motion.elbowCurl > 0.01) {
+      pose.getNormalizedBoneNode('leftLowerArm')?.rotation.set(0, -motion.elbowCurl, 0);
+      pose.getNormalizedBoneNode('rightLowerArm')?.rotation.set(0, motion.elbowCurl, 0);
+    }
+    for (const side of ['left', 'right'] as const) {
+      const sign = side === 'left' ? -1 : 1;
+      pose.getNormalizedBoneNode(`${side}Hand`)?.rotation.set(sign * motion.grip * 1.15, 0, 0);
+      for (const finger of ['Index', 'Middle', 'Ring', 'Little'] as const) {
+        for (const segment of ['Proximal', 'Intermediate', 'Distal'] as const) {
+          pose.getNormalizedBoneNode(`${side}${finger}${segment}` as VRMHumanBoneName)?.rotation.set(0, 0, sign * motion.grip * (segment === 'Proximal' ? 0.85 : 1.1));
+        }
+      }
+      pose.getNormalizedBoneNode(`${side}ThumbProximal`)?.rotation.set(0, sign * motion.grip * 0.55, sign * motion.grip * 0.25);
     }
     vrm.scene.position.y = originY.current - motion.hipDrop * w + motion.hop * w;
     vrm.update(Math.min(delta, 0.05));

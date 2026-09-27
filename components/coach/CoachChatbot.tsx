@@ -169,8 +169,8 @@ function CoachChatbotInner() {
   return (
     <div className="absolute inset-0 z-[5] flex flex-col md:flex-row bg-sf-black/90 backdrop-blur-[1px]">
       {/* 3D coach stage */}
-      <div className="relative md:w-[54%] w-full h-[42%] md:h-full min-h-[120px] bg-gradient-to-b from-sf-ink to-sf-gray border-b md:border-b-0 md:border-r border-sf-yellow/40">
-        <div className="absolute inset-0 bottom-[124px]">
+      <div className="relative flex flex-col md:w-[54%] w-full h-[42%] md:h-full min-h-[120px] bg-gradient-to-b from-sf-ink to-sf-gray border-b md:border-b-0 md:border-r border-sf-yellow/40">
+        <div className="relative flex-1 min-h-0">
         <CoachScene
           exercise={exercise}
           paused={paused}
@@ -200,7 +200,7 @@ function CoachChatbotInner() {
             {muted ? "🔇" : "🔊"}
           </span>
         </button>
-        <div className="absolute bottom-3 left-3 right-3 rounded-2xl border border-white/15 bg-sf-black/90 p-3 text-sf-mist">
+        <div className="relative shrink-0 m-3 rounded-2xl border border-white/15 bg-sf-black/90 p-3 text-sf-mist">
           <div className="flex items-center justify-between gap-2 mb-2">
             <span className="text-xs font-semibold">Exercise demos</span>
             {exercise !== 'rest' && <button onClick={() => setPaused(value => !value)} className="text-xs rounded-full border border-white/30 px-3 py-1">{paused ? 'Resume' : 'Pause'} demo</button>}
