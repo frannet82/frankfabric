@@ -224,7 +224,7 @@ export const projects: Project[] = [
     label: "LIVE DEMO · 3D virtual pet",
     tag: "3D",
     title: "Fabric Pet: 3D Virtual Pet",
-    meta: "Feed, play with and care for a 3D schnauzer that lives in your browser",
+    meta: "Care for Luffy, a 3D schnauzer, by clearing rows in a colourful falling-block puzzle",
     href: "/projects/virtual-pet",
   },
   {

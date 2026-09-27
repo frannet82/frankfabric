@@ -13,8 +13,10 @@
 // lib/pet/petState.ts and persisted via lib/pet/petStorage.ts (SSR-guarded
 // localStorage). On mount we load the saved state (or a fresh one), apply
 // decay for the real time elapsed since it was last written, then tick a small
-// incremental decay on an interval. Feed / Play / Sleep / Clean call
-// applyAction, set a transient `action` prop (plus a monotonic `actionNonce`)
+// incremental decay on an interval. Care is given through the Care Blocks
+// puzzle (components/pet/CareBlocks.tsx): every cleared block applies a
+// fraction of its colour's action via applyActionScaled, then we set a
+// transient `action` prop (plus a monotonic `actionNonce`)
 // that PetScene turns into a ~1s one-shot reaction (cleared afterwards so it
 // fires once), and persist. The nonce guarantees a repeat of the same action
 // still re-arms the reaction.
@@ -26,10 +28,11 @@
 // THEME: warm, cozy virtual-pet look using the `pet` Tailwind tokens.
 // ---------------------------------------------------------------------------
 
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import dynamic from "next/dynamic";
 import {
   applyAction,
+  applyActionScaled,
   decayForElapsed,
   moodFor,
   overallWellbeing,
@@ -48,6 +51,8 @@ import {
   useQuality,
 } from "@/components/three/quality";
 import QualityToggle from "@/components/three/QualityToggle";
+import CareBlocks, { CARE_META } from "@/components/pet/CareBlocks";
+import { COLS } from "@/lib/pet/careBlocks";
 import { useReducedMotion } from "@/components/three/useReducedMotion";
 
 const PetScene = dynamic(() => import("@/components/pet/PetScene"), {
@@ -57,12 +62,15 @@ const PetScene = dynamic(() => import("@/components/pet/PetScene"), {
       <div className="flex flex-col items-center gap-3">
         <span className="w-7 h-7 rounded-full border-2 border-pet-accentSoft border-t-pet-accent animate-spin" />
         <span className="font-mono text-[11px] tracking-widest uppercase">
-          Waking the pup…
+          Waking Luffy…
         </span>
       </div>
     </div>
   ),
 });
+
+// The pup's name, shown on the stage, the header and the mood line.
+const PET_NAME = "Luffy";
 
 // How often we apply incremental decay + persist (ms).
 const TICK_MS = 4000;
@@ -96,18 +104,6 @@ function statColor(value: number): string {
   return "bg-pet-good";
 }
 
-const ACTION_META: {
-  action: PetAction;
-  label: string;
-  emoji: string;
-  color: string;
-}[] = [
-  { action: "feed", label: "Feed", emoji: "🍖", color: "bg-pet-feed" },
-  { action: "play", label: "Play", emoji: "🎾", color: "bg-pet-play" },
-  { action: "sleep", label: "Sleep", emoji: "😴", color: "bg-pet-rest" },
-  { action: "clean", label: "Clean", emoji: "🛁", color: "bg-pet-clean" },
-];
-
 // Wraps the widget in the shared QualityProvider so its stage and the shared
 // QualityToggle read/write the SAME quality tier (components/three/quality.ts).
 export default function VirtualPet() {
@@ -129,7 +125,6 @@ function VirtualPetInner() {
   // the ACTION_HOLD_MS window still re-fires the animation (the action string
   // alone would compare equal and silently skip the second reaction).
   const [actionNonce, setActionNonce] = useState(0);
-  const [nameDraft, setNameDraft] = useState("");
 
   // Keep a ref to the latest state so the interval/action callbacks always read
   // and persist the freshest value without re-subscribing each tick. Updated in
@@ -174,7 +169,6 @@ function VirtualPetInner() {
     const decayed = decayForElapsed(loaded, now);
     savePetState(decayed);
     /* eslint-disable react-hooks/set-state-in-effect */
-    setNameDraft(decayed.name ?? "");
     setState(decayed);
     /* eslint-enable react-hooks/set-state-in-effect */
   }, []);
@@ -222,14 +216,41 @@ function VirtualPetInner() {
     }, ACTION_HOLD_MS);
   }, [playFeedback]);
 
-  const commitName = useCallback(() => {
-    const current = stateRef.current;
-    if (!current) return;
-    const trimmed = nameDraft.trim().slice(0, 24);
-    const next: PetState = { ...current, name: trimmed || undefined };
-    setState(next);
-    savePetState(next);
-  }, [nameDraft]);
+  // Care Blocks cleared one or more rows: every block is 1/COLS of its colour's
+  // action (a full row of one colour = one classic button press). Clearing
+  // several rows at once earns a 25% bonus per extra row.
+  const [clearNote, setClearNote] = useState("");
+  const onBlocksCleared = useCallback(
+    (counts: Record<PetAction, number>, rows: number) => {
+      const current = stateRef.current;
+      if (!current) return;
+      const bonus = 1 + 0.25 * (rows - 1);
+      let next = decayForElapsed(current, Date.now());
+      const earned: PetAction[] = [];
+      (Object.keys(counts) as PetAction[]).forEach((a) => {
+        if (!counts[a]) return;
+        next = applyActionScaled(next, a, (counts[a] / COLS) * bonus);
+        earned.push(a);
+      });
+      setState(next);
+      savePetState(next);
+      playFeedback();
+
+      // React with the colour that contributed most.
+      const top = earned.sort((x, y) => counts[y] - counts[x])[0];
+      if (top) {
+        setPendingAction(top);
+        setActionNonce((n) => n + 1);
+        if (actionTimerRef.current) clearTimeout(actionTimerRef.current);
+        actionTimerRef.current = setTimeout(() => setPendingAction(null), ACTION_HOLD_MS);
+      }
+      setClearNote(
+        `${rows > 1 ? `${rows} rows!` : "Row cleared!"} ${earned.map((a) => `+${CARE_META[a].stat}`).join(", ")}`,
+      );
+    },
+    [playFeedback],
+  );
+
 
   // Derived values (safe defaults before the client state loads).
   const stats = state?.stats ?? {
@@ -240,12 +261,25 @@ function VirtualPetInner() {
   };
   const mood = state ? moodFor(stats) : "content";
   const wellbeing = state ? overallWellbeing(stats) : 0;
-  const petName = state?.name?.trim() || "Your schnauzer";
+  // The pup has a fixed name.
+  const petName = PET_NAME;
+  // Colour weighting for new pieces: the lower a stat, the more often its
+  // colour appears (with a floor so every colour still shows up).
+  const needs = useMemo(
+    () =>
+      ({
+        feed: 115 - stats.hunger,
+        play: 115 - stats.happiness,
+        sleep: 115 - stats.energy,
+        clean: 115 - stats.cleanliness,
+      }) as Record<PetAction, number>,
+    [stats.hunger, stats.happiness, stats.energy, stats.cleanliness],
+  );
 
   return (
     <div className="absolute inset-0 z-[5] flex flex-col md:flex-row bg-pet-cream">
       {/* 3D pet stage */}
-      <div className="relative md:w-[48%] w-full h-[42%] md:h-full min-h-[140px] bg-gradient-to-b from-pet-paper to-pet-mist border-b md:border-b-0 md:border-r border-pet-accentSoft">
+      <div className="relative md:w-[48%] w-full h-[34%] md:h-full min-h-[140px] bg-gradient-to-b from-pet-paper to-pet-mist border-b md:border-b-0 md:border-r border-pet-accentSoft">
         <PetScene
           mood={mood}
           action={pendingAction}
@@ -279,8 +313,10 @@ function VirtualPetInner() {
           </p>
         </div>
 
+        {/* Stats, with Care Blocks underneath */}
+        <div className="flex flex-col gap-4">
         {/* Stat bars */}
-        <div className="flex flex-col gap-3">
+        <div className="grid grid-cols-2 gap-x-5 gap-y-2.5">
           {STAT_META.map(({ key, label }) => {
             const value = Math.round(stats[key]);
             return (
@@ -310,64 +346,15 @@ function VirtualPetInner() {
           })}
         </div>
 
-        {/* Action buttons */}
-        <div className="grid grid-cols-2 gap-2">
-          {ACTION_META.map(({ action, label, emoji, color }) => {
-            // Disable Feed when already full; other actions stay available.
-            const disabled =
-              !state || (action === "feed" && stats.hunger >= 99);
-            return (
-              <button
-                key={action}
-                type="button"
-                onClick={() => doAction(action)}
-                disabled={disabled}
-                className={[
-                  "flex items-center justify-center gap-2 rounded-2xl px-3 py-2.5 text-white text-[13px] font-semibold shadow-sm",
-                  "hover:-translate-y-0.5 focus:outline-none focus-visible:ring-2 focus-visible:ring-pet-accent focus-visible:ring-offset-2 focus-visible:ring-offset-pet-paper",
-                  "transition-all disabled:opacity-40 disabled:hover:translate-y-0 disabled:cursor-not-allowed",
-                  color,
-                ].join(" ")}
-              >
-                <span aria-hidden className="text-[15px] leading-none">
-                  {emoji}
-                </span>
-                {label}
-              </button>
-            );
-          })}
+        {/* Care Blocks puzzle (replaces the Feed / Play / Sleep / Clean buttons) */}
+        <div className="rounded-2xl border border-pet-accentSoft bg-pet-cream/60 p-3">
+          <CareBlocks needs={needs} onClear={onBlocksCleared} disabled={!state} />
+          <p aria-live="polite" className="min-h-[1.4em] mt-2 font-mono text-[11px] text-pet-accent">
+            {clearNote}
+          </p>
+        </div>
         </div>
 
-        {/* Name the pet */}
-        <form
-          onSubmit={(event) => {
-            event.preventDefault();
-            commitName();
-          }}
-          className="mt-auto flex items-center gap-2 pt-2 border-t border-pet-mist"
-        >
-          <label htmlFor="pet-name" className="sr-only">
-            Name your pet
-          </label>
-          <input
-            id="pet-name"
-            type="text"
-            value={nameDraft}
-            maxLength={24}
-            onChange={(event) => setNameDraft(event.target.value)}
-            placeholder="Name your pet…"
-            autoComplete="off"
-            disabled={!state}
-            className="flex-1 min-w-0 rounded-full bg-pet-cream border border-pet-accentSoft px-4 py-2 text-[12.5px] text-pet-ink placeholder:text-pet-inkSoft/60 focus:outline-none focus:border-pet-accent focus:ring-2 focus:ring-pet-accent/30 disabled:opacity-50"
-          />
-          <button
-            type="submit"
-            disabled={!state}
-            className="shrink-0 rounded-full bg-pet-accent text-white text-[12.5px] font-semibold px-4 py-2 shadow-sm hover:-translate-y-0.5 hover:bg-pet-feed focus:outline-none focus-visible:ring-2 focus-visible:ring-pet-accent focus-visible:ring-offset-2 focus-visible:ring-offset-pet-paper transition-all disabled:opacity-40 disabled:hover:translate-y-0"
-          >
-            Save
-          </button>
-        </form>
       </div>
     </div>
   );
