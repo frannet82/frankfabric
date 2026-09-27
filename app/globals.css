@@ -204,3 +204,36 @@ a:hover {
 @keyframes credential-float { 0%, 100% { transform: translateY(5px) rotateZ(-1deg); } 50% { transform: translateY(-12px) rotateZ(1deg); } }
 @media (max-width: 767px) { .credential-grid { grid-template-columns: 1fr; gap: 24px; } .credential-stage { height: 300px; } .credential-float { width: 220px; max-width: 86%; } }
 @media (prefers-reduced-motion: reduce) { .credential-float { animation: none; } .credential-object { transition: none; transform: rotateX(-4deg) rotateY(5deg); } .credential-motion { display: none; } }
+
+/* Hero portrait: fade the photo into the hero with a mask instead of a
+   colour overlay, so there is no visible seam against the hero gradient. */
+.hero-portrait {
+  -webkit-mask-image: linear-gradient(180deg, #000 0%, #000 45%, transparent 100%);
+  mask-image: linear-gradient(180deg, #000 0%, #000 45%, transparent 100%);
+}
+@media (min-width: 768px) {
+  .hero-portrait {
+    -webkit-mask-image: linear-gradient(90deg, transparent 0%, rgba(0,0,0,0.6) 18%, #000 40%);
+    mask-image: linear-gradient(90deg, transparent 0%, rgba(0,0,0,0.6) 18%, #000 40%);
+  }
+}
+/* Stack rail: let people pause the loop to read it. */
+.stack-rail:hover .animate-marquee { animation-play-state: paused; }
+/* Sections land below the docked nav when jumped to. */
+section[id] { scroll-margin-top: 84px; }
+/* Capabilities: heading, diagram, panel stack on mobile; heading + panel sit
+   beside the diagram on desktop. */
+.cap-layout { display: grid; gap: 40px; grid-template-areas: "head" "diagram" "panel"; }
+.cap-head { grid-area: head; }
+.cap-panel { grid-area: panel; }
+.cap-diagram { grid-area: diagram; margin-top: 28px; margin-bottom: 28px; }
+@media (min-width: 1024px) {
+  .cap-layout {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 600px);
+    grid-template-rows: auto 1fr;
+    grid-template-areas: "head diagram" "panel diagram";
+    column-gap: 56px; row-gap: 32px; align-items: start;
+  }
+  .cap-head { align-self: end; }
+  .cap-diagram { margin: 0; align-self: center; }
+}

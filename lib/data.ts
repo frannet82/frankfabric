@@ -110,13 +110,80 @@ export const badges = [
   },
 ];
 
-export const caps = [
-  { name: "Cloud Architecture", code: "AWS", lx: "50%", ly: "2%" },
-  { name: "Generative AI", code: "GENAI", lx: "88%", ly: "28%" },
-  { name: "Data Engineering", code: "DATA", lx: "88%", ly: "72%" },
-  { name: "Fabric Engineering", code: "AEM", lx: "50%", ly: "98%" },
-  { name: "ML Ops", code: "MLOPS", lx: "12%", ly: "72%" },
-  { name: "DAM Automation", code: "DAM", lx: "12%", ly: "28%" },
+export type CapIcon = "cloud" | "spark" | "data" | "fabric" | "loop" | "asset";
+
+// Capability nodes on the "Fabric mesh" diagram. `lx`/`ly` position each node
+// around the ring; `summary` and `link` feed the detail panel that updates when
+// a node is selected. Summaries are draft copy: edit freely.
+export const caps: {
+  name: string;
+  code: string;
+  lx: string;
+  ly: string;
+  icon: CapIcon;
+  summary: string;
+  link: { href: string; label: string };
+}[] = [
+  {
+    name: "Cloud Architecture",
+    code: "AWS",
+    lx: "50%",
+    ly: "2%",
+    icon: "cloud",
+    summary:
+      "Well-architected AWS foundations: multi-account landing zones, secure integration gateways, and infrastructure as code that scales without surprises.",
+    link: { href: "/case-studies/external-integrations", label: "External Service Integrations" },
+  },
+  {
+    name: "Generative AI",
+    code: "GENAI",
+    lx: "88%",
+    ly: "28%",
+    icon: "spark",
+    summary:
+      "Production LLM assistants on Bedrock: retrieval over enterprise content, guardrails, and voice-enabled experiences like the live chef and coach demos.",
+    link: { href: "#projects", label: "See the live AI builds" },
+  },
+  {
+    name: "Data Engineering",
+    code: "DATA",
+    lx: "88%",
+    ly: "72%",
+    icon: "data",
+    summary:
+      "Pipelines that move governed content and metadata between AEM, relational stores, and Databricks: scheduled, batched, and observable.",
+    link: { href: "/case-studies/metadata-sync", label: "Content Metadata DB Sync" },
+  },
+  {
+    name: "Fabric Engineering",
+    code: "AEM",
+    lx: "50%",
+    ly: "98%",
+    icon: "fabric",
+    summary:
+      "Enterprise Adobe Experience Manager: dispatcher and CDN caching, MSM rollout, headless GraphQL, and publishing that holds up at global scale.",
+    link: { href: "/case-studies/content-delivery-cache", label: "Content Delivery & Cache Invalidation" },
+  },
+  {
+    name: "ML Ops",
+    code: "MLOPS",
+    lx: "12%",
+    ly: "72%",
+    icon: "loop",
+    summary:
+      "Model training, deployment, and drift monitoring on AWS, with repeatable pipelines that take machine learning from notebook to production.",
+    link: { href: "#credentials", label: "AWS Machine Learning certification" },
+  },
+  {
+    name: "DAM Automation",
+    code: "DAM",
+    lx: "12%",
+    ly: "28%",
+    icon: "asset",
+    summary:
+      "Automated digital-asset workflows: ingestion, metadata enrichment, and cost-aware archiving of originals to S3 Glacier with on-demand restore.",
+    link: { href: "/case-studies/s3-glacier-archiving", label: "Asset Archiving to AWS S3 Glacier" },
+  },
 ];
 
 export type Project = {
