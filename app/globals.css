@@ -185,8 +185,25 @@ h1.font-display, h2.font-display, h3.font-display { letter-spacing: var(--displa
   .wardrobe-page > nav { padding-top: 0; padding-bottom: 8px; flex-shrink: 0; }
   .wardrobe-page > nav a { padding-top: 4px; padding-bottom: 4px; font-size: 12px; }
 }
-.project-carousel { scrollbar-width: thin; scrollbar-color: #4c638b transparent; }
-.project-carousel:focus-visible { outline: 2px solid #3fa9ff; outline-offset: 6px; }
+/* Gallery carousel (components/GalleryCarousel.tsx). Slides are sized against
+   the section container via container-query units; the track bleeds to the
+   right edge of the viewport so the next slide peeks in. */
+.gallery-carousel {
+  container-type: inline-size;
+  --gap: 24px;
+  --bleed: max(0px, calc((100vw - 100cqw) / 2));
+  --slide: 86cqw;
+  --span: 86cqw;
+}
+@media (min-width: 768px) {
+  .gallery-carousel { --slide: calc((100cqw - var(--gap)) / 2); --span: 100cqw; }
+}
+.gallery-bleed { margin-right: calc(-1 * var(--bleed)); }
+.gallery-track { scrollbar-width: none; gap: var(--gap); }
+.gallery-track::-webkit-scrollbar { display: none; }
+.gallery-track:focus-visible { outline: 2px solid rgb(var(--c-blue)); outline-offset: 6px; border-radius: 20px; }
+.gallery-slide { width: var(--slide); }
+.gallery-spacer { width: max(0px, calc(100cqw - var(--span) + var(--bleed) - var(--gap))); }
 
 @media (min-width: 1024px) {
   .puzzles-page > div:first-child { padding-top: 10px; padding-bottom: 0; }
