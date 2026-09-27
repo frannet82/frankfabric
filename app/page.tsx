@@ -1,6 +1,6 @@
 import Image from "next/image";
 import Link from "next/link";
-import ProjectCarousel from "@/components/ProjectCarousel";
+import GalleryCarousel from "@/components/GalleryCarousel";
 import FloatingCertifications from "@/components/FloatingCertifications";
 import HeroNav from "@/components/HeroNav";
 import CapabilityMesh from "@/components/CapabilityMesh";
@@ -178,8 +178,12 @@ export default function Home() {
       </section>
 
       {/* CASE STUDIES */}
-      <section id="case-studies" className="relative max-w-[1280px] mx-auto px-10 pt-24 pb-20 z-10">
-        <div className="max-w-[640px] mb-12">
+      <section id="case-studies" className="relative max-w-[1280px] mx-auto px-5 sm:px-10 pt-24 pb-20 z-10">
+        <GalleryCarousel
+          label="Architecture case studies"
+          itemNoun="case study"
+          header={
+            <div className="max-w-[640px]">
           <div className="flex items-center gap-4 mb-4">
             <span className="font-mono text-xs tracking-[2px] uppercase text-cloud-blue whitespace-nowrap">
               {"// Selected Work"}
@@ -193,52 +197,43 @@ export default function Home() {
             Real enterprise AEM and AWS work, each with an interactive diagram you can explore.
           </p>
         </div>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          }
+        >
           {cases.map((c) => (
-            <Link
-              key={c.num}
-              href={c.href}
-              className="group relative flex flex-col rounded border border-white/[0.08] bg-gradient-to-br from-white/[0.045] to-white/[0.015] backdrop-blur-md overflow-hidden transition-all hover:border-cloud-blue/55 hover:shadow-[0_0_0_1px_rgba(63,169,255,0.3),0_24px_70px_rgba(155,107,255,0.22)] hover:-translate-y-1"
-            >
-              <span className="absolute top-0 left-0 right-0 h-[2px] z-20 bg-gradient-to-r from-cloud-blue to-cloud-violet" />
-              {/* Architecture diagram preview */}
-              <div className="relative aspect-[16/10] bg-[#0a0e1a] overflow-hidden border-b border-white/[0.06]">
+            <Link key={c.num} href={c.href} className="group block focus-visible:outline-none">
+              {/* Media: the architecture diagram, framed like a photo */}
+              <div className="relative aspect-[4/3] md:aspect-[16/10] rounded-2xl overflow-hidden bg-cloud-panel ring-1 ring-white/10 transition-all duration-500 group-hover:ring-cloud-blue/50 group-hover:shadow-[0_30px_80px_-20px_rgb(var(--c-violet)/0.35)] group-focus-visible:ring-2 group-focus-visible:ring-cloud-blue">
                 <Image
                   src={asset(c.image)}
                   alt={`${c.title} architecture diagram preview`}
                   fill
-                  className="object-cover object-top opacity-90 transition-transform duration-500 group-hover:scale-[1.03]"
+                  sizes="(min-width: 768px) 600px, 86vw"
+                  className="object-cover object-top transition-transform duration-700 ease-out group-hover:scale-[1.04]"
                 />
                 <div
                   className="absolute inset-0 pointer-events-none"
-                  style={{ background: "linear-gradient(180deg, transparent 55%, rgba(5,6,12,0.65) 100%)" }}
+                  style={{ background: "linear-gradient(180deg, rgb(var(--c-bg) / 0) 55%, rgb(var(--c-bg) / 0.7) 100%)" }}
                 />
-                <span className="absolute top-3 left-3 font-mono text-[11px] text-cloud-mist px-[10px] py-[5px] rounded-sm border border-cloud-blue/35 bg-cloud-blue/10">
-                  {c.num} · CASE_STUDY
+                <span className="absolute top-4 left-4 font-mono text-[11px] tracking-[2px] text-ink-1 px-3 py-1.5 rounded-full bg-black/45 backdrop-blur-md border border-white/15">
+                  {c.num}
+                </span>
+                <span className="absolute bottom-4 right-4 inline-flex items-center gap-2 text-[13px] font-semibold text-[#150a2e] bg-white px-4 py-2 rounded-full opacity-0 translate-y-2 transition-all duration-300 group-hover:opacity-100 group-hover:translate-y-0 group-focus-visible:opacity-100 group-focus-visible:translate-y-0">
+                  Explore the diagram <span aria-hidden="true">↗</span>
                 </span>
               </div>
-              <div className="flex flex-col flex-1 p-7">
-                <h3 className="font-display font-semibold text-xl leading-snug mb-3 text-ink-1">{c.title}</h3>
-                <p className="text-[14.5px] leading-relaxed text-ink-3 mb-5 font-light">{c.desc}</p>
-                <div className="mt-auto flex items-center justify-between gap-3">
-                  <div className="flex gap-2 flex-wrap">
-                    {c.tags.map((t) => (
-                      <span
-                        key={t}
-                        className="font-mono text-[11px] text-ink-3 px-[10px] py-[5px] rounded-sm border border-white/10"
-                      >
-                        {t}
-                      </span>
-                    ))}
-                  </div>
-                  <span className="font-mono text-[11px] tracking-widest uppercase text-ink-3 whitespace-nowrap transition-colors group-hover:text-cloud-blue">
-                    View →
-                  </span>
+              {/* Caption */}
+              <div className="pt-5 pr-2">
+                <div className="flex flex-wrap items-center gap-x-3 gap-y-1 mb-2 font-mono text-[11px] tracking-[1.5px] uppercase text-cloud-blue">
+                  {c.tags.join(" · ")}
                 </div>
+                <h3 className="font-display font-semibold text-[21px] leading-snug mb-2 text-ink-1 transition-colors group-hover:text-cloud-blue">
+                  {c.title}
+                </h3>
+                <p className="text-[15px] leading-relaxed text-ink-3 font-light max-w-[52ch]">{c.desc}</p>
               </div>
             </Link>
           ))}
-        </div>
+        </GalleryCarousel>
       </section>
 
       {/* CREDENTIALS */}
@@ -256,8 +251,12 @@ export default function Home() {
       </section>
 
       {/* PROJECT GALLERY */}
-      <section id="projects" className="relative max-w-[1280px] mx-auto px-10 py-24 border-t border-white/[0.06] z-10">
-        <div className="max-w-[640px] mb-12">
+      <section id="projects" className="relative max-w-[1280px] mx-auto px-5 sm:px-10 py-24 border-t border-white/[0.06] z-10">
+        <GalleryCarousel
+          label="Live side projects"
+          itemNoun="project"
+          header={
+            <div className="max-w-[640px]">
           <div className="flex items-center gap-4 mb-4">
             <span className="font-mono text-xs tracking-[2px] uppercase text-cloud-blue whitespace-nowrap">
               {"// Project Gallery"}
@@ -271,18 +270,18 @@ export default function Home() {
             Where I experiment with 3D, voice and generative AI in the browser. They all run live, so jump in and try one.
           </p>
         </div>
-        <ProjectCarousel>
+          }
+        >
           {projects.map((p) => {
             const Card = (
-              <div className="rounded border border-white/[0.08] bg-gradient-to-br from-white/[0.045] to-white/[0.015] overflow-hidden transition-all group-hover:border-cloud-blue/55 group-hover:shadow-[0_0_0_1px_rgba(63,169,255,0.25),0_20px_60px_rgba(63,169,255,0.18)] group-hover:-translate-y-1 h-full">
+              <div className="h-full">
                 <div
-                  className="relative md:aspect-video min-h-[210px] min-w-0 grid place-items-center bg-[#0d1018]"
+                  className="gallery-media relative aspect-[4/3] md:aspect-[16/10] min-w-0 grid place-items-center bg-cloud-panel rounded-2xl overflow-hidden ring-1 ring-white/10 transition-all duration-500 group-hover:ring-cloud-blue/50 group-hover:shadow-[0_30px_80px_-20px_rgb(var(--c-violet)/0.35)] group-focus-visible:ring-2 group-focus-visible:ring-cloud-blue"
                   style={{
                     backgroundImage:
                       "repeating-linear-gradient(135deg, rgba(120,140,190,0.10) 0 12px, transparent 12px 24px)",
                   }}
                 >
-                  <span className="absolute top-0 left-0 right-0 h-[2px] z-10 bg-gradient-to-r from-cloud-blue to-cloud-violet" />
                   <div
                     className="absolute inset-0"
                     style={{ background: "radial-gradient(120% 90% at 70% 10%, rgba(63,169,255,0.14), transparent 55%)" }}
@@ -318,7 +317,7 @@ export default function Home() {
                         <span className="font-display font-semibold text-[20px] tracking-tight bg-gradient-to-r from-ac-leafDark to-ac-orange bg-clip-text text-transparent">
                           Chef Fabric
                         </span>
-                        <span className="font-mono text-[10.5px] tracking-widest uppercase text-ac-brown/80">
+                        <span className="font-mono text-[10.5px] tracking-widest uppercase text-white/85">
                           Live recipe assistant · click to chat
                         </span>
                       </div>
@@ -465,18 +464,23 @@ export default function Home() {
                       {p.label}
                     </span>
                   )}
-                  <span className="absolute top-4 left-4 font-mono text-[11px] text-cloud-mist px-[10px] py-[5px] rounded-sm border border-cloud-blue/35 bg-cloud-blue/10 z-10">
+                  <span className="absolute top-4 left-4 font-mono text-[11px] tracking-[1.5px] uppercase text-ink-1 px-3 py-1.5 rounded-full bg-black/45 backdrop-blur-md border border-white/15 z-10">
                     {p.tag}
                   </span>
+                  {p.href && (
+                    <span className="absolute bottom-4 right-4 z-10 inline-flex items-center gap-2 text-[13px] font-semibold text-[#150a2e] bg-white px-4 py-2 rounded-full opacity-0 translate-y-2 transition-all duration-300 group-hover:opacity-100 group-hover:translate-y-0 group-focus-visible:opacity-100 group-focus-visible:translate-y-0">
+                      Open live demo <span aria-hidden="true">↗</span>
+                    </span>
+                  )}
                 </div>
-                <div className="px-6 py-6">
-                  <h3 className="font-display font-semibold text-[19px] mb-1 text-ink-1">{p.title}</h3>
-                  <p className="text-sm text-ink-3 font-light">{p.meta}</p>
+                <div className="pt-5 pr-2">
+                  <h3 className="font-display font-semibold text-[21px] leading-snug mb-2 text-ink-1 transition-colors group-hover:text-cloud-blue">{p.title}</h3>
+                  <p className="text-[15px] leading-relaxed text-ink-3 font-light max-w-[52ch]">{p.meta}</p>
                 </div>
               </div>
             );
             return p.href ? (
-              <Link key={p.title} href={p.href} className="group block">
+              <Link key={p.title} href={p.href} className="group block focus-visible:outline-none">
                 {Card}
               </Link>
             ) : (
@@ -485,7 +489,7 @@ export default function Home() {
               </div>
             );
           })}
-        </ProjectCarousel>
+        </GalleryCarousel>
       </section>
 
       {/* CONTACT */}
