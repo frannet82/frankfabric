@@ -3,7 +3,7 @@ import BrandMark from "@/components/BrandMark";
 import WardrobeBuilder from "@/components/WardrobeBuilder";
 
 export const metadata = {
-  title: "Digital Wardrobe Avatar Builder — Frank Cloud Fabric",
+  title: "Digital Wardrobe Avatar Builder — Frank Murillo",
   description:
     "A real-time interactive 3D outfit builder: rotate the model and swap garments and colors live in the browser.",
 };

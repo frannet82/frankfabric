@@ -131,7 +131,7 @@ export const caps: {
     ly: "2%",
     icon: "cloud",
     summary:
-      "Well-architected AWS foundations: multi-account landing zones, secure integration gateways, and infrastructure as code that scales without surprises.",
+      "I design AWS foundations that scale without surprises: secure integration gateways, well-architected accounts and infrastructure as code.",
     link: { href: "/case-studies/external-integrations", label: "External Service Integrations" },
   },
   {
@@ -141,8 +141,8 @@ export const caps: {
     ly: "28%",
     icon: "spark",
     summary:
-      "Production LLM assistants on Bedrock: retrieval over enterprise content, guardrails, and voice-enabled experiences like the live chef and coach demos.",
-    link: { href: "#projects", label: "See the live AI builds" },
+      "I build LLM assistants that work with enterprise content, with guardrails and voice, like the live chef and coach demos further down.",
+    link: { href: "#projects", label: "Try the live AI demos" },
   },
   {
     name: "Data Engineering",
@@ -151,7 +151,7 @@ export const caps: {
     ly: "72%",
     icon: "data",
     summary:
-      "Pipelines that move governed content and metadata between AEM, relational stores, and Databricks: scheduled, batched, and observable.",
+      "I build pipelines that move governed content and metadata between AEM, relational stores and Databricks: scheduled, batched and observable.",
     link: { href: "/case-studies/metadata-sync", label: "Content Metadata DB Sync" },
   },
   {
@@ -161,7 +161,7 @@ export const caps: {
     ly: "98%",
     icon: "fabric",
     summary:
-      "Enterprise Adobe Experience Manager: dispatcher and CDN caching, MSM rollout, headless GraphQL, and publishing that holds up at global scale.",
+      "My home ground: enterprise Adobe Experience Manager, from dispatcher and CDN caching to MSM rollout, headless GraphQL and global publishing.",
     link: { href: "/case-studies/content-delivery-cache", label: "Content Delivery & Cache Invalidation" },
   },
   {
@@ -171,7 +171,7 @@ export const caps: {
     ly: "72%",
     icon: "loop",
     summary:
-      "Model training, deployment, and drift monitoring on AWS, with repeatable pipelines that take machine learning from notebook to production.",
+      "I take machine learning from notebook to production on AWS, with repeatable training, deployment and drift monitoring.",
     link: { href: "#credentials", label: "AWS Machine Learning certification" },
   },
   {
@@ -181,7 +181,7 @@ export const caps: {
     ly: "28%",
     icon: "asset",
     summary:
-      "Automated digital-asset workflows: ingestion, metadata enrichment, and cost-aware archiving of originals to S3 Glacier with on-demand restore.",
+      "I automate digital-asset workflows: ingestion, metadata enrichment and cost-aware archiving to S3 Glacier with on-demand restore.",
     link: { href: "/case-studies/s3-glacier-archiving", label: "Asset Archiving to AWS S3 Glacier" },
   },
 ];
@@ -200,22 +200,22 @@ export const projects: Project[] = [
   {
     label: "PROJECT SHOT · Coach trainer interface",
     tag: "Fitness",
-    title: "Coach Fabric Smart Fit Trainer",
-    meta: "Client-side conversational gym coach with a 3D avatar",
+    title: "Coach Fabric: AI Fitness Trainer",
+    meta: "A conversational gym coach with a speaking 3D avatar, running entirely in your browser",
     href: "/projects/coach-trainer",
   },
   {
     label: "PROJECT SHOT · Chatbot interface",
     tag: "GenAI",
-    title: "Chef Fabric Recipe Assistant",
-    meta: "Client-side conversational chef with a 3D avatar",
+    title: "Chef Fabric: AI Recipe Assistant",
+    meta: "A conversational recipe assistant with a speaking 3D chef, running entirely in your browser",
     href: "/projects/chef-chatbot",
   },
   {
     label: "LIVE DEMO · Interactive avatar builder",
     tag: "Next.js",
-    title: "Digital Wardrobe Avatar Builder",
-    meta: "Rotate a 3D model and swap garments and colors in real time",
+    title: "Digital Wardrobe: Avatar Builder",
+    meta: "Rotate a 3D avatar and swap outfits and colours in real time",
     href: "/projects/digital-wardrobe",
     image: "/images/final_futuristic_avatar.jpg",
     video: "/videos/digital-wardrobe-preview.mp4",
@@ -223,14 +223,14 @@ export const projects: Project[] = [
   {
     label: "LIVE DEMO · 3D virtual pet",
     tag: "3D",
-    title: "Fabric Pet Virtual Tamagotchi",
-    meta: "Feed, play with, and care for a 3D schnauzer that lives in your browser",
+    title: "Fabric Pet: 3D Virtual Pet",
+    meta: "Feed, play with and care for a 3D schnauzer that lives in your browser",
     href: "/projects/virtual-pet",
   },
   {
     label: "LIVE DEMO · Two browser puzzle games",
     tag: "Games",
-    title: "Pet Puzzles Tile & Tower",
+    title: "Pet Puzzles: Tile & Tower",
     meta: "Two original tile puzzles with synthesised sound, playable offline",
     href: "/projects/pet-puzzles",
   },

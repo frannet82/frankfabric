@@ -3,7 +3,7 @@ import BrandMark from "@/components/BrandMark";
 import { asset } from "@/lib/asset";
 
 export const metadata = {
-  title: "Pet Puzzles Tile & Tower — Frank Cloud Fabric",
+  title: "Pet Puzzles Tile & Tower — Frank Murillo",
   description:
     "Two original browser puzzle games behind one menu: Pet Jump, a triple-matching tray game, and Pet Tower Sort, a column-filling sort game with face-down tiles. One self-contained HTML file — original SVG artwork, synthesised sound, no assets, no server, plays offline.",
 };

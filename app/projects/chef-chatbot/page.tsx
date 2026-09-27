@@ -3,7 +3,7 @@ import BrandMark from "@/components/BrandMark";
 import ChefChatbot from "@/components/chef/ChefChatbot";
 
 export const metadata = {
-  title: "Chef Fabric Recipe Assistant — Frank Cloud Fabric",
+  title: "Chef Fabric Recipe Assistant — Frank Murillo",
   description:
     "A client-side conversational chef with a 3D avatar: ask for recipes, cook with the ingredients you have, and get step-by-step instructions from a deterministic in-browser engine.",
 };

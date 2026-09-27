@@ -22,7 +22,7 @@ export default function FloatingCertifications({ badges }: { badges: Credential[
   };
   return <div className="credential-gallery" data-paused={paused}>
     <div className="flex items-center justify-center gap-4 mb-6 flex-wrap">
-      <p className="text-sm text-slate-400">Select a floating badge to view its verified credential.</p>
+      <p className="text-sm text-slate-400">Select a badge to verify it with the issuer.</p>
       <button type="button" aria-pressed={paused} onClick={() => setPaused(value => !value)} className="credential-motion rounded-full border border-white/20 px-3 py-1.5 text-xs text-slate-300 hover:border-cloud-blue focus-visible:outline-2 focus-visible:outline-cloud-blue">{paused ? 'Resume floating' : 'Pause floating'}</button>
     </div>
     <div className="credential-grid">

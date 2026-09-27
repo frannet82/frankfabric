@@ -3,7 +3,7 @@ import BrandMark from "@/components/BrandMark";
 import VirtualPet from "@/components/pet/VirtualPet";
 
 export const metadata = {
-  title: "Fabric Pet Virtual Tamagotchi — Frank Cloud Fabric",
+  title: "Fabric Pet 3D Virtual Pet — Frank Murillo",
   description:
     "A client-side 3D virtual pet: feed, play with, and care for an animated white 3D Miniature Schnauzer that lives in your browser. Its stats decay over time and it reacts to how you look after it — no server, all in the browser.",
 };
@@ -34,7 +34,7 @@ export default function VirtualPetPage() {
       <section className="assistant-heading max-w-[1600px] mx-auto px-6 pt-8 pb-4 text-center">
         <span className="font-mono text-xs tracking-[2px] uppercase text-pet-accent">A little care, every day</span>
         <h1 className="font-display font-semibold text-[clamp(28px,3.6vw,42px)] tracking-tight text-pet-ink mt-3 mb-3">
-          Fabric Pet <span className="text-pet-accent">Virtual Tamagotchi</span>
+          Fabric Pet <span className="text-pet-accent">3D Virtual Pet</span>
         </h1>
         <p className="text-pet-inkSoft text-[16px] leading-relaxed opacity-75 max-w-[680px] mx-auto">
           Meet your new companion. Share a meal, make time to play, and settle down for a rest. Your pet remembers your care on this device.

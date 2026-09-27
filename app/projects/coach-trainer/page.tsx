@@ -3,7 +3,7 @@ import BrandMark from "@/components/BrandMark";
 import CoachChatbot from "@/components/coach/CoachChatbot";
 
 export const metadata = {
-  title: "Coach Fabric Smart Fit Trainer — Frank Cloud Fabric",
+  title: "Coach Fabric AI Fitness Trainer — Frank Murillo",
   description:
     "A client-side conversational gym coach with a 3D avatar: get a workout matched to your goal and level, list the exercises, and get walked through a routine by a deterministic in-browser engine.",
 };
@@ -34,7 +34,7 @@ export default function CoachTrainerPage() {
       <section className="assistant-heading max-w-[1600px] mx-auto px-6 pt-8 pb-4 text-center">
         <span className="font-mono text-xs tracking-[2px] uppercase text-sf-yellow">Make room for movement</span>
         <h1 className="font-display font-bold text-[clamp(28px,3.6vw,42px)] tracking-tight text-sf-mist mt-3 mb-3">
-          Coach Fabric <span className="text-sf-yellow">Smart Fit</span> Trainer
+          Coach Fabric <span className="text-sf-yellow">AI Fitness</span> Trainer
         </h1>
         <p className="text-sf-mist text-[16px] leading-relaxed opacity-75 max-w-[680px] mx-auto">
           Build a routine around your goals, experience, and available time. Ask your coach for a workout, then work through the exercises at your pace.

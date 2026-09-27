@@ -1,11 +1,11 @@
 // Deterministic, dependency-free conversational coach engine.
 //
-// This is the "brain" of the Smart Fit coach trainer chatbot. It is pure
+// This is the "brain" of the AI fitness coach chatbot. It is pure
 // TypeScript with NO React and NO three.js imports, so it stays build-safe (the
 // site is a static export with output:'export' and no server) and is trivially
 // reusable by the UI. It performs lightweight keyword/intent matching against
 // the bundled workout knowledge base in workouts.ts and answers in an energetic
-// Smart Fit gym-coach persona. This mirrors lib/chef/chefEngine.ts.
+// Gym-coach persona. This mirrors lib/chef/chefEngine.ts.
 //
 // Everything here is 100% client-side, offline, and DETERMINISTIC: the same
 // inputs always produce the same output (no randomness, no I/O, no network).
@@ -429,7 +429,7 @@ export function respondToMessage(
   if (isGreeting) {
     const isFirstTurn = history.every((message) => message.role !== "assistant");
     const opener = isFirstTurn
-      ? "Hey there, welcome to Smart Fit! I'm Coach Fabric, your personal trainer."
+      ? "Hey there, welcome to the gym! I'm Coach Fabric, your personal trainer."
       : "Back for more? Love the energy!";
     return {
       reply: `${opener} I can suggest a workout, match one to your goal or level, list the exercises, or walk you through a routine. What are we training today?`,

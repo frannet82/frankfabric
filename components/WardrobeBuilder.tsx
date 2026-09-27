@@ -355,7 +355,7 @@ function WardrobeBuilderInner() {
             ATELIER
           </div>
           <div className="text-[11px] tracking-[4px] uppercase text-[#8f8a80] mt-[2px]">
-            Digital Wardrobe · by Frank Cloud Fabric
+            Digital Wardrobe · by Frank Murillo
           </div>
         </div>
         <span className="text-[11px] tracking-widest uppercase text-[#a39d92] hidden sm:block">

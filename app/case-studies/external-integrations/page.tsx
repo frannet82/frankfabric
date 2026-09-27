@@ -4,7 +4,7 @@ import { getCase } from "@/lib/data";
 const study = getCase("external-integrations");
 
 export const metadata = {
-  title: `${study.title} — Frank Cloud Fabric`,
+  title: `${study.title} — Frank Murillo`,
   description: study.desc,
 };
 

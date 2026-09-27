@@ -20,7 +20,7 @@
 // sends, and the message list is an aria-live region so new replies are
 // announced. The layout stacks on narrow screens.
 //
-// THEME: bold Smart Fit gym look — high-energy yellow/black panels with magenta
+// THEME: bold gym look — high-energy yellow/black panels with magenta
 // accents, using the `sf` Tailwind tokens (analogous to how ChefChatbot uses
 // the cozy `ac` tokens).
 // ---------------------------------------------------------------------------
