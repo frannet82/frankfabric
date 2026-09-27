@@ -2,7 +2,8 @@ import Image from "next/image";
 import Link from "next/link";
 import ProjectCarousel from "@/components/ProjectCarousel";
 import FloatingCertifications from "@/components/FloatingCertifications";
-import BrandMark from "@/components/BrandMark";
+import HeroNav from "@/components/HeroNav";
+import CapabilityMesh from "@/components/CapabilityMesh";
 import { stack, cases, badges, caps, projects, ticker } from "@/lib/data";
 import { asset } from "@/lib/asset";
 
@@ -12,6 +13,7 @@ export default function Home() {
 
   return (
     <main
+      id="top"
       className="min-h-screen overflow-x-hidden relative"
       style={{
         background:
@@ -30,8 +32,8 @@ export default function Home() {
       <div className="fixed left-0 right-0 top-0 h-[2px] z-40 pointer-events-none bg-gradient-to-r from-transparent via-cloud-blue/35 to-transparent animate-scan" />
 
       {/* STATUS TICKER */}
-      <section className="relative z-10 border-b border-white/[0.06] bg-black/30 overflow-hidden">
-        <div className="max-w-[1280px] mx-auto px-10 py-2 flex items-center gap-5 font-mono text-[11px] tracking-widest text-[#6b8b9a]">
+      <section aria-hidden="true" className="relative z-10 border-b border-white/[0.06] bg-black/30 overflow-hidden">
+        <div className="max-w-[1280px] mx-auto px-5 sm:px-10 py-2 flex items-center gap-5 font-mono text-[11px] tracking-widest text-[#6b8b9a]">
           <span className="inline-flex items-center gap-[7px] text-cloud-blue whitespace-nowrap">
             <span className="w-[6px] h-[6px] rounded-full bg-cloud-blue shadow-[0_0_8px_#3fa9ff] animate-emberPulse" />
             SYS.ONLINE
@@ -51,9 +53,9 @@ export default function Home() {
       </section>
 
       {/* HERO */}
-      <section className="max-w-[1360px] mx-auto mt-5 mb-14 px-6">
+      <section className="max-w-[1360px] mx-auto mt-5 mb-8 px-4 sm:px-6">
         <div
-          className="relative rounded-3xl overflow-hidden min-h-[560px] md:min-h-[660px]"
+          className="relative rounded-3xl overflow-hidden md:min-h-[640px] flex flex-col"
           style={{
             background:
               "radial-gradient(58% 55% at 64% 26%, rgba(60,60,150,0.45), transparent 62%), linear-gradient(120deg, #0a0e26 0%, #10184a 40%, #1a2a6c 70%, #0f1030 100%)",
@@ -66,119 +68,89 @@ export default function Home() {
             }}
           />
 
-          <div className="absolute right-0 bottom-0 top-0 w-full md:w-[56%]">
+          <div
+            className="hero-portrait absolute right-0 left-0 top-0 h-[420px] md:h-auto md:left-auto md:bottom-0 md:w-[58%]"
+          >
             <Image
               src={asset("/images/final_futuristic_avatar.jpg")}
-              alt="Frank portrait"
+              alt="Frank, wearing futuristic visor glasses and a holographic jacket"
               fill
-              className="object-cover object-right"
+              sizes="(min-width: 768px) 58vw, 100vw"
+              className="object-cover"
               style={{ objectPosition: "72% 6%" }}
               priority
-            />
-            {/* Desktop: horizontal fade from the left edge of the portrait */}
-            <div
-              className="absolute inset-0 hidden md:block"
-              style={{
-                background: "linear-gradient(90deg, #10184a 0%, rgba(16,24,74,0.75) 16%, transparent 42%)",
-              }}
-            />
-            {/* Mobile: darken the whole portrait so the text stays readable on top */}
-            <div
-              className="absolute inset-0 md:hidden"
-              style={{
-                background:
-                  "linear-gradient(180deg, rgba(10,14,38,0.72) 0%, rgba(10,14,38,0.55) 45%, rgba(10,14,38,0.9) 100%)",
-              }}
             />
           </div>
 
           {/* nav */}
-          <div className="relative z-10 px-6 pt-5">
-            <nav className="flex items-center justify-between gap-3 sm:gap-6 py-2.5 sm:py-3 pl-4 sm:pl-6 pr-2.5 sm:pr-3 rounded-full border border-white/20 bg-white/[0.06] backdrop-blur-md">
-              <div className="flex items-center gap-3 min-w-0">
-                <BrandMark />
-                <span className="font-display font-semibold text-[15px] sm:text-[17px] text-white tracking-tight truncate">
-                  Frank<span className="text-cloud-mist">.</span>CloudFabric
-                </span>
-              </div>
-              <div className="hidden md:flex items-center gap-8 text-[14.5px] text-white/80">
-                <a href="#case-studies" className="hover:text-white">Case Studies</a>
-                <a href="#capabilities" className="hover:text-white">Capabilities</a>
-                <a href="#credentials" className="hover:text-white">Credentials</a>
-                <a href="#projects" className="hover:text-white">Projects</a>
-              </div>
-              <a
-                href="#contact"
-                className="flex-none text-[#0d1030] bg-white px-4 sm:px-6 py-[9px] sm:py-[11px] rounded-full font-semibold text-[13px] sm:text-[14.5px] whitespace-nowrap hover:-translate-y-0.5 transition-transform"
-              >
-                Start a Project
-              </a>
-            </nav>
+          <div className="relative z-20 px-4 sm:px-6 pt-4 sm:pt-5">
+            <HeroNav />
           </div>
 
           {/* content */}
-          <div className="relative z-10 max-w-[600px] px-6 sm:px-14 pt-8 sm:pt-10 pb-12">
-            <div className="flex items-center gap-3 mb-6 font-mono text-[12.5px] tracking-[2px] uppercase text-white/90">
-              <span className="w-[13px] h-[13px] bg-gradient-to-br from-cloud-mist to-white rotate-45 shadow-[0_0_12px_rgba(95,242,223,0.7)]" />
+          <div className="relative z-10 max-w-[740px] px-6 sm:px-14 pt-[250px] md:pt-12 pb-10 md:pb-14 flex-1 flex flex-col justify-center">
+            <div className="flex items-center gap-3 mb-5 font-mono text-[12px] sm:text-[12.5px] tracking-[2px] uppercase text-white/90">
+              <span className="w-[11px] h-[11px] bg-gradient-to-br from-cloud-mist to-white rotate-45 shadow-[0_0_12px_rgba(95,242,223,0.7)]" />
               Woven for the Enterprise
             </div>
-            <h1 className="font-display font-bold text-[clamp(42px,5vw,72px)] leading-[1.0] tracking-tighter mb-6 text-white">
-              Where Enterprise AEM &amp; AWS&nbsp;Cloud
-              <br />
-              <span className="bg-gradient-to-r from-[#c9e0ff] via-[#d6c6ff] to-[#c6f2ec] bg-clip-text text-transparent">
+            <h1 className="font-display font-bold text-[clamp(38px,4.6vw,66px)] leading-[1.02] tracking-tighter mb-6 text-white">
+              Where Enterprise AEM &amp;&nbsp;AWS&nbsp;Cloud{" "}
+              <span className="sm:block sm:whitespace-nowrap pr-2 bg-gradient-to-r from-[#c9e0ff] via-[#d6c6ff] to-[#c6f2ec] bg-clip-text text-transparent">
                 Meet Generative&nbsp;AI.
               </span>
             </h1>
-            <p className="text-lg leading-relaxed text-white/80 max-w-[460px] mb-8 font-light">
+            <p className="text-[17px] sm:text-lg leading-relaxed text-white/80 max-w-[480px] mb-8 font-light">
               Frank Cloud Fabric designs resilient, massive-scale cloud architectures where enterprise content,
               machine learning, and generative intelligence converge.
             </p>
-            <div className="mb-10">
+            <div className="flex flex-wrap items-center gap-3 mb-10">
               <a
                 href="#contact"
-                className="inline-flex items-center gap-2 bg-white text-[#0d1030] px-8 py-[15px] rounded-full font-semibold text-[15px] hover:-translate-y-0.5 hover:shadow-2xl transition-all"
+                className="inline-flex items-center gap-2 bg-white !text-[#0d1030] px-7 py-[14px] rounded-full font-semibold text-[15px] hover:-translate-y-0.5 hover:shadow-[0_12px_40px_rgba(95,242,223,0.25)] transition-all focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-cloud-mist"
               >
-                Get started →
+                Start a project <span aria-hidden="true">→</span>
+              </a>
+              <a
+                href="#case-studies"
+                className="inline-flex items-center gap-2 !text-white px-6 py-[13px] rounded-full font-medium text-[15px] border border-white/30 bg-white/[0.04] backdrop-blur-sm hover:border-white/60 hover:bg-white/[0.08] transition-all focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-cloud-mist"
+              >
+                View case studies
               </a>
             </div>
-            <div className="flex flex-wrap items-center gap-x-9 gap-y-5">
-              <div className="flex items-baseline gap-2">
-                <span className="font-display font-bold text-3xl text-white">3×</span>
-                <span className="text-[13px] leading-tight text-white/75">
-                  AWS &amp; Adobe
-                  <br />
-                  Certified
-                </span>
-              </div>
-              <div className="w-px h-[34px] bg-white/25" />
-              <div className="flex items-baseline gap-2">
-                <span className="font-display font-bold text-3xl text-white">12+</span>
-                <span className="text-[13px] leading-tight text-white/75">
-                  Years in
-                  <br />
-                  Architecture
-                </span>
-              </div>
-            </div>
+            <dl className="grid grid-cols-3 max-w-[460px] border-t border-white/15 pt-5">
+              {[
+                { v: "3×", l: "AWS & Adobe certified" },
+                { v: "12+", l: "Years in architecture" },
+                { v: String(cases.length), l: "Case studies" },
+              ].map((stat, i) => (
+                <div key={stat.l} className={`flex flex-col gap-1 ${i ? "pl-4 sm:pl-6 border-l border-white/15" : "pr-4"}`}>
+                  <dt className="order-2 text-[12.5px] leading-snug text-white/70">{stat.l}</dt>
+                  <dd className="order-1 font-display font-bold text-[26px] sm:text-3xl text-white leading-none">{stat.v}</dd>
+                </div>
+              ))}
+            </dl>
           </div>
         </div>
       </section>
 
       {/* STACK MARQUEE */}
-      <section className="border-y border-white/[0.06] bg-white/[0.015] py-6 overflow-hidden relative z-10">
-        <div className="max-w-[1280px] mx-auto mb-4 px-10">
-          <span className="font-mono text-[11.5px] tracking-[2px] uppercase text-[#6b7286]">
+      <section aria-labelledby="stack-label" className="border-y border-white/[0.06] bg-white/[0.015] py-5 overflow-hidden relative z-10">
+        <div className="max-w-[1280px] mx-auto mb-3 px-5 sm:px-10">
+          <span id="stack-label" className="font-mono text-[11.5px] tracking-[2px] uppercase text-[#8a93a8]">
             Core Stack &amp; Platforms
           </span>
         </div>
-        <div className="relative [mask-image:linear-gradient(90deg,transparent,#000_8%,#000_92%,transparent)]">
-          <div className="flex gap-[72px] w-max animate-marquee items-center px-9">
+        <ul className="sr-only">
+          {stack.map((tech) => (
+            <li key={tech}>{tech}</li>
+          ))}
+        </ul>
+        <div aria-hidden="true" className="stack-rail relative [mask-image:linear-gradient(90deg,transparent,#000_8%,#000_92%,transparent)]">
+          <div className="flex gap-10 w-max animate-marquee items-center px-5">
             {stackLoop.map((tech, i) => (
-              <span
-                key={i}
-                className="font-display font-medium text-[22px] text-[#8b93a7] tracking-wide whitespace-nowrap opacity-75"
-              >
-                {tech}
+              <span key={i} className="flex items-center gap-10 whitespace-nowrap">
+                <span className="font-display font-medium text-[19px] sm:text-[22px] text-[#b4bccd] tracking-wide">{tech}</span>
+                <span className="w-[7px] h-[7px] rotate-45 bg-gradient-to-br from-cloud-blue to-cloud-violet opacity-70" />
               </span>
             ))}
           </div>
@@ -186,95 +158,23 @@ export default function Home() {
       </section>
 
       {/* CAPABILITIES */}
-      <section id="capabilities" className="relative max-w-[1280px] mx-auto px-10 pt-24 pb-20 z-10">
-        <div className="text-center max-w-[620px] mx-auto mb-10">
-          <div className="inline-flex items-center gap-3 mb-4">
-            <span className="h-[10px] w-12 bg-[repeating-linear-gradient(90deg,rgba(63,169,255,0.45)_0_1px,transparent_1px_9px)]" />
+      <section id="capabilities" className="relative max-w-[1280px] mx-auto px-5 sm:px-10 pt-20 sm:pt-24 pb-20 z-10 scroll-mt-20">
+        <CapabilityMesh caps={caps}>
+          <div className="max-w-[560px]">
+          <div className="flex items-center gap-4 mb-4">
             <span className="font-mono text-xs tracking-[2px] uppercase text-cloud-blue whitespace-nowrap">
               {"// Capabilities"}
             </span>
+            <span className="flex-1 h-[10px] bg-[repeating-linear-gradient(90deg,rgba(63,169,255,0.45)_0_1px,transparent_1px_9px)]" />
           </div>
-          <h2 className="font-display font-semibold text-[clamp(28px,3.2vw,42px)] tracking-tight text-[#f4f6fb]">
+          <h2 className="font-display font-semibold text-[clamp(28px,3.2vw,42px)] tracking-tight text-[#f4f6fb] mb-3">
             Key Features &amp; Services
           </h2>
+          <p className="text-[16px] leading-relaxed text-[#9aa2b4] font-light">
+            Six disciplines, one fabric. Select a node to see what each one covers and where it shows up in real work.
+          </p>
         </div>
-
-        <div className="relative w-full max-w-[600px] aspect-square mx-auto">
-          <div
-            className="absolute inset-[18%] rounded-full blur-2xl"
-            style={{
-              background:
-                "radial-gradient(circle at 50% 45%, rgba(63,169,255,0.30), rgba(155,107,255,0.16) 48%, transparent 70%)",
-            }}
-          />
-          <svg viewBox="0 0 400 400" className="absolute inset-0 w-full h-full">
-            <defs>
-              <linearGradient id="cap" x1="0" y1="0" x2="1" y2="1">
-                <stop offset="0" stopColor="#3fa9ff" />
-                <stop offset="1" stopColor="#9b6bff" />
-              </linearGradient>
-            </defs>
-            <g stroke="url(#cap)" strokeWidth="1" opacity="0.5" strokeDasharray="3 6">
-              {caps.map((c, i) => {
-                const angle = (i / caps.length) * Math.PI * 2 - Math.PI / 2;
-                const x = 200 + Math.cos(angle) * 150;
-                const y = 200 + Math.sin(angle) * 150;
-                return <line key={i} x1="200" y1="200" x2={x} y2={y} />;
-              })}
-            </g>
-            <circle
-              cx="200"
-              cy="200"
-              r="150"
-              fill="none"
-              stroke="url(#cap)"
-              strokeWidth="1.5"
-              strokeDasharray="2 12"
-              opacity="0.55"
-              className="origin-center animate-ringSpin"
-            />
-            <circle cx="200" cy="200" r="120" fill="none" stroke="url(#cap)" strokeWidth="1" strokeDasharray="1 9" opacity="0.35" />
-          </svg>
-          <div
-            className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-[34%] p-[2px]"
-            style={{
-              aspectRatio: "1/1.08",
-              clipPath: "polygon(50% 0%,100% 25%,100% 75%,50% 100%,0% 75%,0% 25%)",
-              background: "linear-gradient(150deg,#3fa9ff,#9b6bff)",
-              filter: "drop-shadow(0 0 26px rgba(63,169,255,0.45))",
-            }}
-          >
-            <div
-              className="w-full h-full grid place-items-center text-center gap-[2px]"
-              style={{
-                clipPath: "polygon(50% 0%,100% 25%,100% 75%,50% 100%,0% 75%,0% 25%)",
-                background: "radial-gradient(circle at 50% 40%, #101826, #060810)",
-              }}
-            >
-              <div>
-                <div className="font-display font-bold text-xl bg-gradient-to-br from-cloud-mist to-cloud-violet bg-clip-text text-transparent">
-                  FABRIC
-                </div>
-                <div className="font-mono text-[9px] tracking-widest text-[#6b8b9a]">CLOUD.MESH</div>
-              </div>
-            </div>
-          </div>
-          {caps.map((c, i) => (
-            <div
-              key={i}
-              className="absolute flex flex-col items-center gap-[9px] w-[120px] -translate-x-1/2 -translate-y-1/2"
-              style={{ left: c.lx, top: c.ly }}
-            >
-              <div className="w-[58px] h-[58px] rounded-full grid place-items-center bg-black/90 border border-cloud-blue/40 shadow-[0_0_20px_rgba(63,169,255,0.18)] backdrop-blur-sm">
-                <div className="w-4 h-4 rounded-[3px] bg-gradient-to-br from-cloud-blue to-cloud-violet shadow-[0_0_12px_rgba(63,169,255,0.5)] rotate-45" />
-              </div>
-              <div className="text-center">
-                <div className="font-display font-semibold text-[13.5px] text-[#e8eaf0] leading-tight">{c.name}</div>
-                <div className="font-mono text-[10px] tracking-widest text-[#5c6b8a] mt-[2px]">{c.code}</div>
-              </div>
-            </div>
-          ))}
-        </div>
+        </CapabilityMesh>
       </section>
 
       {/* CASE STUDIES */}
