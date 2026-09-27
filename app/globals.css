@@ -313,8 +313,8 @@ section[id] { scroll-margin-top: 84px; }
 }
 
 /* Care Blocks (components/pet/CareBlocks.tsx): cell size scales with screen. */
-/* Phones/tablets: the board spans the card width (10 columns). */
-.care-board { --cell: clamp(18px, calc((100vw - 110px) / 10), 30px); }
+/* Phones: a compact board, centred, so the whole game fits on screen. */
+.care-board { --cell: clamp(16px, calc((100vw - 170px) / 10), 24px); }
 @media (min-width: 768px) { .care-board { --cell: clamp(18px, calc((52vw - 130px) / 10), 26px); } }
 /* Desktop: the pet panel fills the window height, so size the board from the
    panel's real height (container query), capped by the width left beside the
