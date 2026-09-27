@@ -123,7 +123,13 @@ try {
     if (await first.locator('.credential-float').evaluate(node=>getComputedStyle(node).animationName) !== 'none') errors.push('Reduced motion does not stop floating');
     await page.emulateMedia({reducedMotion:'no-preference'});
    }
-   if (route === 'home') {
+   if (route === 'home' && process.argv.includes('--avatar')) {
+    const portrait = page.locator('.hero-portrait img');
+    await portrait.evaluate(img => img.decode());
+    if (!(await portrait.getAttribute('src')).includes('final_futuristic_avatar_cutout.png')) errors.push('Updated avatar not loaded');
+    await page.evaluate(() => window.scrollTo(0, 0));
+    await page.screenshot({path:join(output,`avatar-${viewport.width}.png`)});
+   } else if (route === 'home') {
     await page.locator('#projects').scrollIntoViewIfNeeded();
     await page.getByRole('button',{name:'Next build',exact:true}).click();
     await page.waitForTimeout(800);

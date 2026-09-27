@@ -264,16 +264,31 @@ h1.font-display, h2.font-display, h3.font-display { letter-spacing: var(--displa
 @media (max-width: 767px) { .credential-grid { grid-template-columns: 1fr; gap: 24px; } .credential-stage { height: 300px; } .credential-float { width: 220px; max-width: 86%; } }
 @media (prefers-reduced-motion: reduce) { .credential-float { animation: none; } .credential-object { transition: none; transform: rotateX(-4deg) rotateY(5deg); } .credential-motion { display: none; } }
 
-/* Hero portrait: fade the photo into the hero with a mask instead of a
-   colour overlay, so there is no visible seam against the hero gradient. */
+/* Transparent silhouette breaks out of the panel without clipping its hair. */
+.hero-panel { isolation: isolate; box-shadow: 0 24px 80px #0004; }
 .hero-portrait {
-  -webkit-mask-image: linear-gradient(180deg, #000 0%, #000 45%, transparent 100%);
-  mask-image: linear-gradient(180deg, #000 0%, #000 45%, transparent 100%);
+  position: absolute;
+  pointer-events: none;
+  z-index: 1;
+  top: -60px;
+  right: -8px;
+  width: calc(100% + 16px);
+  height: 440px;
+  filter: drop-shadow(-14px 18px 18px #0008);
+  -webkit-mask-image: linear-gradient(#000 70%, transparent 100%);
+  mask-image: linear-gradient(#000 70%, transparent 100%);
 }
+.hero-portrait img { object-position: center top; }
 @media (min-width: 768px) {
+  .hero-portrait img { object-position: center bottom; }
   .hero-portrait {
-    -webkit-mask-image: linear-gradient(90deg, transparent 0%, rgba(0,0,0,0.6) 18%, #000 40%);
-    mask-image: linear-gradient(90deg, transparent 0%, rgba(0,0,0,0.6) 18%, #000 40%);
+    top: -80px;
+    right: -20px;
+    bottom: 0;
+    width: 55%;
+    height: auto;
+    -webkit-mask-image: linear-gradient(#000 94%, transparent 100%);
+    mask-image: linear-gradient(#000 94%, transparent 100%);
   }
 }
 /* Stack rail: let people pause the loop to read it. */

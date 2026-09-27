@@ -54,41 +54,38 @@ export default function Home() {
 
       {/* HERO */}
       <section className="max-w-[1360px] mx-auto mt-5 mb-8 px-4 sm:px-6">
+        <div className="relative z-20 mb-20">
+          <HeroNav />
+        </div>
         <div
-          className="relative rounded-3xl overflow-hidden md:min-h-[640px] flex flex-col"
+          className="hero-panel relative rounded-3xl md:min-h-[640px] flex flex-col"
           style={{
             background:
               "var(--hero-bg)",
           }}
         >
           <div
-            className="absolute inset-0 pointer-events-none mix-blend-screen"
+            className="absolute inset-0 rounded-3xl pointer-events-none mix-blend-screen"
             style={{
               background: "var(--hero-glow)",
             }}
           />
 
           <div
-            className="hero-portrait absolute right-0 left-0 top-0 h-[420px] md:h-auto md:left-auto md:bottom-0 md:w-[58%]"
+            className="hero-portrait"
           >
             <Image
-              src={asset("/images/final_futuristic_avatar.jpg")}
-              alt="Frank Murillo, wearing futuristic visor glasses and a holographic jacket"
+              src={asset("/images/final_futuristic_avatar_cutout.png")}
+              alt="3D portrait of Frank Murillo in a metallic jacket, with a neon skyline reflected in his futuristic glasses"
               fill
               sizes="(min-width: 768px) 58vw, 100vw"
-              className="object-cover"
-              style={{ objectPosition: "72% 6%" }}
+              className="object-contain object-bottom"
               priority
             />
           </div>
 
-          {/* nav */}
-          <div className="relative z-20 px-4 sm:px-6 pt-4 sm:pt-5">
-            <HeroNav />
-          </div>
-
           {/* content */}
-          <div className="relative z-10 max-w-[740px] px-6 sm:px-14 pt-[250px] md:pt-12 pb-10 md:pb-14 flex-1 flex flex-col justify-center">
+          <div className="relative z-10 max-w-[740px] px-6 sm:px-14 pt-[310px] md:pt-12 pb-10 md:pb-14 flex-1 flex flex-col justify-center">
             <div className="flex items-center gap-3 mb-5 font-mono text-[12px] sm:text-[12.5px] tracking-[2px] uppercase text-white/90">
               <span className="w-[11px] h-[11px] bg-gradient-to-br from-cloud-mist to-white rotate-45 shadow-[0_0_12px_rgba(95,242,223,0.7)]" />
               Frank Murillo · Cloud &amp; AI Architect
