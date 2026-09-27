@@ -187,7 +187,7 @@ h1.font-display, h2.font-display, h3.font-display { letter-spacing: var(--displa
 }
 /* Gallery carousel (components/GalleryCarousel.tsx). Slides are sized against
    the section container via container-query units; the track bleeds to the
-   right edge of the viewport so the next slide peeks in. */
+   right edge of the viewport on mobile so the next slide peeks in. */
 .gallery-carousel {
   container-type: inline-size;
   --gap: 24px;
@@ -196,7 +196,8 @@ h1.font-display, h2.font-display, h3.font-display { letter-spacing: var(--displa
   --span: 86cqw;
 }
 @media (min-width: 768px) {
-  .gallery-carousel { --slide: calc((100cqw - var(--gap)) / 2); --span: 100cqw; }
+  /* Desktop: exactly two slides inside the page width. No bleed, no ghost slide. */
+  .gallery-carousel { --slide: calc((100cqw - var(--gap)) / 2); --span: 100cqw; --bleed: 0px; }
 }
 .gallery-bleed { margin-right: calc(-1 * var(--bleed)); }
 .gallery-track { scrollbar-width: none; gap: var(--gap); }
