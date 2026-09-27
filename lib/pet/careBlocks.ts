@@ -14,7 +14,7 @@
 
 import type { PetAction } from "@/lib/pet/petState";
 
-export const COLS = 8;
+export const COLS = 10;
 export const ROWS = 14;
 
 export type Cell = PetAction | null;

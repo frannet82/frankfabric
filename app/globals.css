@@ -313,7 +313,20 @@ section[id] { scroll-margin-top: 84px; }
 }
 
 /* Care Blocks (components/pet/CareBlocks.tsx): cell size scales with screen. */
-.care-board { --cell: 17px; }
-@media (min-width: 400px) { .care-board { --cell: 19px; } }
-@media (min-width: 1024px) { .care-board { --cell: 22px; } }
-.care-cell { box-shadow: inset 0 -2px 0 rgba(0, 0, 0, 0.14), inset 0 1px 0 rgba(255, 255, 255, 0.35); }
+/* Phones/tablets: the board spans the card width (10 columns). */
+.care-board { --cell: clamp(18px, calc((100vw - 110px) / 10), 30px); }
+@media (min-width: 768px) { .care-board { --cell: clamp(18px, calc((52vw - 130px) / 10), 26px); } }
+/* Desktop: the pet panel fills the window height, so size the board from the
+   panel's real height (container query), capped by the width left beside the
+   3D stage for the next piece and colour key. */
+@media (min-width: 1024px) {
+  .pet-panel { container-type: size; }
+  .care-board {
+    --cell: clamp(18px, min(calc((100cqh - 348px) / 14.2), calc((52cqw - 290px) / 10)), 40px);
+  }
+}
+.care-slot { border-radius: calc(var(--cell) * 0.2); }
+.care-cell {
+  font-size: calc(var(--cell) * 0.36);
+  box-shadow: inset 0 -2px 0 rgba(0, 0, 0, 0.14), inset 0 1px 0 rgba(255, 255, 255, 0.35);
+}
